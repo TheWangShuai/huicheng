@@ -1,0 +1,110 @@
+license.path: /opt/eap/${eap.name}/config/license.key
+server:
+  port: 8083
+  servlet:
+    session:
+      timeout: 18000m
+  tomcat:
+    uri-encoding: UTF-8
+    max-connections: 5000   #最大并发数
+    accept-count: 200   #可以放到处理队列中的请求数
+    connection-timeout: 2000ms
+    threads:
+      max: 800  #最大并发数
+      min-spare: 80  #初始化时创建的线程数
+
+
+
+spring:
+  messages:
+    basename: i18n.messages
+    encoding: UTF-8
+#  thymeleaf:
+#    prefix: classpath:/templates/
+#    suffix: .html
+#    mode: HTML
+#    encoding: UTF-8
+#    servlet:
+#      content-type: text/html
+#      cache: false
+  resources:
+    chain:
+      strategy:
+        content:
+          enabled: true
+          paths: /**
+  mvc:
+    static-path-pattern: /**
+  redis:
+    host: 200.73.11.164
+    port: 6379
+    lettuce:
+      pool:
+        min-idle: 10
+        max-idle: 50
+        max-active: 100
+  rabbitmq:
+    mes:
+       host: 200.73.11.164
+       port: 5672
+       username: guest
+       password: guest
+       virtualHost: /
+       listener:
+       simple:
+         acknowledge-mode: manual
+    spc:
+      host: 200.73.11.164
+      port: 5672
+      username: guest
+      password: guest
+      virtualHost: /
+      listener:
+      simple:
+        acknowledge-mode: manual
+logging:
+  config: classpath:log/logback-dev.xml
+  level:
+    cn.jay.repository: trace
+
+super:
+  user:
+    username: admin
+    password: 123
+
+
+
+async:
+  thread:
+    core_pool_size: 100
+    max_pool_size:  1000
+    queue_capacity: 200
+    keep_alive_seconds: 30
+
+project:
+#  type: plc
+  config: /opt/eap/${eap.name}/config
+  param: /opt/eap/${eap.name}/param
+#  data:
+#    frequency: 1000
+
+http:
+  enable: true
+
+tcp:
+  timeout: 10    #单位 秒
+  config: /opt/eap/${eap.name}/config/tcp.properties
+  client:
+    enable: true        #是否作为client
+    separator: "|"    #消息分隔符（结束符）
+    retry:
+      delay: 5000        #多久重连一次，单位：毫秒
+
+#webService:
+#  enable: false
+
+webSocket:
+  enable: true
+
+
+version: @project.version@

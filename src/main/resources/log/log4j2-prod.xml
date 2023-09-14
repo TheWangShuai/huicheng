@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="debug" name="sidtek" dest="/opt/log/log4j2.log" monitorInterval="0">
+    <Properties>
+        <Property name="applicationName">${spring:spring.application.name}</Property>
+        <Property name="LOG_HOME">${spring:logging.dir}</Property>
+
+        <!--        等于比较，如果X==Y, 则结果是Z，否则是X -->
+        <!--        %equals{X}{Y}{Z}-->
+        <!--        flowNodeId 等于空时，则展示logger，否则展示flowNodeId -->
+        <Property name="defaultPatternLayout">
+            %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] [%-5level] %notEmpty{[%X{eqptId}]}[%X{traceId}] %equals{[%X{flowNodeId}]}{[]}{%logger{36}} - %msg%n
+        </Property>
+
+        <Property name="interfacePatternLayout">
+            %d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] {%logger{36}} - %msg%n
+        </Property>
+
+        <Property name="secsPatternLayout">
+            %d{yyyy-MM-dd HH:mm:ss.SSS} [%t][%X{eqptId}] %msg%n
+        </Property>
+
+    </Properties>
+    <Appenders>
+        <!--        普通日志的控制台打印-->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${defaultPatternLayout}"/>
+        </Console>
+
+        <Console name="SecsConsole" target="SYSTEM_OUT">
+            <PatternLayout pattern="${secsPatternLayout}"/>
+        </Console>
+
+        <RollingFile name="infoLog" fileName="${LOG_HOME}/info.log" filePattern="${LOG_HOME}/info.log.%d{yyyy-MM-dd}.%i">
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="${defaultPatternLayout}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="200MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+
+        <RollingFile name="errorLog" fileName="${LOG_HOME}/error.log" filePattern="${LOG_HOME}/error.log.%d{yyyy-MM-dd}.%i">
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="${defaultPatternLayout}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="200MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+
+        <RollingFile name="warnLog" fileName="${LOG_HOME}/warn.log" filePattern="${LOG_HOME}/warn.log.%d{yyyy-MM-dd}.%i">
+            <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="${defaultPatternLayout}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="200MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+
+        <!--        log event 动态生成文件 -->
+        <Routing name="secsLog">
+            <Routes pattern="$${ctx:EQPTID}}">
+                <Route>
+                    <RollingFile name="secs" fileName="${LOG_HOME}/${ctx:eqptId}/secs.log"
+                                 filePattern="${LOG_HOME}/${ctx:eqptId}/secs.log.%d{yyyy-MM-dd}.%i">
+                        <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+                        <PatternLayout pattern="${secsPatternLayout}"/>
+                        <Policies>
+                            <TimeBasedTriggeringPolicy interval="1"/>
+                            <SizeBasedTriggeringPolicy size="200MB"/>
+                        </Policies>
+                        <DefaultRolloverStrategy max="30"/>
+                    </RollingFile>
+                </Route>
+            </Routes>
+        </Routing>
+
+        <!--        log event 动态生成文件 -->
+        <Routing name="messageLog">
+            <Routes pattern="$${ctx:EQPTID}}">
+                <Route>
+                    <RollingFile name="secs" fileName="${LOG_HOME}/${ctx:eqptId}/message.log"
+                                 filePattern="${LOG_HOME}/${ctx:eqptId}/message.log.%d{yyyy-MM-dd}.%i">
+                        <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+                        <PatternLayout pattern="${secsPatternLayout}"/>
+                        <Policies>
+                            <TimeBasedTriggeringPolicy interval="1"/>
+                            <SizeBasedTriggeringPolicy size="200MB"/>
+                        </Policies>
+                        <DefaultRolloverStrategy max="30"/>
+                    </RollingFile>
+                </Route>
+            </Routes>
+        </Routing>
+
+        <Async name="Async">
+            <AppenderRef ref="infoLog"/>
+            <AppenderRef ref="errorLog"/>
+            <AppenderRef ref="warnLog"/>
+        </Async>
+
+        <Async name="AsyncSecs">
+            <AppenderRef ref="secsLog"/>
+        </Async>
+
+        <Async name="AsyncMessage">
+            <AppenderRef ref="messageLog"/>
+        </Async>
+    </Appenders>
+    <Loggers>
+
+        <Logger name="com.totainfo.matrix.github.secs4java8.secs.AbstractSecsCommunicator" level="OFF"/>
+
+        <Logger name="SECS-LOGGER" level="INFO" additivity="false">
+            <AppenderRef ref="AsyncSecs"/>
+        </Logger>
+
+        <Logger name="BC-LOGGER" level="INFO" additivity="false">
+            <AppenderRef ref="AsyncMessage"/>
+        </Logger>
+
+        <Root level="info">
+            <AppenderRef ref="Async"/>
+        </Root>
+    </Loggers>
+</Configuration>
+
