@@ -1,10 +1,13 @@
 package com.totainfo.eap.cp.service.kvm;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
+import com.totainfo.eap.cp.handler.MesHandler;
 import com.totainfo.eap.cp.trx.kvm.KVMAlarmReport.KVMAlarmReportI;
 import com.totainfo.eap.cp.trx.kvm.KVMAlarmReport.KVMAlarmReportO;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportI;
 import org.springframework.stereotype.Service;
+
+import java.awt.*;
 
 /**
  * @author xiaobin.Guo
@@ -15,7 +18,12 @@ public class KVMAlarmReportService extends EapBaseService<KVMAlarmReportI, KVMAl
 
     @Override
     public void mainProc(String uid, KVMAlarmReportI inTrx, KVMAlarmReportO outTrx) {
-        EAPEqptAlarmReportI eapEqptAlarmReportI = new EAPEqptAlarmReportI();
+        String alarmCode = inTrx.getAlarmCode();
+        String alarmText = inTrx.getAlarmMessage();
+        String time = inTrx.getTime();
+        MesHandler.alarmReport(alarmCode, alarmText, time);
+
+        //todo 报警需要推送给Client端展示
 
     }
 }
