@@ -1,6 +1,6 @@
 package com.totainfo.eap.cp.commdef;
 
-public class GenergicDef {
+public class GenergicStatDef {
 
     public static class MdcKey{
        public static final String EVTNO = "EVTNO";

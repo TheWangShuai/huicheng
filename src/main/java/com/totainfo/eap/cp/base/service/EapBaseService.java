@@ -5,13 +5,12 @@ import com.totainfo.eap.cp.base.trx.BaseTrxI;
 import com.totainfo.eap.cp.base.trx.BaseTrxO;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.ParameterizedType;
 
-import static com.totainfo.eap.cp.commdef.GenergicDef.Constant.RETURN_CODE_OK;
-import static com.totainfo.eap.cp.commdef.GenergicDef.Constant.RETURN_MESG_OK;
-import static com.totainfo.eap.cp.commdef.GenergicDef.Constant.SERVICE_EXCEPTION;
+import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
+import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_MESG_OK;
+import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.SERVICE_EXCEPTION;
 
 
 /**
@@ -45,5 +44,5 @@ public abstract class EapBaseService<I extends BaseTrxI, O extends BaseTrxO>  im
         return returnMsg;
     }
 
-    public abstract void mainProc(String uid, I inTrx, O outTrx);
+    public abstract void mainProc(String evtNo, I inTrx, O outTrx);
 }

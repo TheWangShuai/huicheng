@@ -16,25 +16,6 @@ server:
 
 
 spring:
-  messages:
-    basename: i18n.messages
-    encoding: UTF-8
-#  thymeleaf:
-#    prefix: classpath:/templates/
-#    suffix: .html
-#    mode: HTML
-#    encoding: UTF-8
-#    servlet:
-#      content-type: text/html
-#      cache: false
-  resources:
-    chain:
-      strategy:
-        content:
-          enabled: true
-          paths: /**
-  mvc:
-    static-path-pattern: /**
   redis:
 #    host: 200.73.11.164
     host: localhost
@@ -47,24 +28,31 @@ spring:
   rabbitmq:
     mes:
        host: 127.0.0.1
-#       host: 200.73.11.164
-#       host: localhost
        port: 5672
        username: guest
        password: guest
        virtualHost: /
-       listener:
+       timeout: 30000
+       mesMq:
+       eapMq:
+       mesExchange:
+       eapExchange:
        simple:
          acknowledge-mode: manual
-    spc:
+    client:
       host: 127.0.0.1
-#      host: 200.73.11.164
-#      host: localhost
       port: 5672
       username: guest
       password: guest
       virtualHost: /
+      timeout: 30000
       listener:
+      clientMq:
+      serverMq:
+      logMq:
+      clientExchange:
+      serverExchange:
+
       simple:
         acknowledge-mode: manual
 logging:
@@ -85,28 +73,6 @@ async:
     max_pool_size:  1000
     queue_capacity: 200
     keep_alive_seconds: 30
-
-project:
-#  type: plc
-  config: /opt/eap/${eap.name}/config
-  param: /opt/eap/${eap.name}/param
-#  data:
-#    frequency: 1000
-
-http:
-  enable: true
-
-tcp:
-  timeout: 10    #单位 秒
-  config: /opt/eap/${eap.name}/config/tcp.properties
-  client:
-    enable: true        #是否作为client
-    separator: "|"    #消息分隔符（结束符）
-    retry:
-      delay: 5000        #多久重连一次，单位：毫秒
-
-#webService:
-#  enable: false
 
 webSocket:
   enable: true

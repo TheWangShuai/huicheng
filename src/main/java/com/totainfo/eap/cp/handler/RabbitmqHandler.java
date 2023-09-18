@@ -18,7 +18,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -26,7 +25,7 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static com.totainfo.eap.cp.commdef.GenergicDef.Constant._SPACE;
+import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant._SPACE;
 
 @Component
 public class RabbitmqHandler<I extends BaseTrxI> {
@@ -41,7 +40,6 @@ public class RabbitmqHandler<I extends BaseTrxI> {
     private String eapExchange;
 
 
-    private static ApplicationContext context;
 
     private RabbitTemplate rabbitTemplate;
 
@@ -51,7 +49,7 @@ public class RabbitmqHandler<I extends BaseTrxI> {
 
 
 
-    public void send(String evtNo, String toekn, String exchange, String queue, I inObj) {
+    public void send(String evtNo, String exchange, String queue, I inObj) {
         MessageProperties properties = new MessageProperties();
         properties.setMessageId(evtNo);
         properties.setContentType("text/plain");

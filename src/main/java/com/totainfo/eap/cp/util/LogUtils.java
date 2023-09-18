@@ -1,10 +1,9 @@
 package com.totainfo.eap.cp.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.totainfo.eap.cp.commdef.GenergicDef.LogType;
+import com.totainfo.eap.cp.commdef.GenergicStatDef.LogType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.util.Optional;
 

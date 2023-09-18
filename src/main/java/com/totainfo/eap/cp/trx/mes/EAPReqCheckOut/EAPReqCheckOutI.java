@@ -10,6 +10,7 @@ public class EAPReqCheckOutI extends BaseTrxI {
     private String computerName;
     private String evtUsr;
     private String lotNo;
+    private String equipmentNo;
 
     public String getComputerName() {
         return computerName;
@@ -33,5 +34,13 @@ public class EAPReqCheckOutI extends BaseTrxI {
 
     public void setLotNo(String lotNo) {
         this.lotNo = lotNo;
+    }
+
+    public String getEquipmentNo() {
+        return equipmentNo;
+    }
+
+    public void setEquipmentNo(String equipmentNo) {
+        this.equipmentNo = equipmentNo;
     }
 }

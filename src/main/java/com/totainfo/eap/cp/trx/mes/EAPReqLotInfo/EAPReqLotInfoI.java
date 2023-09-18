@@ -10,6 +10,7 @@ public class EAPReqLotInfoI extends BaseTrxI {
     private String computerName;
     private String evtUsr;
     private String lotNo;
+    private String proberId;
     private String equipmentNo;
 
     public String getComputerName() {
@@ -34,6 +35,14 @@ public class EAPReqLotInfoI extends BaseTrxI {
 
     public void setLotNo(String lotNo) {
         this.lotNo = lotNo;
+    }
+
+    public String getProberId() {
+        return proberId;
+    }
+
+    public void setProberId(String proberId) {
+        this.proberId = proberId;
     }
 
     public String getEquipmentNo() {
