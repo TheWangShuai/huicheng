@@ -17,11 +17,11 @@ import java.awt.*;
 public class KVMAlarmReportService extends EapBaseService<KVMAlarmReportI, KVMAlarmReportO> {
 
     @Override
-    public void mainProc(String uid, KVMAlarmReportI inTrx, KVMAlarmReportO outTrx) {
+    public void mainProc(String evtNo, KVMAlarmReportI inTrx, KVMAlarmReportO outTrx) {
         String alarmCode = inTrx.getAlarmCode();
         String alarmText = inTrx.getAlarmMessage();
         String time = inTrx.getTime();
-        MesHandler.alarmReport(alarmCode, alarmText, time);
+        MesHandler.alarmReport(evtNo, alarmCode, alarmText, time);
 
         //todo 报警需要推送给Client端展示
 

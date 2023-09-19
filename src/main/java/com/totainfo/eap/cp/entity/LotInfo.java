@@ -1,26 +1,28 @@
-package com.totainfo.eap.cp.trx.mes.EAPReqLotInfo;
+package com.totainfo.eap.cp.entity;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author xiaobin.Guo
- * @date 2023年09月14日 11:14
+ * @date 2023年09月18日 10:14
  */
-public class EAPReqLotInfoOA {
-    private String waferLot;
+public class LotInfo {
+    private String lotId;
     private String device;
     private String proberCard;
     private String testProgram;
     private String loadBoardId;
     private String deviceId;
-    private List<EAPReqLotInfoOB> paramList;
+    private String userId;
 
-    public String getWaferLot() {
-        return waferLot;
+    private Map<String, String> paramMap;
+
+    public String getLotId() {
+        return lotId;
     }
 
-    public void setWaferLot(String waferLot) {
-        this.waferLot = waferLot;
+    public void setLotId(String lotId) {
+        this.lotId = lotId;
     }
 
     public String getDevice() {
@@ -63,11 +65,20 @@ public class EAPReqLotInfoOA {
         this.deviceId = deviceId;
     }
 
-    public List<EAPReqLotInfoOB> getParamList() {
-        return paramList;
+
+    public String getUserId() {
+        return userId;
     }
 
-    public void setParamList(List<EAPReqLotInfoOB> paramList) {
-        this.paramList = paramList;
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public Map<String, String> getParamMap() {
+        return paramMap;
+    }
+
+    public void setParamMap(Map<String, String> paramMap) {
+        this.paramMap = paramMap;
     }
 }

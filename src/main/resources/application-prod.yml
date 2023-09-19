@@ -15,25 +15,6 @@ server:
 
 
 spring:
-  messages:
-    basename: i18n.messages
-    encoding: UTF-8
-#  thymeleaf:
-#    prefix: classpath:/templates/
-#    suffix: .html
-#    mode: HTML
-#    encoding: UTF-8
-#    servlet:
-#      content-type: text/html
-#      cache: false
-  resources:
-    chain:
-      strategy:
-        content:
-          enabled: true
-          paths: /**
-  mvc:
-    static-path-pattern: /**
   redis:
     host: 200.73.52.156
     port: 6379
@@ -42,12 +23,6 @@ spring:
         min-idle: 10
         max-idle: 50
         max-active: 100
-#  rabbitmq:
-#    host: localhost
-#    port: 5672
-#    username: guest
-#    password: guest
-#    queque: test
   rabbitmq:
     mes:
       host: 200.73.52.156
@@ -67,10 +42,11 @@ spring:
       listener:
       simple:
         acknowledge-mode: manual
-logging:
-  config: classpath:log/logback-prod.xml
-  level:
-    cn.jay.repository: trace
+  logging:
+    config: classpath:log/log4j2-local.xml
+    path: /aplog/BC/%{bcName}/
+    level:
+      cn.jay.repository: trace
 
 super:
   user:

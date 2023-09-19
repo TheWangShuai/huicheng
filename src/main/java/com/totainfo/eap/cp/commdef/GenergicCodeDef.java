@@ -8,8 +8,15 @@ public class GenergicCodeDef {
 
     public static final String MES_TIME_OUT = "9999999";
     public static final String KVM_TIME_OUT = "8888888";
+    public static final String KVM_RETURN_ERROR = "8888889";
+    public static final String RMS_TIME_OUT = "7777777";
+    public static final String RMS_FAILD = "7777778";
     public static final String LOT_ID_EMPTY = "0000001";
     public static final String PROBER_ID_EMPTY = "0000002";
     public static final String USER_ID_EMPTY = "0000003";
+    public static final String LOT_INFO_NOT_EXIST = "0000004";
+    public static final String DEVICE_DISMATCH = "0000005";
+    public static final String EQPT_MODE_DISMATCH = "0000006";
+
 
 }

@@ -7,16 +7,17 @@ import com.totainfo.eap.cp.util.GUIDGenerator;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.MatrixAppContext;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 
 @RestController
+@RequestMapping("/matrix")
 public class EapBaseController {
 
-    @RequestMapping(value = "eap.do", method = RequestMethod.POST)
-    public String sendMessage(String trxId, String message) {
+    @RequestMapping(value = "/sendMsg/{trxId}/{actionFlag}", method = RequestMethod.POST)
+    public String sendMessage(@PathVariable String trxId, @PathVariable String actionFlag, @RequestBody String message) {
         long crTime = System.currentTimeMillis();
         String evtNo =  GUIDGenerator.generateInviteCode();
         String returnMsg;

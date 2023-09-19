@@ -1,4 +1,8 @@
-license.path: /opt/eap/${eap.name}/config/license.key
+equipment:
+  id: 123
+  proberUrl:
+  testerUrl:
+
 server:
   port: 8083
   servlet:
@@ -13,11 +17,8 @@ server:
       max: 800  #最大并发数
       min-spare: 80  #初始化时创建的线程数
 
-
-
 spring:
   redis:
-#    host: 200.73.11.164
     host: localhost
     port: 6379
     lettuce:
@@ -26,37 +27,28 @@ spring:
         max-idle: 50
         max-active: 100
   rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+    virtualHost: /
+    timeout: 60000
+    simple:
+      acknowledge-mode: manual
     mes:
-       host: 127.0.0.1
-       port: 5672
-       username: guest
-       password: guest
-       virtualHost: /
-       timeout: 30000
-       mesMq:
-       eapMq:
-       mesExchange:
-       eapExchange:
-       simple:
-         acknowledge-mode: manual
+       queue: MES-QUEUE
+       exchange: MES
     client:
-      host: 127.0.0.1
-      port: 5672
-      username: guest
-      password: guest
-      virtualHost: /
-      timeout: 30000
-      listener:
-      clientMq:
-      serverMq:
-      logMq:
-      clientExchange:
-      serverExchange:
-
-      simple:
-        acknowledge-mode: manual
-logging:
-  config: classpath:log/logback-dev.xml
+      queue: CLIENT-QUEUE
+      exchange: CLIENT
+    eap:
+      queue: EAP-QUEUE.${equipment.id}
+      exchange: EAP
+    rms:
+      queue: RMS-QUEUE
+      exchange: RMS
+  logging:
+    config:classpath:log/log4j2-dev.xml
   level:
     cn.jay.repository: trace
 

@@ -2,6 +2,7 @@ package com.totainfo.eap.cp.handler;
 
 import com.rabbitmq.client.Channel;
 import com.totainfo.eap.cp.base.service.IEapBaseInterface;
+import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportI;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportO;
 import com.totainfo.eap.cp.trx.mes.EAPEqptStatusReport.EAPEqptStatusReportI;
@@ -24,10 +25,6 @@ import com.totainfo.eap.cp.util.MatrixAppContext;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.AsyncRabbitTemplate;
-import org.springframework.amqp.rabbit.annotation.Exchange;
-import org.springframework.amqp.rabbit.annotation.Queue;
-import org.springframework.amqp.rabbit.annotation.QueueBinding;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +38,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
+import com.totainfo.eap.cp.commdef.GenericDataDef.*;
+
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.MES_TIME_OUT;
-import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant._SPACE;
 
 /**
  * @author xiaobin.Guo
@@ -52,20 +50,17 @@ import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant._SPACE;
 public class MesHandler {
 
 
-    private static RabbitTemplate mesRabbitTemplate;
+    private static RabbitmqHandler rabbitmqHandler;
+    private static final String appName = "MES";
 
-    private static AsyncRabbitTemplate mesAsyncRabbitTemplate;
-
-    private static int timeout;
     private static String mesQueue;
     private static  String mesExchange;
 
     private static String computerName;
-    private static String equipmentNo;
     static {
         InetAddress address = null; // 此处可以是计算机名或者IP，任一即可
         try {
-            address = InetAddress.getByName("HostNameOrIP");
+            address = InetAddress.getLocalHost();
         } catch (UnknownHostException e) {
             LogUtils.error("获取服务器名失败", e);
         }
@@ -74,18 +69,18 @@ public class MesHandler {
 
 
 
-    public static EAPEqptAlarmReportO alarmReport(String alarmCode, String alarmText, String time){
+    public static EAPEqptAlarmReportO alarmReport(String evtNo,String alarmCode, String alarmText, String time){
         EAPEqptAlarmReportI eapEqptAlarmReportI = new EAPEqptAlarmReportI();
         EAPEqptAlarmReportO eapEqptAlarmReportO = new EAPEqptAlarmReportO();
         eapEqptAlarmReportI.setEvtUsr("");
         eapEqptAlarmReportI.setComputerName(computerName);
-        eapEqptAlarmReportI.setEquipmentNo(equipmentNo);
+        eapEqptAlarmReportI.setEquipmentNo(GenericDataDef.equipmentNo);
         eapEqptAlarmReportI.setErrorcode(alarmCode);
         eapEqptAlarmReportI.setMessage(alarmText);
         eapEqptAlarmReportI.setTime(time);
 
         String inTrxStr = JacksonUtils.object2String(eapEqptAlarmReportI);
-        String outTrxStr = sendMessageToMes("", inTrxStr);
+        String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapEqptAlarmReportI);
         if(!StringUtils.hasText(outTrxStr)){
             eapEqptAlarmReportO.setRtnCode("00000001");
             eapEqptAlarmReportO.setRtnMesg("EAP发送设备报警，MES没有回复");
@@ -95,17 +90,17 @@ public class MesHandler {
         return eapEqptAlarmReportO;
     }
 
-    public static EAPEqptStatusReportO eqptStatReport(String eqptStat, String remark){
+    public static EAPEqptStatusReportO eqptStatReport(String evtNo, String eqptStat, String remark){
         EAPEqptStatusReportI eapEqptStatusReportI = new EAPEqptStatusReportI();
         EAPEqptStatusReportO eapEqptStatusReportO = new EAPEqptStatusReportO();
         eapEqptStatusReportI.setEvtUsr("");
         eapEqptStatusReportI.setComputerName(computerName);
-        eapEqptStatusReportI.setEquipmentNo(equipmentNo);
+        eapEqptStatusReportI.setEquipmentNo(GenericDataDef.equipmentNo);
         eapEqptStatusReportI.setLastState(eqptStat);
         eapEqptStatusReportI.setRemark(remark);
 
         String inTrxStr = JacksonUtils.object2String(eapEqptStatusReportI);
-        String outTrxStr = sendMessageToMes("", inTrxStr);
+        String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapEqptStatusReportI);
         if(!StringUtils.hasText(outTrxStr)){
             eapEqptStatusReportO.setRtnCode(MES_TIME_OUT);
             eapEqptStatusReportO.setRtnMesg("EAP发送设备状态，MES没有回复");
@@ -115,17 +110,16 @@ public class MesHandler {
         return eapEqptStatusReportO;
     }
 
-    public static EAPReqLotInfoO lotInfoReq(String lotNo, String proberId,String userId){
+    public static EAPReqLotInfoO lotInfoReq(String evtNo, String lotNo, String proberId,String userId){
         EAPReqLotInfoI eapReqLotInfoI = new EAPReqLotInfoI();
         EAPReqLotInfoO eapReqLotInfoO = new EAPReqLotInfoO();
         eapReqLotInfoI.setEvtUsr(userId);
         eapReqLotInfoI.setLotNo(lotNo);
         eapReqLotInfoI.setProberId(proberId);
         eapReqLotInfoI.setComputerName(computerName);
-        eapReqLotInfoI.setEquipmentNo(equipmentNo);
+        eapReqLotInfoI.setEquipmentNo(GenericDataDef.equipmentNo);
 
-        String inTrxStr = JacksonUtils.object2String(eapReqLotInfoI);
-        String outTrxStr = sendMessageToMes("", inTrxStr);
+        String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapReqLotInfoI);
         if(!StringUtils.hasText(outTrxStr)){
             eapReqLotInfoO.setRtnCode(MES_TIME_OUT);
             eapReqLotInfoO.setRtnMesg("EAP发送设备状态，MES没有回复");
@@ -136,16 +130,15 @@ public class MesHandler {
     }
 
 
-    public static EAPReqCheckInO checkInReq(String lotNo){
+    public static EAPReqCheckInO checkInReq(String evtNo, String lotNo, String userId){
         EAPReqCheckInI eapReqCheckInI = new EAPReqCheckInI();
         EAPReqCheckInO eapReqCheckInO = new EAPReqCheckInO();
-        eapReqCheckInI.setEvtUsr("");
+        eapReqCheckInI.setEvtUsr(userId);
         eapReqCheckInI.setLotNo(lotNo);
         eapReqCheckInI.setComputerName(computerName);
-        eapReqCheckInI.setEquipmentNo(equipmentNo);
+        eapReqCheckInI.setEquipmentNo(GenericDataDef.equipmentNo);
 
-        String inTrxStr = JacksonUtils.object2String(eapReqCheckInI);
-        String outTrxStr = sendMessageToMes("", inTrxStr);
+        String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapReqCheckInI);
         if(!StringUtils.hasText(outTrxStr)){
             eapReqCheckInO.setRtnCode(MES_TIME_OUT);
             eapReqCheckInO.setRtnMesg("EAP发送Lot:["+lotNo+"] Check In，MES没有回复");
@@ -157,16 +150,15 @@ public class MesHandler {
 
 
 
-    public static EAPReqCheckOutO checkOutReq(String lotNo){
+    public static EAPReqCheckOutO checkOutReq(String evtNo, String lotNo){
         EAPReqCheckOutI eapReqCheckOutI = new EAPReqCheckOutI();
         EAPReqCheckOutO eapReqCheckOutO = new EAPReqCheckOutO();
         eapReqCheckOutI.setEvtUsr("");
         eapReqCheckOutI.setLotNo(lotNo);
         eapReqCheckOutI.setComputerName(computerName);
-        eapReqCheckOutI.setEquipmentNo(equipmentNo);
+        eapReqCheckOutI.setEquipmentNo(GenericDataDef.equipmentNo);
 
-        String inTrxStr = JacksonUtils.object2String(eapReqCheckOutI);
-        String outTrxStr = sendMessageToMes("", inTrxStr);
+        String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapReqCheckOutI);
         if(!StringUtils.hasText(outTrxStr)){
             eapReqCheckOutO.setRtnCode(MES_TIME_OUT);
             eapReqCheckOutO.setRtnMesg("EAP发送Lot:["+lotNo+"] Check In，MES没有回复");
@@ -177,16 +169,16 @@ public class MesHandler {
     }
 
 
-    public static EAPReqMeasureResultO measureResultReq(String lotNo){
+    public static EAPReqMeasureResultO measureResultReq(String evtNo, String lotNo){
         EAPReqMeasureResultI eapReqMeasureResultI = new EAPReqMeasureResultI();
         EAPReqMeasureResultO eapReqMeasureResultO = new EAPReqMeasureResultO();
         eapReqMeasureResultI.setEvtUsr("");
         eapReqMeasureResultI.setLotNo(lotNo);
         eapReqMeasureResultI.setComputerName(computerName);
-        eapReqMeasureResultI.setEquipmentNo(equipmentNo);
+        eapReqMeasureResultI.setEquipmentNo(GenericDataDef.equipmentNo);
 
         String inTrxStr = JacksonUtils.object2String(eapReqMeasureResultI);
-        String outTrxStr = sendMessageToMes("", inTrxStr);
+        String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapReqMeasureResultI);
         if(!StringUtils.hasText(outTrxStr)){
             eapReqMeasureResultO.setRtnCode(MES_TIME_OUT);
             eapReqMeasureResultO.setRtnMesg("EAP请求Lot:["+lotNo+"] 量测结果，MES没有回复");
@@ -197,19 +189,18 @@ public class MesHandler {
     }
 
 
-    public static EAPUploadDieResultO uploadDieResult(String lotNo, String waferId, String startCoordinates, String result){
+    public static EAPUploadDieResultO uploadDieResult(String evtNo, String lotNo, String waferId, String startCoordinates, String result, String userId){
         EAPUploadDieResultI eapUploadDieResultI = new EAPUploadDieResultI();
         EAPUploadDieResultO eapUploadDieResultO = new EAPUploadDieResultO();
-        eapUploadDieResultI.setEvtUsr("");
+        eapUploadDieResultI.setEvtUsr(userId);
         eapUploadDieResultI.setLotNo(lotNo);
         eapUploadDieResultI.setWaferId(waferId);
         eapUploadDieResultI.setStartingCoordinates(startCoordinates);
         eapUploadDieResultI.setResult(result);
         eapUploadDieResultI.setComputerName(computerName);
-        eapUploadDieResultI.setEquipmentNo(equipmentNo);
+        eapUploadDieResultI.setEquipmentNo(GenericDataDef.equipmentNo);
 
-        String inTrxStr = JacksonUtils.object2String(eapUploadDieResultI);
-        String outTrxStr = sendMessageToMes("", inTrxStr);
+        String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapUploadDieResultI);
         if(!StringUtils.hasText(outTrxStr)){
             eapUploadDieResultO.setRtnCode(MES_TIME_OUT);
             eapUploadDieResultO.setRtnMesg("EAP上传Lot:["+lotNo+"],Wafer:["+waferId+"],DIE 测试结果，MES没有回复");
@@ -219,111 +210,42 @@ public class MesHandler {
         return eapUploadDieResultO;
     }
 
-    public static EAPUploadMarkResultO uploadMarkResult(String lotNo, String waferId, String startCoordinates, String result, String remark){
+    public static EAPUploadMarkResultO uploadMarkResult(String evtNo, String lotNo, String waferId, String startCoordinates, String result, String remark, String userId) {
         EAPUploadMarkResultI eapUploadMarkResultI = new EAPUploadMarkResultI();
         EAPUploadMarkResultO eapUploadMarkResultO = new EAPUploadMarkResultO();
-        eapUploadMarkResultI.setEvtUsr("");
-       eapUploadMarkResultI.setLotNo(lotNo);
-       eapUploadMarkResultI.setWaferId(waferId);
-       eapUploadMarkResultI.setStartingCoordinates(startCoordinates);
-       eapUploadMarkResultI.setResult(result);
-       eapUploadMarkResultI.setRemark(remark);
-       eapUploadMarkResultI.setComputerName(computerName);
-       eapUploadMarkResultI.setEquipmentNo(equipmentNo);
+        eapUploadMarkResultI.setEvtUsr(userId);
+        eapUploadMarkResultI.setLotNo(lotNo);
+        eapUploadMarkResultI.setWaferId(waferId);
+        eapUploadMarkResultI.setStartingCoordinates(startCoordinates);
+        eapUploadMarkResultI.setResult(result);
+        eapUploadMarkResultI.setRemark(remark);
+        eapUploadMarkResultI.setComputerName(computerName);
+        eapUploadMarkResultI.setEquipmentNo(GenericDataDef.equipmentNo);
 
-        String inTrxStr = JacksonUtils.object2String(eapUploadMarkResultI);
-        String outTrxStr = sendMessageToMes("", inTrxStr);
-        if(!StringUtils.hasText(outTrxStr)){
+        String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, mesQueue, mesExchange, eapUploadMarkResultI);
+        if (!StringUtils.hasText(outTrxStr)) {
             eapUploadMarkResultO.setRtnCode(MES_TIME_OUT);
-            eapUploadMarkResultO.setRtnMesg("EAP上传Lot:["+lotNo+"],Wafer:["+waferId+"] 针痕检测结果，MES没有回复");
-        }else{
+            eapUploadMarkResultO.setRtnMesg("EAP上传Lot:[" + lotNo + "],Wafer:[" + waferId + "] 针痕检测结果，MES没有回复");
+        } else {
             eapUploadMarkResultO = JacksonUtils.string2Object(outTrxStr, EAPUploadMarkResultO.class);
         }
         return eapUploadMarkResultO;
     }
 
-    private static String sendMessageToMes(String trxId, String inObjStr){
-        MessageProperties properties = new MessageProperties();
-        properties.setContentType("text/plain");
-        properties.setContentEncoding("UTF-8");
-        properties.setAppId("EAP");
-        properties.setExpiration(String.valueOf(timeout));
-        properties.getHeaders().put("trxId", trxId);
-        Message message = new Message(inObjStr.getBytes(), properties);
-        LogUtils.info("[{}][{}]:[{}]", trxId, "EAP->MES", inObjStr);
-        AsyncRabbitTemplate.RabbitMessageFuture future = mesAsyncRabbitTemplate.sendAndReceive(mesExchange, mesQueue, message);
-        String reply = _SPACE;
-        Message rtnMessage = null;
-        try {
-            rtnMessage = future.get(timeout, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            LogUtils.error("RabbitMQ Receive Exception", e);
-        }
-        if (rtnMessage != null) {
-            reply = new String(rtnMessage.getBody());
-        }
-        LogUtils.info("[{}][{}]:[{}]", trxId, "RMS->EAP", reply);
-        return reply;
-    }
-
-    @RabbitListener(bindings = @QueueBinding(value = @Queue("${spring.rabbitmq.mes.eapMq}"), exchange = @Exchange("${spring.rabbitmq.mes.eapExchange}"), key = "${spring.rabbitmq.eap.queue}"))
-     private void lisenterMq(Message msg, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliverTag) {
-        MessageProperties properties = msg.getMessageProperties();
-        try {
-            String trxId = _SPACE;
-            String evtNo = properties.getMessageId();
-            String appId = properties.getAppId();
-            Object trxObj = properties.getHeaders().get("trxId");
-            String message = new String(msg.getBody());
-
-            String replyQueue = properties.getReplyTo();
-            LogUtils.info("[{}][{}]:[{}]",  "MES->EAP",trxId, message);
-            IEapBaseInterface commService = (IEapBaseInterface) MatrixAppContext.getBean(trxId);
-            String rtnMesg = commService.subMainProc(evtNo, message);
-            if (StringUtils.hasText(replyQueue)) {
-                mesRabbitTemplate.send(replyQueue, new Message(rtnMesg.getBytes(), properties));
-                LogUtils.info("[{}][{}]:[{}]",  "EAP->MES", trxId, rtnMesg);
-            }
-        } catch (Exception e) {
-            LogUtils.error("Service Exception：", e);
-        }finally {
-            //直接ack
-            try {
-                channel.basicAck(deliverTag, true);
-            } catch (IOException e) {
-                LogUtils.error("ACK 异常", e);
-            }
-        }
-    }
 
     @Autowired
-    public void setMesRabbitTemplate(RabbitTemplate mesRabbitTemplate) {
-        MesHandler.mesRabbitTemplate = mesRabbitTemplate;
+    public void setRabbitmqHandler(RabbitmqHandler rabbitmqHandler) {
+        MesHandler.rabbitmqHandler = rabbitmqHandler;
     }
 
-    @Autowired
-    public void setMesAsyncRabbitTemplate(AsyncRabbitTemplate mesAsyncRabbitTemplate) {
-        MesHandler.mesAsyncRabbitTemplate = mesAsyncRabbitTemplate;
+    @Value("${spring.rabbitmq.mes.queue}")
+    public void setMesQueue(String queue) {
+        MesHandler.mesQueue = queue;
     }
 
-    @Value("${equipment.no}")
-    public void setEquipmentNo(String equipmentNo) {
-        MesHandler.equipmentNo = equipmentNo;
-    }
-
-    @Value("${spring.rabbitmq.mes.timeout}")
-    public  void setTimeout(int timeout) {
-        MesHandler.timeout = timeout;
-    }
-
-    @Value("${spring.rabbitmq.mes.mesMq}")
-    public void setMesQueue(String mesQueue) {
-        MesHandler.mesQueue = mesQueue;
-    }
-
-    @Value("${spring.rabbitmq.mes.mesExchange}")
-    public void setMesExchange(String mesExchange) {
-        MesHandler.mesExchange = mesExchange;
+    @Value("${spring.rabbitmq.mes.exchange}")
+    public void setMesExchange(String exchange) {
+        MesHandler.mesExchange = exchange;
     }
 
 }

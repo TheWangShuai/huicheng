@@ -2,6 +2,8 @@ package com.totainfo.eap.cp.service.client;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
+import com.totainfo.eap.cp.dao.ILotDao;
+import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.handler.HttpHandler;
 import com.totainfo.eap.cp.handler.MesHandler;
 import com.totainfo.eap.cp.trx.client.EAPLotIdRead.EAPLotIdReadI;
@@ -13,7 +15,6 @@ import com.totainfo.eap.cp.util.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.*;
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
@@ -24,6 +25,9 @@ import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_O
  */
 @Service("EAPLOTIDREAD")
 public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdReadO> {
+
+    @Resource
+    private ILotDao lotDao;
 
     @Resource
     private HttpHandler httpHandler;
@@ -50,14 +54,24 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
             return;
         }
 
-        EAPReqLotInfoO eapReqLotInfoO = MesHandler.lotInfoReq(lotId, proberId, userId);
+        EAPReqLotInfoO eapReqLotInfoO = MesHandler.lotInfoReq(evtNo, lotId, proberId, userId);
         if(!RETURN_CODE_OK.equals(eapReqLotInfoO.getRtnCode())){
             return;
         }
 
+
         //todo 发送给前端，LOT 校验成功。
 
-        EAPReqLotInfoOA lotInfo = eapReqLotInfoO.getLotInfo();
+        EAPReqLotInfoOA eapReqLotInfoOA = eapReqLotInfoO.getLotInfo();
+        LotInfo lotInfo = new LotInfo();
+        lotInfo.setLotId(eapReqLotInfoOA.getWaferLot());
+        lotInfo.setDevice(eapReqLotInfoOA.getDevice());
+        lotInfo.setLoadBoardId(eapReqLotInfoOA.getLoadBoardId());
+        lotInfo.setProberCard(eapReqLotInfoOA.getProberCard());
+        lotInfo.setTestProgram(eapReqLotInfoOA.getTestProgram());
+        lotInfo.setDeviceId(eapReqLotInfoOA.getDeviceId());
+        lotInfo.setUserId(userId);
+        lotDao.addLotInfo(lotInfo);
 
         //将信息下发给LVM
         EAPLotInfoWriteInI eapLotInfoWriteInI = new EAPLotInfoWriteInI();
@@ -67,7 +81,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         eapLotInfoWriteInI.setProberCardId(lotInfo.getProberCard());
         eapLotInfoWriteInI.setLoadBoardId(lotInfo.getLoadBoardId());
         eapLotInfoWriteInI.setDeviceId(lotInfo.getDeviceId());
-        eapLotInfoWriteInI.setTestProgram(lotInfo.getTestPropram());
+        eapLotInfoWriteInI.setTestProgram(lotInfo.getTestProgram());
 
 
         String returnMesg  = httpHandler.postHttpForEqpt(evtNo, GenericDataDef.proberUrl, eapLotInfoWriteInI);

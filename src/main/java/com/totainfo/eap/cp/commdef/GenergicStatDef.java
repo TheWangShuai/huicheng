@@ -92,6 +92,21 @@ public class GenergicStatDef {
         public static final String AlarmClear = "1";
         public static final String AlarmSet = "2";
     }
+
+    public static class KVMOperateState{
+        public static final String Pass = "pass";
+        public static final String Fail = "fail";
+    }
+
+    public static class EqptMode{
+        public static final String Online = "online";
+        public static final String Offline = "offline";
+    }
+
+    public static class RMSResult{
+        public static final String TRUE = "TRUE";
+        public static final String FALSE = "FALSE";
+    }
 }
 
 

@@ -6,14 +6,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class GenericDataDef {
 
-
-    public static String  equipmentNo;
+    public static String equipmentNo;
 
     public static String proberUrl;
 
     public static String testerUrl;
 
-    @Value("${equipment.no}")
+    @Value("${equipment.id}")
     public void setEquipmentNo(String equipmentNo) {
         GenericDataDef.equipmentNo = equipmentNo;
     }

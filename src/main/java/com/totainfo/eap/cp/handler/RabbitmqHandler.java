@@ -1,12 +1,11 @@
 package com.totainfo.eap.cp.handler;
 
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.rabbitmq.client.Channel;
-import com.totainfo.eap.cp.base.service.IEapBaseInterface;
+import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.base.trx.BaseTrxI;
-import com.totainfo.eap.cp.util.JacksonUtils;
-import com.totainfo.eap.cp.util.LogUtils;
-import com.totainfo.eap.cp.util.MatrixAppContext;
+import com.totainfo.eap.cp.util.*;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.AsyncRabbitTemplate;
@@ -30,14 +29,8 @@ import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant._SPACE;
 @Component
 public class RabbitmqHandler<I extends BaseTrxI> {
 
-    @Value("${spring.rabbitmq.rms.timeout}")
-    private int rmsTimeout;
-
-    @Value("${spring.rabbitmq.eap.queue}")
-    private String eapQueue;
-
-    @Value("${spring.rabbitmq.eap.exchange}")
-    private String eapExchange;
+    @Value("${spring.rabbitmq.timeout}")
+    private int timeout;
 
 
 
@@ -47,16 +40,16 @@ public class RabbitmqHandler<I extends BaseTrxI> {
     public AsyncRabbitTemplate asyncRabbitTemplate;
 
 
-
-
-    public void send(String evtNo, String exchange, String queue, I inObj) {
+    public void send(String evtNo, String toekn, String exchange, String queue, I inObj) {
         MessageProperties properties = new MessageProperties();
         properties.setMessageId(evtNo);
         properties.setContentType("text/plain");
         properties.setContentEncoding("UTF-8");
         properties.setAppId("EAP");
-        properties.setExpiration(String.valueOf(rmsTimeout));
+        properties.setExpiration(String.valueOf(timeout));
+        properties.getHeaders().put("token", toekn);
         properties.getHeaders().put("trxId", inObj.getTrxId());
+        properties.getHeaders().put("actionFlag", inObj.getActionFlg());
         String inObjStr = JacksonUtils.object2String(inObj);
         Message message = new Message(inObjStr.getBytes(), properties);
 
@@ -64,7 +57,7 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         rabbitTemplate.convertAndSend(exchange, queue, message);
     }
 
-    public String sendForReply(String evtNo, String token, String exchange, String queue, int timeout, I inObj) {
+    public String sendForReply(String evtNo, String appName, String exchange, String queue, I inObj) {
 
         String trxId = inObj.getTrxId();
         MessageProperties properties = new MessageProperties();
@@ -72,12 +65,12 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         properties.setContentType("text/plain");
         properties.setContentEncoding("UTF-8");
         properties.setAppId("EAP");
-        properties.setExpiration(String.valueOf(rmsTimeout));
-        properties.getHeaders().put("token", token);
+        properties.setExpiration(String.valueOf(timeout));
         properties.getHeaders().put("trxId", inObj.getTrxId());
+        properties.getHeaders().put("actionFlag", inObj.getActionFlg());
         String inObjStr = JacksonUtils.object2String(inObj);
         Message message = new Message(inObjStr.getBytes(), properties);
-        LogUtils.info("[{}][{}]:[{}]", trxId, "EAP->RMS", inObjStr);
+        LogUtils.info("[{}][{}]:[{}]", trxId, "EAP->"+appName, inObjStr);
         AsyncRabbitTemplate.RabbitMessageFuture future = asyncRabbitTemplate.sendAndReceive(exchange, queue, message);
         String reply = _SPACE;
         Message rtnMessage = null;
@@ -89,7 +82,7 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         if (rtnMessage != null) {
             reply = new String(rtnMessage.getBody());
         }
-        LogUtils.info("[{}][{}]:[{}]", trxId, "RMS->EAP", reply);
+        LogUtils.info("[{}][{}]:[{}]", trxId, appName+"->EAP", reply);
         return reply;
     }
 
@@ -98,10 +91,16 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         MessageProperties properties = msg.getMessageProperties();
         try {
             String trxId = _SPACE;
-            String evtNo = properties.getMessageId();
             String appId = properties.getAppId();
             Object trxObj = properties.getHeaders().get("trxId");
             String message = new String(msg.getBody());
+            ObjectNode jsonObject = JacksonUtils.getJson2(message);
+            String evtNo = GUIDGenerator.javaGUID();
+            if(trxObj == null){
+                trxId = jsonObject.get("trxId").textValue();
+            }else{
+                trxId = trxObj.toString();
+            }
 
             String replyQueue = properties.getReplyTo();
             if (!StringUtils.hasText(appId) || !StringUtils.hasText(trxId)) {
@@ -113,7 +112,14 @@ public class RabbitmqHandler<I extends BaseTrxI> {
                 LogUtils.info("[{}][{}]:[{}]", trxId, "RMS->EAP", message);
             }
 
-            IEapBaseInterface commService = (IEapBaseInterface) MatrixAppContext.getBean(trxId);
+            if(jsonObject.has("jobId")){
+                String jobId = jsonObject.get("jobId").textValue();
+                AsyncUtils.setResponse(jobId, message);
+                return;
+            }
+
+
+            EapBaseService commService = (EapBaseService) MatrixAppContext.getBean(trxId);
             String rtnMesg = commService.subMainProc(evtNo, message);
             if (StringUtils.hasText(replyQueue)) {
                 rabbitTemplate.send(replyQueue, new Message(rtnMesg.getBytes(), properties));
@@ -145,5 +151,4 @@ public class RabbitmqHandler<I extends BaseTrxI> {
     public void setAsyncRabbitTemplate(AsyncRabbitTemplate asyncRabbitTemplate) {
         this.asyncRabbitTemplate = asyncRabbitTemplate;
     }
-
 }
