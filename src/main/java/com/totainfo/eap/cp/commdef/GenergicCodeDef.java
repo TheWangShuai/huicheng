@@ -17,6 +17,7 @@ public class GenergicCodeDef {
     public static final String LOT_INFO_NOT_EXIST = "0000004";
     public static final String DEVICE_DISMATCH = "0000005";
     public static final String EQPT_MODE_DISMATCH = "0000006";
+    public static final String LOT_INFO_EXIST = "0000007";
 
 
 }

@@ -99,8 +99,14 @@ public class GenergicStatDef {
     }
 
     public static class EqptMode{
-        public static final String Online = "online";
-        public static final String Offline = "offline";
+        public static final String Offline = "0";
+        public static final String Online = "1";
+    }
+
+    public static class EqptStat{
+        public static final String RUN = "RUN";
+        public static final String DOWN = "DOWN";
+        public static final String IDLE = "IDLE";
     }
 
     public static class RMSResult{

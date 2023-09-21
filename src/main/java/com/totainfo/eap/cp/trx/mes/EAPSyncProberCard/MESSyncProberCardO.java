@@ -1,4 +1,4 @@
-package com.totainfo.eap.cp.trx.mes.MESSyncProberCard;
+package com.totainfo.eap.cp.trx.mes.EAPSyncProberCard;
 
 import com.totainfo.eap.cp.base.trx.BaseTrxO;
 

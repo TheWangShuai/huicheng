@@ -40,21 +40,20 @@ public class RabbitmqHandler<I extends BaseTrxI> {
     public AsyncRabbitTemplate asyncRabbitTemplate;
 
 
-    public void send(String evtNo, String toekn, String exchange, String queue, I inObj) {
+    public void send(String evtNo, String appName, String exchange, String queue, I inObj) {
         MessageProperties properties = new MessageProperties();
         properties.setMessageId(evtNo);
         properties.setContentType("text/plain");
         properties.setContentEncoding("UTF-8");
         properties.setAppId("EAP");
         properties.setExpiration(String.valueOf(timeout));
-        properties.getHeaders().put("token", toekn);
         properties.getHeaders().put("trxId", inObj.getTrxId());
         properties.getHeaders().put("actionFlag", inObj.getActionFlg());
         String inObjStr = JacksonUtils.object2String(inObj);
         Message message = new Message(inObjStr.getBytes(), properties);
 
-        LogUtils.info("[{}][{}]:[{}]", inObj.getTrxId(), "EAP->RMS", inObjStr);
         rabbitTemplate.convertAndSend(exchange, queue, message);
+        LogUtils.info("[{}][{}][{}]:[{}]", evtNo,"EAP->"+appName,inObj.getTrxId(),  inObjStr);
     }
 
     public String sendForReply(String evtNo, String appName, String exchange, String queue, I inObj) {
@@ -70,7 +69,7 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         properties.getHeaders().put("actionFlag", inObj.getActionFlg());
         String inObjStr = JacksonUtils.object2String(inObj);
         Message message = new Message(inObjStr.getBytes(), properties);
-        LogUtils.info("[{}][{}]:[{}]", trxId, "EAP->"+appName, inObjStr);
+        LogUtils.info("[{}][{}][{}]:[{}]", evtNo, "EAP->"+appName, trxId,  inObjStr);
         AsyncRabbitTemplate.RabbitMessageFuture future = asyncRabbitTemplate.sendAndReceive(exchange, queue, message);
         String reply = _SPACE;
         Message rtnMessage = null;
@@ -82,7 +81,7 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         if (rtnMessage != null) {
             reply = new String(rtnMessage.getBody());
         }
-        LogUtils.info("[{}][{}]:[{}]", trxId, appName+"->EAP", reply);
+        LogUtils.info("[{}][{}]:[{}]",  evtNo,appName+"->EAP",trxId,  reply);
         return reply;
     }
 
@@ -103,14 +102,11 @@ public class RabbitmqHandler<I extends BaseTrxI> {
             }
 
             String replyQueue = properties.getReplyTo();
-            if (!StringUtils.hasText(appId) || !StringUtils.hasText(trxId)) {
+            if (!StringUtils.hasText(trxId)) {
                 return;
             }
-            if ("MES".equals(appId)) {
-                LogUtils.info("[{}][{}]:[{}]", trxId, "MES->EAP", message);
-            } else if ("RMS".equals(appId)) {
-                LogUtils.info("[{}][{}]:[{}]", trxId, "RMS->EAP", message);
-            }
+            LogUtils.info("[{}][{}]:[{}]", evtNo, appId+"->EAP",  trxId,  message);
+
 
             if(jsonObject.has("jobId")){
                 String jobId = jsonObject.get("jobId").textValue();
@@ -118,16 +114,11 @@ public class RabbitmqHandler<I extends BaseTrxI> {
                 return;
             }
 
-
             EapBaseService commService = (EapBaseService) MatrixAppContext.getBean(trxId);
             String rtnMesg = commService.subMainProc(evtNo, message);
             if (StringUtils.hasText(replyQueue)) {
                 rabbitTemplate.send(replyQueue, new Message(rtnMesg.getBytes(), properties));
-                if ("MES".equals(appId)) {
-                    LogUtils.info("[{}][{}]:[{}]", trxId, "EAP->MES", rtnMesg);
-                } else if ("RMS".equals(appId)) {
-                    LogUtils.info("[{}][{}]:[{}]", trxId, "EAP->RMS", rtnMesg);
-                }
+                LogUtils.info("[{}][{}]:[{}]", evtNo,  "EAP->"+ appId,trxId, rtnMesg);
             }
         } catch (Exception e) {
             LogUtils.error("Service Exception：", e);

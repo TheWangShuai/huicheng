@@ -4,13 +4,16 @@ import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.entity.LotInfo;
+import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.HttpHandler;
 import com.totainfo.eap.cp.handler.MesHandler;
 import com.totainfo.eap.cp.trx.client.EAPLotIdRead.EAPLotIdReadI;
 import com.totainfo.eap.cp.trx.client.EAPLotIdRead.EAPLotIdReadO;
 import com.totainfo.eap.cp.trx.kvm.EAPLotInfoWriteIn.EAPLotInfoWriteInI;
+import com.totainfo.eap.cp.trx.kvm.EAPLotInfoWriteIn.EAPLotInfoWriteInO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOA;
+import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +26,7 @@ import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_O
  * @author xiaobin.Guo
  * @date 2023年09月14日 14:34
  */
-@Service("EAPLOTIDREAD")
+@Service("LotIdRead")
 public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdReadO> {
 
     @Resource
@@ -35,13 +38,13 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
     @Override
     public void mainProc(String evtNo, EAPLotIdReadI inTrx, EAPLotIdReadO outTrx) {
 
-        String lotId = inTrx.getLotId();
+        String lotId = inTrx.getLotNo();
         if(StringUtils.isEmpty(lotId)){
             outTrx.setRtnCode(LOT_ID_EMPTY);
             outTrx.setRtnMesg("批次号为空，请重新扫描!");
             return;
         }
-        String proberId = inTrx.getProberId();
+        String proberId = inTrx.getProberCardId();
         if(StringUtils.isEmpty(proberId)){
             outTrx.setRtnCode(PROBER_ID_EMPTY);
             outTrx.setRtnMesg("探针号为空，请重新扫描!");
@@ -54,16 +57,23 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
             return;
         }
 
+        LotInfo lotInfo = lotDao.getCurLotInfo();
+        if(lotInfo != null){
+            outTrx.setRtnCode(LOT_INFO_EXIST);
+            outTrx.setRtnMesg("批次:[" + lotInfo.getLotId() + "]制程未结束，请等待");
+            return;
+        }
+
         EAPReqLotInfoO eapReqLotInfoO = MesHandler.lotInfoReq(evtNo, lotId, proberId, userId);
         if(!RETURN_CODE_OK.equals(eapReqLotInfoO.getRtnCode())){
             return;
         }
 
-
-        //todo 发送给前端，LOT 校验成功。
+        //发送给前端，LOT 校验成功。
+        ClientHandler.sendMessage(evtNo, false, 2, "批次号:[" + lotId + "]探针:["+ proberId +"] MES 验证成功。");
 
         EAPReqLotInfoOA eapReqLotInfoOA = eapReqLotInfoO.getLotInfo();
-        LotInfo lotInfo = new LotInfo();
+        lotInfo = new LotInfo();
         lotInfo.setLotId(eapReqLotInfoOA.getWaferLot());
         lotInfo.setDevice(eapReqLotInfoOA.getDevice());
         lotInfo.setLoadBoardId(eapReqLotInfoOA.getLoadBoardId());
@@ -90,9 +100,12 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
             outTrx.setRtnMesg("EAP下发批次信息，KVM没有回复");
             return;
         }
-
-
-        //todo 发送给前端，LOT信息发送KVM成功
-
+        EAPLotInfoWriteInO eapLotInfoWriteInO = JacksonUtils.string2Object(returnMesg, EAPLotInfoWriteInO.class);
+        if(!RETURN_CODE_OK.equals(eapLotInfoWriteInO.getRtnCode())){
+            outTrx.setRtnCode(eapLotInfoWriteInO.getRtnCode());
+            outTrx.setRtnMesg("EAP下发批次信息，KVM返回失败，原因:[" + eapLotInfoWriteInO.getRtnMesg() + "]");
+        }
+        //发送给前端，LOT信息发送KVM成功
+        ClientHandler.sendMessage(evtNo, false, 2, "批次:[" + lotId + "]信息下发KVM成功。");
     }
 }

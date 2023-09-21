@@ -1,14 +1,13 @@
-package com.totainfo.eap.cp.trx.client.EAPLotIdRead;
+package com.totainfo.eap.cp.trx.client.EAPSyncProberCardChange;
 
 import com.totainfo.eap.cp.base.trx.BaseTrxI;
 
 /**
  * @author xiaobin.Guo
- * @date 2023年09月14日 14:34
+ * @date 2023年09月21日 10:10
  */
-public class EAPLotIdReadI extends BaseTrxI {
+public class EAPSyncProberCardChangeI extends BaseTrxI {
     private String userId;
-    private String lotNo;
     private String proberCardId;
 
     public String getUserId() {
@@ -17,14 +16,6 @@ public class EAPLotIdReadI extends BaseTrxI {
 
     public void setUserId(String userId) {
         this.userId = userId;
-    }
-
-    public String getLotNo() {
-        return lotNo;
-    }
-
-    public void setLotNo(String lotNo) {
-        this.lotNo = lotNo;
     }
 
     public String getProberCardId() {

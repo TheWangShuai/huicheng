@@ -5,10 +5,9 @@ import com.totainfo.eap.cp.commdef.GenergicStatDef.KVMOperateState;
 import com.totainfo.eap.cp.commdef.GenergicStatDef.RMSResult;
 import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.entity.LotInfo;
+import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.HttpHandler;
 import com.totainfo.eap.cp.handler.RMSHandler;
-import com.totainfo.eap.cp.trx.kvm.EAPDeviceParamCollection.EAPDeviceParamCollectionI;
-import com.totainfo.eap.cp.trx.kvm.EAPDeviceParamCollection.EAPDeviceParamCollectionO;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionI;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionIA;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionO;
@@ -82,6 +81,9 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
      * 下发采集Device Name，并与Lot Device Name进行比对
      */
     private void sendDeviceCollection(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx){
+
+        ClientHandler.sendMessage(evtNo, false,2, "KVM 批次信息写入成功.");
+
         EAPSingleParamCollectionI eapSingleParamCollectionI = new EAPSingleParamCollectionI();
         eapSingleParamCollectionI.setTrxId("EAPACCEPT");
         eapSingleParamCollectionI.setActionFlg("RWPE");
@@ -99,59 +101,63 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             outTrx.setRtnMesg("EAP 发送采集Device Name， KVM 返回错误:[" + eapSingleParamCollectionO.getRtnMesg() + "]");
             return;
         }
+
+        ClientHandler.sendMessage(evtNo, false,2, "EAP发送Device name采集指令成功。");
     }
 
     private void deviceNameVerfication(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx){
          String state = inTrx.getState();
          if(KVMOperateState.Fail.equals(state)){
-             //todo 通知Client， KVM 获取Device Name失败
+             outTrx.setRtnCode(KVM_RETURN_ERROR);
+             outTrx.setRtnMesg("KVM采集Device Name完成， 状态Error.");
              return;
          }
          String responseKey = inTrx.getResponseKey();
          String eqptDeviceName = inTrx.getOpeContent();
          List<String> recipeIds = new ArrayList<>(1);
          recipeIds.add(eqptDeviceName);
-        AsyncUtils.setResponse(responseKey, recipeIds);
+         AsyncUtils.setResponse(responseKey, recipeIds);
 
          LotInfo lotInfo = lotDao.getCurLotInfo();
          if(lotInfo == null){
-             outTrx.setRtnCode(LOT_INFO_NOT_EXIST);
-             outTrx.setRtnMesg("没有找需要制程的批次信息，请确认");
              return;
          }
+
          String lotDeviceName = lotInfo.getDevice();
          if(!lotDeviceName.equals(eqptDeviceName)){
              outTrx.setRtnCode(DEVICE_DISMATCH);
              outTrx.setRtnMesg("批次:[" + lotInfo.getLotId() + "]Device:["+ lotDeviceName + "]与KVM采集的Device:[" + eqptDeviceName + "]不匹配，请确认");
              return;
          }
+         ClientHandler.sendMessage(evtNo, false, 2, "KVM Device Name采集成功，设备Device Name:["+ eqptDeviceName +"], 批次Device:[" + lotDeviceName + "]");
 
-        EAPOperationInstructionI eapOperationInstructionI = new EAPOperationInstructionI();
-        eapOperationInstructionI.setTrxId("EAPACCEPT");
-        eapOperationInstructionI.setTrypeId("I");
-        eapOperationInstructionI.setActionFlg("RJI");
-        eapOperationInstructionI.setOpeType("C");
-        Map<String, String> lotParamMap = lotInfo.getParamMap();
-        List<EAPOperationInstructionIA> eapOperationInstructionIAS = new ArrayList<>(lotParamMap.size());
-        for(Map.Entry<String, String> entry: lotParamMap.entrySet()){
-            EAPOperationInstructionIA eapOperationInstructionIA = new EAPOperationInstructionIA();
-            eapOperationInstructionIA.setInstructKey(entry.getKey());
-            eapOperationInstructionIA.setInstructValue(entry.getValue());
-            eapOperationInstructionIAS.add(eapOperationInstructionIA);
-        }
-        eapOperationInstructionI.setInstructList(eapOperationInstructionIAS);
-        String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapOperationInstructionI);
-        if(StringUtils.isEmpty(returnMesg)){
-            outTrx.setRtnCode(KVM_TIME_OUT);
-            outTrx.setRtnMesg("EAP 下发代操指令， KVM 没有返回");
-            return;
-        }
-        EAPOperationInstructionO eapOperationInstructionO = JacksonUtils.string2Object(returnMesg, EAPOperationInstructionO.class);
-        if(!RETURN_CODE_OK.equals(eapOperationInstructionO.getRtnCode())){
-            outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("EAP 下发代操指令， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
-            return;
-        }
+         EAPOperationInstructionI eapOperationInstructionI = new EAPOperationInstructionI();
+         eapOperationInstructionI.setTrxId("EAPACCEPT");
+         eapOperationInstructionI.setTrypeId("I");
+         eapOperationInstructionI.setActionFlg("RJI");
+         eapOperationInstructionI.setOpeType("C");
+         Map<String, String> lotParamMap = lotInfo.getParamMap();
+         List<EAPOperationInstructionIA> eapOperationInstructionIAS = new ArrayList<>(lotParamMap.size());
+         for(Map.Entry<String, String> entry: lotParamMap.entrySet()){
+             EAPOperationInstructionIA eapOperationInstructionIA = new EAPOperationInstructionIA();
+             eapOperationInstructionIA.setInstructKey(entry.getKey());
+             eapOperationInstructionIA.setInstructValue(entry.getValue());
+             eapOperationInstructionIAS.add(eapOperationInstructionIA);
+         }
+         eapOperationInstructionI.setInstructList(eapOperationInstructionIAS);
+         String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapOperationInstructionI);
+         if(StringUtils.isEmpty(returnMesg)){
+             outTrx.setRtnCode(KVM_TIME_OUT);
+             outTrx.setRtnMesg("EAP 下发代操指令， KVM 没有返回");
+             return;
+         }
+         EAPOperationInstructionO eapOperationInstructionO = JacksonUtils.string2Object(returnMesg, EAPOperationInstructionO.class);
+         if(!RETURN_CODE_OK.equals(eapOperationInstructionO.getRtnCode())){
+             outTrx.setRtnCode(KVM_RETURN_ERROR);
+             outTrx.setRtnMesg("EAP 下发代操指令， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
+             return;
+         }
+         ClientHandler.sendMessage(evtNo, false, 2, "EAP发送清除测试程式指令成功。");
     }
 
     /**
@@ -164,7 +170,8 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
 
         String state = inTrx.getState();
         if(KVMOperateState.Fail.equals(state)){
-            //todo 通知Client， KVM 获取Device Name失败
+            outTrx.setRtnCode(KVM_RETURN_ERROR);
+            outTrx.setRtnMesg("KVM代操完成， 状态Error.");
             return;
         }
 
@@ -174,6 +181,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             outTrx.setRtnMesg("没有找需要制程的批次信息，请确认");
             return;
         }
+        ClientHandler.sendMessage(evtNo, false, 2, "KVM 代操完成, EAP发送RMS进行验证。");
 
         RmsOnlineValidationO rmsOnlineValidationO = RMSHandler.toRmsOnlineValidation(evtNo, equipmentNo, lotInfo.getLotId(), lotInfo.getDevice());
         if(rmsOnlineValidationO == null){
@@ -186,6 +194,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             outTrx.setRtnMesg("Device:[" + lotInfo.getDevice() + "]验证失败，原因:[" + rmsOnlineValidationO.getReason() + "]");
             return;
         }
+        ClientHandler.sendMessage(evtNo, false, 2, "Device:[" + lotInfo.getDevice() + "] RMS验证成功。");
 
         EAPOperationInstructionI eapOperationInstructionI = new EAPOperationInstructionI();
         eapOperationInstructionI.setTrxId("EAPACCEPT");
@@ -204,15 +213,16 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         String returnMesg = httpHandler.postHttpForEqpt(evtNo, testerUrl, eapOperationInstructionI);
         if(StringUtils.isEmpty(returnMesg)){
             outTrx.setRtnCode(KVM_TIME_OUT);
-            outTrx.setRtnMesg("EAP 下发代操指令， KVM 没有返回");
+            outTrx.setRtnMesg("EAP 下发清除测试程式， KVM 没有返回");
             return;
         }
         EAPOperationInstructionO eapOperationInstructionO = JacksonUtils.string2Object(returnMesg, EAPOperationInstructionO.class);
         if(!RETURN_CODE_OK.equals(eapOperationInstructionO.getRtnCode())){
             outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("EAP 下发代操指令， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
+            outTrx.setRtnMesg("EAP 下发清除测试程式， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
             return;
         }
+        ClientHandler.sendMessage(evtNo, false, 2, "Device:[" + lotInfo.getDevice() + "] RMS验证成功。");
     }
 
     /**
@@ -225,20 +235,22 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
     private void toRmsVerificationDevice(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx){
         String state = inTrx.getState();
         if(KVMOperateState.Fail.equals(state)){
-            //todo 通知Client， KVM 获取Device Name失败
+            outTrx.setRtnCode(KVM_RETURN_ERROR);
+            outTrx.setRtnMesg("KVM采集Device param完成， 状态Error.");
             return;
         }
         String responseKey = inTrx.getResponseKey();
         String recipeBody = inTrx.getOpeContent();
         AsyncUtils.setResponse(responseKey, recipeBody);
-        //todo 新增RMS接口，发送RMS进行验证
 
+        ClientHandler.sendMessage(evtNo, false, 2, "KVM采集Device param完成。");
     }
 
     private void testProgramVerification(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx){
         String state = inTrx.getState();
         if(KVMOperateState.Fail.equals(state)){
-            //todo 通知Client， KVM 获取Device Name失败
+            outTrx.setRtnCode(KVM_RETURN_ERROR);
+            outTrx.setRtnMesg("KVM 清除测试程式完成， 状态Error.");
             return;
         }
         String eqpTestProgram = inTrx.getOpeContent();
@@ -254,6 +266,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             outTrx.setRtnMesg("批次:[" + lotInfo.getLotId() + "] TestProgram:["+ lotTestProgram + "]与KVM采集的TestProgram:[" + eqpTestProgram + "]不匹配，请确认");
             return;
         }
+        ClientHandler.sendMessage(evtNo, true, 2, "KVM测试程式验证通过，请开始作业");
 
     }
 

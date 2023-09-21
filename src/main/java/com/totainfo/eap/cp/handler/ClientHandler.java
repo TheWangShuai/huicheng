@@ -2,6 +2,8 @@ package com.totainfo.eap.cp.handler;
 
 import com.rabbitmq.client.Channel;
 import com.totainfo.eap.cp.base.service.IEapBaseInterface;
+import com.totainfo.eap.cp.trx.client.EAPMessageSend.EAPMessageSendI;
+import com.totainfo.eap.cp.trx.client.EAPSyncEqpInfo.EAPSyncEqpInfoI;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportI;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportO;
 import com.totainfo.eap.cp.trx.mes.EAPEqptStatusReport.EAPEqptStatusReportI;
@@ -54,18 +56,25 @@ public class ClientHandler {
 
     private static  RabbitmqHandler rabbitmqHandler;
 
+    private static final String appName = "CLIENT";
     private static String clientQueue;
     private static  String clientExchange;
 
-    private static String computerName;
-    static {
-        InetAddress address = null; // 此处可以是计算机名或者IP，任一即可
-        try {
-            address = InetAddress.getLocalHost();
-        } catch (UnknownHostException e) {
-            LogUtils.error("获取服务器名失败", e);
-        }
-        computerName = address.getHostName();
+
+
+    public static void sendEqpInfo(String evtNo, EAPSyncEqpInfoI eapSyncEqpInfoI){
+        rabbitmqHandler.send(evtNo, appName, clientExchange,clientQueue, eapSyncEqpInfoI);
+    }
+
+    public static void sendMessage(String evtNo, boolean isPopUp, int messageType, String message){
+        EAPMessageSendI eapMessageSendI = new EAPMessageSendI();
+        eapMessageSendI.setTrxId("SynMessage");
+        eapMessageSendI.setTrypeId("I");
+        eapMessageSendI.setActionFlg("RLC");
+        eapMessageSendI.setIspopUp(isPopUp);
+        eapMessageSendI.setMessageType(messageType);
+        eapMessageSendI.setMessage(message);
+        rabbitmqHandler.send(evtNo, appName, clientExchange,clientQueue, eapMessageSendI);
     }
 
 

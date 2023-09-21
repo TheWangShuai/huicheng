@@ -2,6 +2,7 @@ package com.totainfo.eap.cp.dao.impl;
 
 
 import com.totainfo.eap.cp.commdef.GenergicStatDef.EqptMode;
+import com.totainfo.eap.cp.commdef.GenergicStatDef.EqptStat;
 import com.totainfo.eap.cp.dao.IEqptDao;
 import com.totainfo.eap.cp.entity.EqptInfo;
 import com.totainfo.eap.cp.handler.RedisHandler;
@@ -44,6 +45,7 @@ public class EqptDao implements IEqptDao {
             eqptInfo = new EqptInfo();
             eqptInfo.setEqptId(equipmentNo);
             eqptInfo.setEqptMode(EqptMode.Offline);
+            eqptInfo.setEqptStat(EqptStat.IDLE);
         }
         return eqptInfo;
     }

@@ -1,7 +1,5 @@
 package com.totainfo.eap.cp.handler;
 
-import com.rabbitmq.client.Channel;
-import com.totainfo.eap.cp.base.service.IEapBaseInterface;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportI;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportO;
@@ -19,26 +17,17 @@ import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultI;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultO;
 import com.totainfo.eap.cp.trx.mes.EAPUploadMarkResult.EAPUploadMarkResultI;
 import com.totainfo.eap.cp.trx.mes.EAPUploadMarkResult.EAPUploadMarkResultO;
+import com.totainfo.eap.cp.trx.mes.EAPSyncProberCard.MESSyncProberCardI;
+import com.totainfo.eap.cp.trx.mes.EAPSyncProberCard.MESSyncProberCardO;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
-import com.totainfo.eap.cp.util.MatrixAppContext;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageProperties;
-import org.springframework.amqp.rabbit.AsyncRabbitTemplate;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
-
-import com.totainfo.eap.cp.commdef.GenericDataDef.*;
 
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.MES_TIME_OUT;
 
@@ -213,6 +202,7 @@ public class MesHandler {
     public static EAPUploadMarkResultO uploadMarkResult(String evtNo, String lotNo, String waferId, String startCoordinates, String result, String remark, String userId) {
         EAPUploadMarkResultI eapUploadMarkResultI = new EAPUploadMarkResultI();
         EAPUploadMarkResultO eapUploadMarkResultO = new EAPUploadMarkResultO();
+        eapUploadMarkResultI.setTrxId("uploadNeedleMarkResults");
         eapUploadMarkResultI.setEvtUsr(userId);
         eapUploadMarkResultI.setLotNo(lotNo);
         eapUploadMarkResultI.setWaferId(waferId);
@@ -230,6 +220,25 @@ public class MesHandler {
             eapUploadMarkResultO = JacksonUtils.string2Object(outTrxStr, EAPUploadMarkResultO.class);
         }
         return eapUploadMarkResultO;
+    }
+
+    public static MESSyncProberCardO syncProberCardInfo(String evtNo, String userId, String proberCardId){
+        MESSyncProberCardI mesSyncProberCardI = new MESSyncProberCardI();
+        MESSyncProberCardO mesSyncProberCardO = new MESSyncProberCardO();
+        mesSyncProberCardI.setTrxId("SynchronousMESProberCardId");
+        mesSyncProberCardI.setActionFlg("");
+        mesSyncProberCardI.setEquipmentNo(GenericDataDef.equipmentNo);
+        mesSyncProberCardI.setComputerName(computerName);
+        mesSyncProberCardI.setEvtUsr(userId);
+        mesSyncProberCardI.setProberCardId(proberCardId);
+        String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, mesQueue, mesExchange, mesSyncProberCardI);
+        if (!StringUtils.hasText(outTrxStr)) {
+            mesSyncProberCardO.setRtnCode(MES_TIME_OUT);
+            mesSyncProberCardO.setRtnMesg("EAP同步探针:["+proberCardId+"] 信息，MES没有回复");
+        } else {
+            mesSyncProberCardO = JacksonUtils.string2Object(outTrxStr, MESSyncProberCardO.class);
+        }
+        return mesSyncProberCardO;
     }
 
 

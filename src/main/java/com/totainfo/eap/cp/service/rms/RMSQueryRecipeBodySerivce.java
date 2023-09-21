@@ -4,6 +4,7 @@ import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.commdef.GenergicStatDef.EqptMode;
 import com.totainfo.eap.cp.dao.IEqptDao;
 import com.totainfo.eap.cp.entity.EqptInfo;
+import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.HttpHandler;
 import com.totainfo.eap.cp.trx.kvm.EAPDeviceParamCollection.EAPDeviceParamCollectionI;
 import com.totainfo.eap.cp.trx.kvm.EAPDeviceParamCollection.EAPDeviceParamCollectionO;
@@ -68,6 +69,7 @@ public class RMSQueryRecipeBodySerivce  extends EapBaseService<RmsQueryRecipeBod
             outTrx.setRtnMesg("EAP 下发Devce Name:["+recipeId+"]参数采集， KVM 返回错误:[" + eapDeviceParamCollectionO.getRtnMesg() + "]");
             return;
         }
+        ClientHandler.sendMessage(evtNo, false, 2, "EAP 发送Device param采集指令成功。");
         String recipeBody = AsyncUtils.getResponse(evtNo, timeOut);
         outTrx.setRecipeBody(recipeBody);
     }
