@@ -77,7 +77,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         lotInfo.setLotId(eapReqLotInfoOA.getWaferLot());
         lotInfo.setDevice(eapReqLotInfoOA.getDevice());
         lotInfo.setLoadBoardId(eapReqLotInfoOA.getLoadBoardId());
-        lotInfo.setProberCard(eapReqLotInfoOA.getProberCard());
+        lotInfo.setProberCard(eapReqLotInfoOA.getProbeCard());
         lotInfo.setTestProgram(eapReqLotInfoOA.getTestProgram());
         lotInfo.setDeviceId(eapReqLotInfoOA.getDeviceId());
         lotInfo.setUserId(userId);

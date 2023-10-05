@@ -23,7 +23,7 @@ public class HttpHandler<I extends BaseTrxI> {
         String actionFlag = inObj.getActionFlg();
         String requestMesg = JacksonUtils.object2String(inObj);
         String realUrl = url + "/" + trxId + "/" + actionFlag;
-        LogUtils.info("[{}][{}]:[{}]->[{}]", evtNo,"EAP->KVM", trxName, requestMesg);
+        LogUtils.info("[{}][{}]:[{}]->[{}]", evtNo,"EAP->KVM", trxId, requestMesg);
         String returnMesg = null;
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -35,7 +35,7 @@ public class HttpHandler<I extends BaseTrxI> {
         } catch (Exception e) {
             LogUtils.error("HTTP异常:", e);
         }
-        LogUtils.info("[{}][{}] :[{}]->[{}]", evtNo, "KVM->EAP", trxName, returnMesg);
+        LogUtils.info("[{}][{}] :[{}]->[{}]", evtNo, "KVM->EAP", trxId, returnMesg);
         return returnMesg;
     }
 }

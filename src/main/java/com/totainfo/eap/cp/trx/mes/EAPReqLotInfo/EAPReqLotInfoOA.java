@@ -9,7 +9,7 @@ import java.util.List;
 public class EAPReqLotInfoOA {
     private String waferLot;
     private String device;
-    private String proberCard;
+    private String probeCard;
     private String testProgram;
     private String loadBoardId;
     private String deviceId;
@@ -31,12 +31,12 @@ public class EAPReqLotInfoOA {
         this.device = device;
     }
 
-    public String getProberCard() {
-        return proberCard;
+    public String getProbeCard() {
+        return probeCard;
     }
 
-    public void setProberCard(String proberCard) {
-        this.proberCard = proberCard;
+    public void setProbeCard(String probeCard) {
+        this.probeCard = probeCard;
     }
 
     public String getTestProgram() {
