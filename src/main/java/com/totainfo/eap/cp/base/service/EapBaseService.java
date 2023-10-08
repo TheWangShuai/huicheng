@@ -18,7 +18,7 @@ import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.SERVICE_EXCEP
  * @date 2022年11月07日 16:23
  */
 public abstract class EapBaseService<I extends BaseTrxI, O extends BaseTrxO>  implements IEapBaseInterface {
-
+    @Override
     public String subMainProc(String evtNo, String message){
 
         LogUtils.info("[{}][{}][InTrx:{}]", evtNo, this.getClass().getSimpleName(), message);

@@ -35,9 +35,10 @@ public class SyncProberCardChangeService extends EapBaseService<EAPSyncProberCar
             return;
         }
         MESSyncProberCardO mesSyncProberCardO = MesHandler.syncProberCardInfo(evtNo, userId, proberId);
-        if(RETURN_CODE_OK.equals(mesSyncProberCardO.getRtnCode())){
+        if(!RETURN_CODE_OK.equals(mesSyncProberCardO.getRtnCode())){
             outTrx.setRtnCode(mesSyncProberCardO.getRtnCode());
             outTrx.setRtnMesg(mesSyncProberCardO.getRtnMesg());
+            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
         ClientHandler.sendMessage(evtNo, false, 2, "EAP同步探针：["+ proberId + "]信息完成。");

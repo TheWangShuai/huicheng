@@ -15,6 +15,7 @@ import javax.annotation.Resource;
 import java.awt.*;
 
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.LOT_INFO_EXIST;
+import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
 
 /**
  * @author xiaobin.Guo
@@ -45,12 +46,17 @@ public class KVMAlarmReportService extends EapBaseService<KVMAlarmReportI, KVMAl
         if(lotInfo != null){
             outTrx.setRtnCode(LOT_INFO_EXIST);
             outTrx.setRtnMesg("批次:[" + lotInfo.getLotId() + "]制程未结束，请等待");
+            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
 
         EAPReqCheckOutO eapReqCheckOutO = MesHandler.checkOutReq(evtNo, lotInfo.getLotId());
-        outTrx.setRtnCode(eapReqCheckOutO.getRtnCode());
-        outTrx.setRtnMesg(eapReqCheckOutO.getRtnMesg());
-
+        if(!RETURN_CODE_OK.equals(eapReqCheckOutO.getRtnCode())){
+            outTrx.setRtnCode(eapReqCheckOutO.getRtnCode());
+            outTrx.setRtnMesg(eapReqCheckOutO.getRtnMesg());
+            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
+            return;
+        }
+        ClientHandler.sendMessage(evtNo,false,2,"批次:[" + lotInfo.getLotId() +"] Check Out 成功");
     }
 }

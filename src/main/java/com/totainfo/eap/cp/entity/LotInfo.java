@@ -1,5 +1,8 @@
 package com.totainfo.eap.cp.entity;
 
+import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
+
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,9 +17,11 @@ public class LotInfo {
     private String loadBoardId;
     private String deviceId;
     private String userId;
+    private String waferLot;
+    private String temperature;
 
-    private Map<String, String> paramMap;
-
+    private Map<String, String> paramList;
+    private List paramList1;
     public String getLotId() {
         return lotId;
     }
@@ -75,10 +80,34 @@ public class LotInfo {
     }
 
     public Map<String, String> getParamMap() {
-        return paramMap;
+        return paramList;
     }
 
     public void setParamMap(Map<String, String> paramMap) {
-        this.paramMap = paramMap;
+        this.paramList = paramMap;
+    }
+
+    public String getWaferLot() {
+        return waferLot;
+    }
+
+    public void setWaferLot(String waferLot) {
+        this.waferLot = waferLot;
+    }
+
+    public List getParamList() {
+        return paramList1;
+    }
+
+    public void setParamList(List paramList1) {
+        this.paramList1 = paramList1;
+    }
+
+    public String getTemperature() {
+        return temperature;
+    }
+
+    public void setTemperature(String temperature) {
+        this.temperature = temperature;
     }
 }
