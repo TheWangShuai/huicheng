@@ -61,6 +61,7 @@ public class MesHandler {
     public static EAPEqptAlarmReportO alarmReport(String evtNo,String alarmCode, String alarmText, String time){
         EAPEqptAlarmReportI eapEqptAlarmReportI = new EAPEqptAlarmReportI();
         EAPEqptAlarmReportO eapEqptAlarmReportO = new EAPEqptAlarmReportO();
+        eapEqptAlarmReportI.setTrxId("uploadEquipmentErrorMessage");
         eapEqptAlarmReportI.setEvtUsr("");
         eapEqptAlarmReportI.setComputerName(computerName);
         eapEqptAlarmReportI.setEquipmentNo(GenericDataDef.equipmentNo);
@@ -82,6 +83,7 @@ public class MesHandler {
     public static EAPEqptStatusReportO eqptStatReport(String evtNo, String eqptStat, String remark){
         EAPEqptStatusReportI eapEqptStatusReportI = new EAPEqptStatusReportI();
         EAPEqptStatusReportO eapEqptStatusReportO = new EAPEqptStatusReportO();
+        eapEqptStatusReportI.setTrxId("equipmentStateChange");
         eapEqptStatusReportI.setEvtUsr("");
         eapEqptStatusReportI.setComputerName(computerName);
         eapEqptStatusReportI.setEquipmentNo(GenericDataDef.equipmentNo);
@@ -99,12 +101,14 @@ public class MesHandler {
         return eapEqptStatusReportO;
     }
 
-    public static EAPReqLotInfoO lotInfoReq(String evtNo, String lotNo, String proberId,String userId){
+    public static EAPReqLotInfoO lotInfoReq(String evtNo, String lotNo, String probeCardId,String userId){
         EAPReqLotInfoI eapReqLotInfoI = new EAPReqLotInfoI();
         EAPReqLotInfoO eapReqLotInfoO = new EAPReqLotInfoO();
+        eapReqLotInfoI.setTrxId("getLotInfoByLotNoAndEquipmentNo");
         eapReqLotInfoI.setEvtUsr(userId);
         eapReqLotInfoI.setLotNo(lotNo);
-        eapReqLotInfoI.setProberId(proberId);
+        String[] split = probeCardId.split("-");
+        eapReqLotInfoI.setProbeCardId(split[0]);
         eapReqLotInfoI.setComputerName(computerName);
         eapReqLotInfoI.setEquipmentNo(GenericDataDef.equipmentNo);
 
@@ -122,6 +126,7 @@ public class MesHandler {
     public static EAPReqCheckInO checkInReq(String evtNo, String lotNo, String userId){
         EAPReqCheckInI eapReqCheckInI = new EAPReqCheckInI();
         EAPReqCheckInO eapReqCheckInO = new EAPReqCheckInO();
+        eapReqCheckInI.setTrxId("checkIn");
         eapReqCheckInI.setEvtUsr(userId);
         eapReqCheckInI.setLotNo(lotNo);
         eapReqCheckInI.setComputerName(computerName);
@@ -142,6 +147,7 @@ public class MesHandler {
     public static EAPReqCheckOutO checkOutReq(String evtNo, String lotNo){
         EAPReqCheckOutI eapReqCheckOutI = new EAPReqCheckOutI();
         EAPReqCheckOutO eapReqCheckOutO = new EAPReqCheckOutO();
+        eapReqCheckOutI.setTrxId("checkOut");
         eapReqCheckOutI.setEvtUsr("");
         eapReqCheckOutI.setLotNo(lotNo);
         eapReqCheckOutI.setComputerName(computerName);
@@ -150,7 +156,7 @@ public class MesHandler {
         String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapReqCheckOutI);
         if(!StringUtils.hasText(outTrxStr)){
             eapReqCheckOutO.setRtnCode(MES_TIME_OUT);
-            eapReqCheckOutO.setRtnMesg("EAP发送Lot:["+lotNo+"] Check In，MES没有回复");
+            eapReqCheckOutO.setRtnMesg("EAP发送Lot:["+lotNo+"] Check Out，MES没有回复");
         }else{
             eapReqCheckOutO = JacksonUtils.string2Object(outTrxStr, EAPReqCheckOutO.class);
         }
@@ -161,6 +167,7 @@ public class MesHandler {
     public static EAPReqMeasureResultO measureResultReq(String evtNo, String lotNo){
         EAPReqMeasureResultI eapReqMeasureResultI = new EAPReqMeasureResultI();
         EAPReqMeasureResultO eapReqMeasureResultO = new EAPReqMeasureResultO();
+        eapReqMeasureResultI.setTrxId("RequestMeasurationResult");
         eapReqMeasureResultI.setEvtUsr("");
         eapReqMeasureResultI.setLotNo(lotNo);
         eapReqMeasureResultI.setComputerName(computerName);
@@ -181,6 +188,7 @@ public class MesHandler {
     public static EAPUploadDieResultO uploadDieResult(String evtNo, String lotNo, String waferId, String startCoordinates, String result, String userId){
         EAPUploadDieResultI eapUploadDieResultI = new EAPUploadDieResultI();
         EAPUploadDieResultO eapUploadDieResultO = new EAPUploadDieResultO();
+        eapUploadDieResultI.setTrxId("uploaddietestresult");
         eapUploadDieResultI.setEvtUsr(userId);
         eapUploadDieResultI.setLotNo(lotNo);
         eapUploadDieResultI.setWaferId(waferId);

@@ -7,6 +7,7 @@ import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.HttpHandler;
 import com.totainfo.eap.cp.handler.MesHandler;
+import com.totainfo.eap.cp.service.kvm.KVMOperateEndService;
 import com.totainfo.eap.cp.trx.client.EAPLotIdRead.EAPLotIdReadI;
 import com.totainfo.eap.cp.trx.client.EAPLotIdRead.EAPLotIdReadO;
 import com.totainfo.eap.cp.trx.kvm.EAPLotInfoWriteIn.EAPLotInfoWriteInI;
@@ -14,6 +15,7 @@ import com.totainfo.eap.cp.trx.kvm.EAPLotInfoWriteIn.EAPLotInfoWriteInO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOA;
 import com.totainfo.eap.cp.util.JacksonUtils;
+import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -61,6 +63,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         if(lotInfo != null){
             outTrx.setRtnCode(LOT_INFO_EXIST);
             outTrx.setRtnMesg("批次:[" + lotInfo.getLotId() + "]制程未结束，请等待");
+            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
 
@@ -74,36 +77,41 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
 
         EAPReqLotInfoOA eapReqLotInfoOA = eapReqLotInfoO.getLotInfo();
         lotInfo = new LotInfo();
-        lotInfo.setLotId(eapReqLotInfoOA.getWaferLot());
+        lotInfo.setWaferLot(eapReqLotInfoOA.getWaferLot());
         lotInfo.setDevice(eapReqLotInfoOA.getDevice());
         lotInfo.setLoadBoardId(eapReqLotInfoOA.getLoadBoardId());
         lotInfo.setProberCard(eapReqLotInfoOA.getProbeCard());
         lotInfo.setTestProgram(eapReqLotInfoOA.getTestProgram());
         lotInfo.setDeviceId(eapReqLotInfoOA.getDeviceId());
         lotInfo.setUserId(userId);
+        lotInfo.setParamList(eapReqLotInfoOA.getParamList());
+        lotInfo.setTemperature(eapReqLotInfoOA.getTemperature());
         lotDao.addLotInfo(lotInfo);
 
-        //将信息下发给LVM
+        //将信息下发给KVM
         EAPLotInfoWriteInI eapLotInfoWriteInI = new EAPLotInfoWriteInI();
-        eapLotInfoWriteInI.setTrxId("EAPLotInfoWriteIn");
+        eapLotInfoWriteInI.setTrxId("EAPACCEPT");
         eapLotInfoWriteInI.setActionFlg("RJI");
         eapLotInfoWriteInI.setUserId(userId);
-        eapLotInfoWriteInI.setProberCardId(lotInfo.getProberCard());
+//        eapLotInfoWriteInI.setProberCardId(inTrx.getProberCardId());
+        eapLotInfoWriteInI.setProberCardId("APNC9922S71-G2");
         eapLotInfoWriteInI.setLoadBoardId(lotInfo.getLoadBoardId());
+        eapLotInfoWriteInI.setWaferLot(lotInfo.getWaferLot());
         eapLotInfoWriteInI.setDeviceId(lotInfo.getDeviceId());
         eapLotInfoWriteInI.setTestProgram(lotInfo.getTestProgram());
-
 
         String returnMesg  = httpHandler.postHttpForEqpt(evtNo, GenericDataDef.proberUrl, eapLotInfoWriteInI);
         if(StringUtils.isEmpty(returnMesg)){
             outTrx.setRtnCode(KVM_TIME_OUT);
             outTrx.setRtnMesg("EAP下发批次信息，KVM没有回复");
+            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
         EAPLotInfoWriteInO eapLotInfoWriteInO = JacksonUtils.string2Object(returnMesg, EAPLotInfoWriteInO.class);
         if(!RETURN_CODE_OK.equals(eapLotInfoWriteInO.getRtnCode())){
             outTrx.setRtnCode(eapLotInfoWriteInO.getRtnCode());
             outTrx.setRtnMesg("EAP下发批次信息，KVM返回失败，原因:[" + eapLotInfoWriteInO.getRtnMesg() + "]");
+            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
         }
         //发送给前端，LOT信息发送KVM成功
         ClientHandler.sendMessage(evtNo, false, 2, "批次:[" + lotId + "]信息下发KVM成功。");

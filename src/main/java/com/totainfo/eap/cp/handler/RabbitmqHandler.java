@@ -56,7 +56,7 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         LogUtils.info("[{}][{}][{}]:[{}]", evtNo,"EAP->"+appName,inObj.getTrxId(),  inObjStr);
     }
 
-    public String sendForReply(String evtNo, String appName, String exchange, String queue, I inObj) {
+    public String sendForReply(String evtNo, String appName, String queue, String exchange, I inObj) {
 
         String trxId = inObj.getTrxId();
         MessageProperties properties = new MessageProperties();
@@ -81,7 +81,7 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         if (rtnMessage != null) {
             reply = new String(rtnMessage.getBody());
         }
-        LogUtils.info("[{}][{}]:[{}]",  evtNo,appName+"->EAP",trxId,  reply);
+        LogUtils.info("[{}][{}]:[{}][{}]",  evtNo,appName+"->EAP",trxId,  reply);
         return reply;
     }
 
@@ -105,7 +105,7 @@ public class RabbitmqHandler<I extends BaseTrxI> {
             if (!StringUtils.hasText(trxId)) {
                 return;
             }
-            LogUtils.info("[{}][{}]:[{}]", evtNo, appId+"->EAP",  trxId,  message);
+            LogUtils.info("[{}][{}]:[{}][{}]", evtNo, appId+"->EAP",  trxId,  message);
 
 
             if(jsonObject.has("jobId")){
@@ -118,7 +118,7 @@ public class RabbitmqHandler<I extends BaseTrxI> {
             String rtnMesg = commService.subMainProc(evtNo, message);
             if (StringUtils.hasText(replyQueue)) {
                 rabbitTemplate.send(replyQueue, new Message(rtnMesg.getBytes(), properties));
-                LogUtils.info("[{}][{}]:[{}]", evtNo,  "EAP->"+ appId,trxId, rtnMesg);
+                LogUtils.info("[{}][{}]:[{}][{}]", evtNo,  "EAP->"+ appId,trxId, rtnMesg);
             }
         } catch (Exception e) {
             LogUtils.error("Service Exception：", e);

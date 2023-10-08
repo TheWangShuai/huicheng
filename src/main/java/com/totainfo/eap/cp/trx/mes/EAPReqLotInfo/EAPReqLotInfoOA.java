@@ -1,7 +1,7 @@
 package com.totainfo.eap.cp.trx.mes.EAPReqLotInfo;
 
 import java.util.List;
-
+import java.util.Map;
 /**
  * @author xiaobin.Guo
  * @date 2023年09月14日 11:14
@@ -13,8 +13,9 @@ public class EAPReqLotInfoOA {
     private String testProgram;
     private String loadBoardId;
     private String deviceId;
+    private String temperature;
     private List<EAPReqLotInfoOB> paramList;
-
+    private Map<String,String> paramList1;
     public String getWaferLot() {
         return waferLot;
     }
@@ -69,5 +70,21 @@ public class EAPReqLotInfoOA {
 
     public void setParamList(List<EAPReqLotInfoOB> paramList) {
         this.paramList = paramList;
+    }
+
+    public void setParamList1(Map<String, String> paramList1) {
+        this.paramList1 = paramList1;
+
+    }
+    public Map<String, String> getParamList1() {
+        return paramList1;
+    }
+
+    public String getTemperature() {
+        return temperature;
+    }
+
+    public void setTemperature(String temperature) {
+        this.temperature = temperature;
     }
 }

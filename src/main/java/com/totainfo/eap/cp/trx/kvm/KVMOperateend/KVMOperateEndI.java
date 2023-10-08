@@ -13,6 +13,7 @@ public class KVMOperateEndI extends BaseTrxI {
     private String opeType;
     private String responseKey;
     private String opeContent;
+    private String temperature;
 
     public void setOpeContent(String opeContent) {
         this.opeContent = opeContent;
@@ -62,5 +63,13 @@ public class KVMOperateEndI extends BaseTrxI {
 
     public String getOpeContent() {
         return opeContent;
+    }
+
+    public String getTemperature() {
+        return temperature;
+    }
+
+    public void setTemperature(String temperature) {
+        this.temperature = temperature;
     }
 }

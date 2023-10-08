@@ -1,7 +1,7 @@
 equipment:
-  id: 123
-  proberUrl:
-  testerUrl:
+  id: P-N3-0C2
+  proberUrl: http://10.8.23.212:6960/matrix/sendMsg
+  testerUrl: http://localhost:8083/matrix/sendMsg
 
 server:
   port: 8083
@@ -27,12 +27,12 @@ spring:
         max-idle: 50
         max-active: 100
   rabbitmq:
-    host: 127.0.0.1
-    port: 5672
+    host: 10.8.10.63
+    port: 5673
     username: guest
     password: guest
     virtualHost: /
-    timeout: 60000
+    timeout: 120000
     simple:
       acknowledge-mode: manual
     mes:
@@ -42,14 +42,13 @@ spring:
       queue: CLIENT-QUEUE
       exchange: CLIENT
     eap:
-      queue: EAP-QUEUE.${equipment.id}
+      queue: TOTA.EAP.${equipment.id}
       exchange: EAP
     rms:
-      checkFlag: false
-      queue: RMS-QUEUE
+      queue: TOTA.RMS
       exchange: RMS
   logging:
-    config:classpath:log/log4j2-dev.xml
+    config: classpath:log/log4j2-dev.xml
   level:
     cn.jay.repository: trace
 
@@ -57,6 +56,8 @@ super:
   user:
     username: admin
     password: 123
+
+
 
 async:
   thread:

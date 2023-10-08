@@ -46,12 +46,12 @@ public class RMSHandler {
         rmsOnlineValidationIAList.add(rmsOnlineValidationIA);
 
         RmsOnlineValidationI rmsOnlineValidationI = new RmsOnlineValidationI();
-        rmsOnlineValidationI.setTrxId("onlineValidation");
-        rmsOnlineValidationI.setTrxId("I");
+        rmsOnlineValidationI.setTrxId("eapRequestRecipeValidation");
+        rmsOnlineValidationI.setTrypeId("I");
         rmsOnlineValidationI.setJobId(evtNo);
         rmsOnlineValidationI.setBisRecipeVOList(rmsOnlineValidationIAList);
 
-        String returnMsg = rabbitmqHandler.sendForReply(evtNo, appName, rmsExchange, rmsQueue, rmsOnlineValidationI);
+        String returnMsg = rabbitmqHandler.sendForReply(evtNo, appName, rmsQueue, rmsExchange, rmsOnlineValidationI);
         if (!StringUtils.hasText(returnMsg)) {
             return null;
         }

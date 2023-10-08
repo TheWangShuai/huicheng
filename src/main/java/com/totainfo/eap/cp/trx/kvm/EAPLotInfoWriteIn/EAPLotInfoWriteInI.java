@@ -11,6 +11,7 @@ public class EAPLotInfoWriteInI extends BaseTrxI {
     private String proberCardId;
     private String loadBoardId;
     private String deviceId;
+    private String waferLot;
     private String testProgram;
 
     public String getUserId() {
@@ -51,5 +52,13 @@ public class EAPLotInfoWriteInI extends BaseTrxI {
 
     public void setTestProgram(String testProgram) {
         this.testProgram = testProgram;
+    }
+
+    public String getWaferLot() {
+        return waferLot;
+    }
+
+    public void setWaferLot(String waferLot) {
+        this.waferLot = waferLot;
     }
 }

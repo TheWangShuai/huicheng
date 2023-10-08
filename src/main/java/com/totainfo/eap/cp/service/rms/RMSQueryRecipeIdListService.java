@@ -4,6 +4,7 @@ import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.commdef.GenergicStatDef.EqptMode;
 import com.totainfo.eap.cp.dao.IEqptDao;
 import com.totainfo.eap.cp.entity.EqptInfo;
+import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.HttpHandler;
 import com.totainfo.eap.cp.trx.kvm.EAPSingleParamCollection.EAPSingleParamCollectionI;
 import com.totainfo.eap.cp.trx.kvm.EAPSingleParamCollection.EAPSingleParamCollectionO;
@@ -63,12 +64,14 @@ public class RMSQueryRecipeIdListService extends EapBaseService<RmsQueryRecipeId
         if(StringUtils.isEmpty(returnMesg)){
             outTrx.setRtnCode(KVM_TIME_OUT);
             outTrx.setRtnMesg("EAP 发送采集Device Name， KVM 没有返回");
+            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
         EAPSingleParamCollectionO eapSingleParamCollectionO = JacksonUtils.string2Object(returnMesg, EAPSingleParamCollectionO.class);
         if(!RETURN_CODE_OK.equals(eapSingleParamCollectionO.getRtnCode())){
             outTrx.setRtnCode(KVM_RETURN_ERROR);
             outTrx.setRtnMesg("EAP 发送采集Device Name， KVM 返回错误:[" + eapSingleParamCollectionO.getRtnMesg() + "]");
+            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
         List<String> recipeIdList = AsyncUtils.getResponse(evtNo, timeOut);

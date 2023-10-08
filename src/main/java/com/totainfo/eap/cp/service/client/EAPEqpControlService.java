@@ -68,12 +68,14 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
         if(StringUtils.isEmpty(returnMsg)){
             outTrx.setRtnCode(KVM_TIME_OUT);
             outTrx.setRtnMesg("EAP 发送设备启停指令，KVM 没有回复");
+            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
         EAPControlCommandO eapControlCommandO = JacksonUtils.string2Object(returnMsg, EAPControlCommandO.class);
         if(!RETURN_CODE_OK.equals(eapControlCommandO.getRtnCode())){
             outTrx.setRtnCode(eapControlCommandO.getRtnCode());
             outTrx.setRtnMesg("EAP 发送设备启停指令，KVM 返回失败，原因:[" + eapControlCommandO.getRtnMesg() + "]");
+            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
 

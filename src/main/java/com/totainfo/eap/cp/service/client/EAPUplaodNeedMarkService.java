@@ -30,6 +30,7 @@ public class EAPUplaodNeedMarkService  extends EapBaseService<EAPUploadNeedMarkI
         if(!RETURN_CODE_OK.equals(eapUploadMarkResultO.getRtnCode())){
             outTrx.setRtnCode(eapUploadMarkResultO.getRtnCode());
             outTrx.setRtnMesg(eapUploadMarkResultO.getRtnMesg());
+            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
         ClientHandler.sendMessage(evtNo, false, 2, "EAP 上传针痕信息成功。");
