@@ -20,6 +20,7 @@ import com.totainfo.eap.cp.trx.rms.RmsOnlineValidation.RmsOnlineValidationO;
 import com.totainfo.eap.cp.util.AsyncUtils;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -47,6 +48,9 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
 
     @Resource
     private HttpHandler httpHandler;
+
+    @Value("${spring.rabbitmq.rms.checkFlag}")
+    private boolean rmsCheckFlag;
 
     @Override
     public void mainProc(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx) {
@@ -193,18 +197,20 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
 
         ClientHandler.sendMessage(evtNo, false, 2, "KVM 代操完成, EAP发送RMS进行验证。");
 
-        RmsOnlineValidationO rmsOnlineValidationO = RMSHandler.toRmsOnlineValidation(evtNo, equipmentNo, lotInfo.getLotId(), lotInfo.getDevice());
-        if(rmsOnlineValidationO == null){
-            outTrx.setRtnCode(RMS_TIME_OUT);
-            outTrx.setRtnMesg("EAP 发送Device:[" + lotInfo.getDevice() + "]验证请求，RMS没有回复");
-            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
-            return;
-        }
-        if(!RMSResult.TRUE.equals(rmsOnlineValidationO.getResult())){
-            outTrx.setRtnCode(RMS_FAILD);
-            outTrx.setRtnMesg("Device:[" + lotInfo.getDevice() + "]验证失败，原因:[" + rmsOnlineValidationO.getReason() + "]");
-            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
-            return;
+        if(rmsCheckFlag){
+            RmsOnlineValidationO rmsOnlineValidationO = RMSHandler.toRmsOnlineValidation(evtNo, equipmentNo, lotInfo.getLotId(), lotInfo.getDevice());
+            if(rmsOnlineValidationO == null){
+                outTrx.setRtnCode(RMS_TIME_OUT);
+                outTrx.setRtnMesg("EAP 发送Device:[" + lotInfo.getDevice() + "]验证请求，RMS没有回复");
+                ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
+                return;
+            }
+            if(!RMSResult.TRUE.equals(rmsOnlineValidationO.getResult())){
+                outTrx.setRtnCode(RMS_FAILD);
+                outTrx.setRtnMesg("Device:[" + lotInfo.getDevice() + "]验证失败，原因:[" + rmsOnlineValidationO.getReason() + "]");
+                ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
+                return;
+            }
         }
         ClientHandler.sendMessage(evtNo, false, 2, "Device:[" + lotInfo.getDevice() + "] RMS验证成功。");
 
