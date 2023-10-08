@@ -267,6 +267,5 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             return;
         }
         ClientHandler.sendMessage(evtNo, true, 2, "KVM测试程式验证通过，请开始作业");
-
     }
 }
