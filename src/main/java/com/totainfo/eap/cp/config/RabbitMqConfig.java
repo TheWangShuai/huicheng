@@ -4,6 +4,7 @@ import org.springframework.amqp.rabbit.AsyncRabbitTemplate;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -48,6 +49,10 @@ public class RabbitMqConfig {
 
     @Bean
     public AsyncRabbitTemplate asyncRabbitTemplate(RabbitTemplate rabbitTemplate){
-        return new AsyncRabbitTemplate(rabbitTemplate);
+        SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer(connectionFactory());
+        simpleMessageListenerContainer.setQueueNames("rabbitmq-reply-to");
+        AsyncRabbitTemplate asyncRabbitTemplate = new AsyncRabbitTemplate(rabbitTemplate);
+        asyncRabbitTemplate.setReceiveTimeout(timeOut);
+        return asyncRabbitTemplate;
     }
 }

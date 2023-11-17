@@ -1,6 +1,7 @@
 package com.totainfo.eap.cp.base.service;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.totainfo.eap.cp.base.trx.BaseTrxI;
 import com.totainfo.eap.cp.base.trx.BaseTrxO;
 import com.totainfo.eap.cp.util.JacksonUtils;
@@ -25,7 +26,7 @@ public abstract class EapBaseService<I extends BaseTrxI, O extends BaseTrxO>  im
         ParameterizedType t = (ParameterizedType) this.getClass().getGenericSuperclass();
         Class<I> inClass = (Class<I>) t.getActualTypeArguments()[0];
         Class<O> outClass = (Class<O>) t.getActualTypeArguments()[1];
-
+        String s = message.toString();
         I inTrx = null;
         O ouTrx = null;
         try{
