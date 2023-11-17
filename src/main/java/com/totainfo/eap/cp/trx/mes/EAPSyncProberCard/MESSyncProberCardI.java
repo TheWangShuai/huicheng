@@ -11,6 +11,7 @@ public class MESSyncProberCardI  extends BaseTrxI {
     private String evtUsr;
     private String ProberCardId;
     private String equipmentNo;
+    private String lotNo;
 
     public String getComputerName() {
         return computerName;
@@ -42,5 +43,13 @@ public class MESSyncProberCardI  extends BaseTrxI {
 
     public void setEquipmentNo(String equipmentNo) {
         this.equipmentNo = equipmentNo;
+    }
+
+    public String getLotNo() {
+        return lotNo;
+    }
+
+    public void setLotNo(String lotNo) {
+        this.lotNo = lotNo;
     }
 }

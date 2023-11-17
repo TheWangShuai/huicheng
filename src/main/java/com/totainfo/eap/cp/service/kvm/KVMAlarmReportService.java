@@ -8,7 +8,11 @@ import com.totainfo.eap.cp.handler.MesHandler;
 import com.totainfo.eap.cp.trx.kvm.KVMAlarmReport.KVMAlarmReportI;
 import com.totainfo.eap.cp.trx.kvm.KVMAlarmReport.KVMAlarmReportO;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportI;
+import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportO;
 import com.totainfo.eap.cp.trx.mes.EAPReqCheckOut.EAPReqCheckOutO;
+import com.totainfo.eap.cp.trx.mes.EAPReqMeasureResult.EAPReqMeasureResultO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -16,6 +20,7 @@ import java.awt.*;
 
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.LOT_INFO_EXIST;
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
+import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant._TRUE;
 
 /**
  * @author xiaobin.Guo
@@ -27,6 +32,7 @@ public class KVMAlarmReportService extends EapBaseService<KVMAlarmReportI, KVMAl
     @Resource
     private ILotDao lotDao;
 
+    private String stop;
     @Override
     public void mainProc(String evtNo, KVMAlarmReportI inTrx, KVMAlarmReportO outTrx) {
         String alarmCode = inTrx.getAlarmCode();
@@ -39,17 +45,20 @@ public class KVMAlarmReportService extends EapBaseService<KVMAlarmReportI, KVMAl
 
         //判断是不是制程结束的报警，如果是，发给MES Check Out
         if(!"00405".equals(alarmCode)){
-             return;
-        }
-
-        LotInfo lotInfo = lotDao.getCurLotInfo();
-        if(lotInfo != null){
-            outTrx.setRtnCode(LOT_INFO_EXIST);
-            outTrx.setRtnMesg("批次:[" + lotInfo.getLotId() + "]制程未结束，请等待");
-            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
+            EAPEqptAlarmReportO eapEqptAlarmReportO = MesHandler.alarmReport(evtNo, alarmCode, alarmText, time);
+            String s = eapEqptAlarmReportO.toString();
+            ClientHandler.sendMessage(evtNo,false,2,s);
             return;
         }
-
+        LotInfo lotInfo = lotDao.getCurLotInfo();
+        //发送量测数据是否齐全的请求
+        EAPReqMeasureResultO eapReqMeasureResultO = MesHandler.measureResultReq(evtNo, lotInfo.getLotId());
+        stop = eapReqMeasureResultO.getRtnMesg();
+        while (!_TRUE.equals(stop)){
+            EAPReqMeasureResultO Msg = MesHandler.measureResultReq(evtNo, lotInfo.getLotId());
+            stop = Msg.getRtnMesg();
+        }
+        ClientHandler.sendMessage(evtNo,false,2,"量测结果均以生成");
         EAPReqCheckOutO eapReqCheckOutO = MesHandler.checkOutReq(evtNo, lotInfo.getLotId());
         if(!RETURN_CODE_OK.equals(eapReqCheckOutO.getRtnCode())){
             outTrx.setRtnCode(eapReqCheckOutO.getRtnCode());

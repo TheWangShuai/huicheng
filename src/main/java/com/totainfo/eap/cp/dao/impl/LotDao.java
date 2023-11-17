@@ -3,6 +3,8 @@ package com.totainfo.eap.cp.dao.impl;
 import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.handler.RedisHandler;
+import com.totainfo.eap.cp.util.JacksonUtils;
+import com.totainfo.eap.cp.util.LogUtils;
 import org.springframework.stereotype.Repository;
 
 import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;

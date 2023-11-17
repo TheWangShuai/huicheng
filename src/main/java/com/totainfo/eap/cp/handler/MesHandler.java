@@ -1,6 +1,10 @@
 package com.totainfo.eap.cp.handler;
 
 import com.totainfo.eap.cp.commdef.GenericDataDef;
+import com.totainfo.eap.cp.dao.ILotDao;
+import com.totainfo.eap.cp.dao.impl.LotDao;
+import com.totainfo.eap.cp.entity.LotInfo;
+import com.totainfo.eap.cp.service.kvm.KVMOperateEndService;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportI;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportO;
 import com.totainfo.eap.cp.trx.mes.EAPEqptStatusReport.EAPEqptStatusReportI;
@@ -23,11 +27,17 @@ import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.Resource;
+import java.awt.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
+import java.util.Map;
 
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.MES_TIME_OUT;
 
@@ -37,14 +47,11 @@ import static com.totainfo.eap.cp.commdef.GenergicCodeDef.MES_TIME_OUT;
  */
 @Component
 public class MesHandler {
-
-
     private static RabbitmqHandler rabbitmqHandler;
     private static final String appName = "MES";
 
     private static String mesQueue;
     private static  String mesExchange;
-
     private static String computerName;
     static {
         InetAddress address = null; // 此处可以是计算机名或者IP，任一即可
@@ -73,7 +80,8 @@ public class MesHandler {
         String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapEqptAlarmReportI);
         if(!StringUtils.hasText(outTrxStr)){
             eapEqptAlarmReportO.setRtnCode("00000001");
-            eapEqptAlarmReportO.setRtnMesg("EAP发送设备报警，MES没有回复");
+            eapEqptAlarmReportO.setRtnMesg("[EAP-MES]:EAP发送设备报警，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,eapEqptAlarmReportO.getRtnMesg());
         }else{
             eapEqptAlarmReportO = JacksonUtils.string2Object(outTrxStr, EAPEqptAlarmReportO.class);
         }
@@ -94,7 +102,8 @@ public class MesHandler {
         String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapEqptStatusReportI);
         if(!StringUtils.hasText(outTrxStr)){
             eapEqptStatusReportO.setRtnCode(MES_TIME_OUT);
-            eapEqptStatusReportO.setRtnMesg("EAP发送设备状态，MES没有回复");
+            eapEqptStatusReportO.setRtnMesg("[EAP-MES]:EAP发送设备状态，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,eapEqptStatusReportO.getRtnMesg());
         }else{
             eapEqptStatusReportO = JacksonUtils.string2Object(outTrxStr, EAPEqptStatusReportO.class);
         }
@@ -115,7 +124,8 @@ public class MesHandler {
         String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapReqLotInfoI);
         if(!StringUtils.hasText(outTrxStr)){
             eapReqLotInfoO.setRtnCode(MES_TIME_OUT);
-            eapReqLotInfoO.setRtnMesg("EAP发送设备状态，MES没有回复");
+            eapReqLotInfoO.setRtnMesg("[EAP-MES]:EAP发送设备状态，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,eapReqLotInfoO.getRtnMesg());
         }else{
             eapReqLotInfoO = JacksonUtils.string2Object(outTrxStr, EAPReqLotInfoO.class);
         }
@@ -123,19 +133,17 @@ public class MesHandler {
     }
 
 
-    public static EAPReqCheckInO checkInReq(String evtNo, String lotNo, String userId){
-        EAPReqCheckInI eapReqCheckInI = new EAPReqCheckInI();
+    public static EAPReqCheckInO checkInReq(String evtNo, String lotNo, String userId,EAPReqCheckInI eapReqCheckInI){
+//        EAPReqCheckInI eapReqCheckInI = new EAPReqCheckInI();
         EAPReqCheckInO eapReqCheckInO = new EAPReqCheckInO();
-        eapReqCheckInI.setTrxId("checkIn");
-        eapReqCheckInI.setEvtUsr(userId);
-        eapReqCheckInI.setLotNo(lotNo);
         eapReqCheckInI.setComputerName(computerName);
         eapReqCheckInI.setEquipmentNo(GenericDataDef.equipmentNo);
-
+        LogUtils.info("准备往mes发checkin");
         String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapReqCheckInI);
         if(!StringUtils.hasText(outTrxStr)){
             eapReqCheckInO.setRtnCode(MES_TIME_OUT);
-            eapReqCheckInO.setRtnMesg("EAP发送Lot:["+lotNo+"] Check In，MES没有回复");
+            eapReqCheckInO.setRtnMesg("[EAP-MES]:EAP发送Lot:["+lotNo+"] Check In，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,eapReqCheckInO.getRtnMesg());
         }else{
             eapReqCheckInO = JacksonUtils.string2Object(outTrxStr, EAPReqCheckInO.class);
         }
@@ -156,13 +164,13 @@ public class MesHandler {
         String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapReqCheckOutI);
         if(!StringUtils.hasText(outTrxStr)){
             eapReqCheckOutO.setRtnCode(MES_TIME_OUT);
-            eapReqCheckOutO.setRtnMesg("EAP发送Lot:["+lotNo+"] Check Out，MES没有回复");
+            eapReqCheckOutO.setRtnMesg("[EAP-MES]:EAP发送Lot:["+lotNo+"] Check Out，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,eapReqCheckOutO.getRtnMesg());
         }else{
             eapReqCheckOutO = JacksonUtils.string2Object(outTrxStr, EAPReqCheckOutO.class);
         }
         return eapReqCheckOutO;
     }
-
 
     public static EAPReqMeasureResultO measureResultReq(String evtNo, String lotNo){
         EAPReqMeasureResultI eapReqMeasureResultI = new EAPReqMeasureResultI();
@@ -177,7 +185,8 @@ public class MesHandler {
         String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapReqMeasureResultI);
         if(!StringUtils.hasText(outTrxStr)){
             eapReqMeasureResultO.setRtnCode(MES_TIME_OUT);
-            eapReqMeasureResultO.setRtnMesg("EAP请求Lot:["+lotNo+"] 量测结果，MES没有回复");
+            eapReqMeasureResultO.setRtnMesg("[EAP-MES]:EAP请求Lot:["+lotNo+"] 量测结果，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,eapReqMeasureResultO.getRtnMesg());
         }else{
             eapReqMeasureResultO = JacksonUtils.string2Object(outTrxStr, EAPReqMeasureResultO.class);
         }
@@ -200,22 +209,22 @@ public class MesHandler {
         String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapUploadDieResultI);
         if(!StringUtils.hasText(outTrxStr)){
             eapUploadDieResultO.setRtnCode(MES_TIME_OUT);
-            eapUploadDieResultO.setRtnMesg("EAP上传Lot:["+lotNo+"],Wafer:["+waferId+"],DIE 测试结果，MES没有回复");
+            eapUploadDieResultO.setRtnMesg("[EAP-MES]:EAP上传Lot:["+lotNo+"],Wafer:["+waferId+"],DIE 测试结果，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,eapUploadDieResultO.getRtnMesg());
         }else{
             eapUploadDieResultO = JacksonUtils.string2Object(outTrxStr, EAPUploadDieResultO.class);
         }
         return eapUploadDieResultO;
     }
 
-    public static EAPUploadMarkResultO uploadMarkResult(String evtNo, String lotNo, String waferId, String startCoordinates, String result, String remark, String userId) {
+    public static EAPUploadMarkResultO uploadMarkResult(String evtNo, String lotNo, String waferId, List datas, String remark, String userId) {
         EAPUploadMarkResultI eapUploadMarkResultI = new EAPUploadMarkResultI();
         EAPUploadMarkResultO eapUploadMarkResultO = new EAPUploadMarkResultO();
         eapUploadMarkResultI.setTrxId("uploadNeedleMarkResults");
         eapUploadMarkResultI.setEvtUsr(userId);
         eapUploadMarkResultI.setLotNo(lotNo);
         eapUploadMarkResultI.setWaferId(waferId);
-        eapUploadMarkResultI.setStartingCoordinates(startCoordinates);
-        eapUploadMarkResultI.setResult(result);
+        eapUploadMarkResultI.setDatas(datas);
         eapUploadMarkResultI.setRemark(remark);
         eapUploadMarkResultI.setComputerName(computerName);
         eapUploadMarkResultI.setEquipmentNo(GenericDataDef.equipmentNo);
@@ -223,14 +232,15 @@ public class MesHandler {
         String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, mesQueue, mesExchange, eapUploadMarkResultI);
         if (!StringUtils.hasText(outTrxStr)) {
             eapUploadMarkResultO.setRtnCode(MES_TIME_OUT);
-            eapUploadMarkResultO.setRtnMesg("EAP上传Lot:[" + lotNo + "],Wafer:[" + waferId + "] 针痕检测结果，MES没有回复");
+            eapUploadMarkResultO.setRtnMesg("[EAP-MES]:EAP上传Lot:[" + lotNo + "],Wafer:[" + waferId + "] 针痕检测结果，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,eapUploadMarkResultO.getRtnMesg());
         } else {
             eapUploadMarkResultO = JacksonUtils.string2Object(outTrxStr, EAPUploadMarkResultO.class);
         }
         return eapUploadMarkResultO;
     }
 
-    public static MESSyncProberCardO syncProberCardInfo(String evtNo, String userId, String proberCardId){
+    public static MESSyncProberCardO syncProberCardInfo(String evtNo, String userId, String proberCardId,String lotNo){
         MESSyncProberCardI mesSyncProberCardI = new MESSyncProberCardI();
         MESSyncProberCardO mesSyncProberCardO = new MESSyncProberCardO();
         mesSyncProberCardI.setTrxId("SynchronousMESProberCardId");
@@ -239,10 +249,12 @@ public class MesHandler {
         mesSyncProberCardI.setComputerName(computerName);
         mesSyncProberCardI.setEvtUsr(userId);
         mesSyncProberCardI.setProberCardId(proberCardId);
+        mesSyncProberCardI.setLotNo(lotNo);
         String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, mesQueue, mesExchange, mesSyncProberCardI);
         if (!StringUtils.hasText(outTrxStr)) {
             mesSyncProberCardO.setRtnCode(MES_TIME_OUT);
-            mesSyncProberCardO.setRtnMesg("EAP同步探针:["+proberCardId+"] 信息，MES没有回复");
+            mesSyncProberCardO.setRtnMesg("[EAP-MES]:EAP同步探针:["+proberCardId+"] 信息，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,mesSyncProberCardO.getRtnMesg());
         } else {
             mesSyncProberCardO = JacksonUtils.string2Object(outTrxStr, MESSyncProberCardO.class);
         }

@@ -44,7 +44,7 @@ public class EqptDao implements IEqptDao {
         if(eqptInfo == null){
             eqptInfo = new EqptInfo();
             eqptInfo.setEqptId(equipmentNo);
-            eqptInfo.setEqptMode(EqptMode.Offline);
+            eqptInfo.setEqptMode(EqptMode.Online);
             eqptInfo.setEqptStat(EqptStat.IDLE);
         }
         return eqptInfo;

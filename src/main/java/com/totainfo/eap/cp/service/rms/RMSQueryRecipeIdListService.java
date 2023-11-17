@@ -49,9 +49,11 @@ public class RMSQueryRecipeIdListService extends EapBaseService<RmsQueryRecipeId
         EqptInfo eqptInfo = eqptDao.getEqpt();
         if(!EqptMode.Online.equals(eqptInfo.getEqptMode())){
             outTrx.setRtnCode(EQPT_MODE_DISMATCH);
-            outTrx.setRtnMesg("设备当前是Offline 模式，请确认");
+            outTrx.setRtnMesg("[EAP-RMS]:设备当前是Offline 模式，请确认");
+            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
             return;
         }
+
         EAPSingleParamCollectionI eapSingleParamCollectionI = new EAPSingleParamCollectionI();
         eapSingleParamCollectionI.setTrxId("EAPACCEPT");
         eapSingleParamCollectionI.setActionFlg("RWPE");
@@ -63,14 +65,14 @@ public class RMSQueryRecipeIdListService extends EapBaseService<RmsQueryRecipeId
         String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapSingleParamCollectionI);
         if(StringUtils.isEmpty(returnMesg)){
             outTrx.setRtnCode(KVM_TIME_OUT);
-            outTrx.setRtnMesg("EAP 发送采集Device Name， KVM 没有返回");
+            outTrx.setRtnMesg("[EAP-KVM]:EAP 发送采集Device Name， KVM 没有返回");
             ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
         EAPSingleParamCollectionO eapSingleParamCollectionO = JacksonUtils.string2Object(returnMesg, EAPSingleParamCollectionO.class);
         if(!RETURN_CODE_OK.equals(eapSingleParamCollectionO.getRtnCode())){
             outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("EAP 发送采集Device Name， KVM 返回错误:[" + eapSingleParamCollectionO.getRtnMesg() + "]");
+            outTrx.setRtnMesg("[EAP-KVM]:EAP 发送采集Device Name， KVM 返回错误:[" + eapSingleParamCollectionO.getRtnMesg() + "]");
             ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }

@@ -13,7 +13,7 @@ public class EAPReqLotInfoOA {
     private String testProgram;
     private String loadBoardId;
     private String deviceId;
-    private String temperature;
+    private String temperatureRange;
     private List<EAPReqLotInfoOB> paramList;
     private Map<String,String> paramList1;
     public String getWaferLot() {
@@ -80,11 +80,11 @@ public class EAPReqLotInfoOA {
         return paramList1;
     }
 
-    public String getTemperature() {
-        return temperature;
+    public String getTemperatureRange() {
+        return temperatureRange;
     }
 
-    public void setTemperature(String temperature) {
-        this.temperature = temperature;
+    public void setTemperatureRange(String temperatureRange) {
+        this.temperatureRange = temperatureRange;
     }
 }

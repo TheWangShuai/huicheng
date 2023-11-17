@@ -13,8 +13,10 @@ public class KVMOperateEndI extends BaseTrxI {
     private String opeType;
     private String responseKey;
     private String opeContent;
-    private String temperature;
 
+    private String alarmCode;
+    private String alarmMessage;
+    private String time;
     public void setOpeContent(String opeContent) {
         this.opeContent = opeContent;
     }
@@ -65,11 +67,28 @@ public class KVMOperateEndI extends BaseTrxI {
         return opeContent;
     }
 
-    public String getTemperature() {
-        return temperature;
+    public String getAlarmCode() {
+        return alarmCode;
     }
 
-    public void setTemperature(String temperature) {
-        this.temperature = temperature;
+    public void setAlarmCode(String alarmCode) {
+        this.alarmCode = alarmCode;
     }
+
+    public String getAlarmMessage() {
+        return alarmMessage;
+    }
+
+    public void setAlarmMessage(String alarmMessage) {
+        this.alarmMessage = alarmMessage;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+
 }

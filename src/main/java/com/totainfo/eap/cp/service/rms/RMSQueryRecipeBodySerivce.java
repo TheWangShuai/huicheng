@@ -45,8 +45,8 @@ public class RMSQueryRecipeBodySerivce  extends EapBaseService<RmsQueryRecipeBod
         EqptInfo eqptInfo = eqptDao.getEqpt();
         if(!EqptMode.Online.equals(eqptInfo.getEqptMode())){
             outTrx.setRtnCode(EQPT_MODE_DISMATCH);
-            outTrx.setRtnMesg("设备当前是Offline 模式，请确认");
-            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
+            outTrx.setRtnMesg("[EAP-Clinet]:设备当前是Offline 模式，请确认");
+            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
             return;
         }
 
@@ -61,18 +61,18 @@ public class RMSQueryRecipeBodySerivce  extends EapBaseService<RmsQueryRecipeBod
         String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapDeviceParamCollectionI);
         if(StringUtils.isEmpty(returnMesg)){
             outTrx.setRtnCode(KVM_TIME_OUT);
-            outTrx.setRtnMesg("EAP 下发Devce Name:["+recipeId+"]参数采集， KVM 没有返回");
+            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发Devce Name:["+recipeId+"]参数采集， KVM 没有返回");
             ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
         EAPDeviceParamCollectionO eapDeviceParamCollectionO = JacksonUtils.string2Object(returnMesg, EAPDeviceParamCollectionO.class);
         if(!RETURN_CODE_OK.equals(eapDeviceParamCollectionO.getRtnCode())){
             outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("EAP 下发Devce Name:["+recipeId+"]参数采集， KVM 返回错误:[" + eapDeviceParamCollectionO.getRtnMesg() + "]");
+            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发Devce Name:["+recipeId+"]参数采集， KVM 返回错误:[" + eapDeviceParamCollectionO.getRtnMesg() + "]");
             ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
-        ClientHandler.sendMessage(evtNo, false, 2, "EAP 发送Device param采集指令成功。");
+        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:EAP 发送Device param采集指令成功。");
         String recipeBody = AsyncUtils.getResponse(evtNo, timeOut);
         outTrx.setRecipeBody(recipeBody);
     }

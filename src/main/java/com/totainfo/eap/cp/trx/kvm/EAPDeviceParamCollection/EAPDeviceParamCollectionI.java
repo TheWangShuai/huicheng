@@ -1,6 +1,9 @@
 package com.totainfo.eap.cp.trx.kvm.EAPDeviceParamCollection;
 
 import com.totainfo.eap.cp.base.trx.BaseTrxI;
+import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionIA;
+
+import java.util.List;
 
 /**
  * @author xiaobin.Guo

@@ -2,7 +2,7 @@
 <Configuration status="debug" name="sidtek" dest="/opt/log/log4j2.log" monitorInterval="0">
     <Properties>
         <Property name="applicationName">${spring:spring.application.name}</Property>
-        <Property name="LOG_HOME">${spring:logging.path}</Property>
+        <Property name="LOG_HOME">/aplog/eap/${spring:equipment.id}/log/</Property>
 
         <!--        等于比较，如果X==Y, 则结果是Z，否则是X -->
         <!--        %equals{X}{Y}{Z}-->

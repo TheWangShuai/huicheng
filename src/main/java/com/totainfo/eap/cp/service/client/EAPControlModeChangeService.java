@@ -54,20 +54,20 @@ public class EAPControlModeChangeService extends EapBaseService<EAPContrlModeCha
         String returnMesg = httpHandler.postHttpForEqpt(evtNo, GenericDataDef.proberUrl, eapChangeControlModeI);
         if(StringUtils.isEmpty(returnMesg)){
             outTrx.setRtnCode(KVM_TIME_OUT);
-            outTrx.setRtnMesg("EAP切换模式，KVM 没有回复");
-            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
+            outTrx.setRtnMesg("[EAP-KVM]:EAP切换模式，KVM 没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
             return;
         }
         EAPChangeControlModeO eapChangeControlModeO = JacksonUtils.string2Object(returnMesg, EAPChangeControlModeO.class);
         if(!RETURN_CODE_OK.equals(eapChangeControlModeO.getRtnCode())){
             outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("EAP切换模式，KVM 返回失败,原因:[" + eapChangeControlModeO.getRtnMesg() + "]");
-            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
+            outTrx.setRtnMesg("[EAP-KVM]:EAP切换模式，KVM 返回失败,原因:[" + eapChangeControlModeO.getRtnMesg() + "]");
+            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
             return;
         }
 
         String modeDesc = "0".equals(model)? "offline":"online";
-        ClientHandler.sendMessage(evtNo, false, 2, "模式切换成功，当前模式:[" + modeDesc + "]");
+        ClientHandler.sendMessage(evtNo, false, 2, "[Client-EAP-KVM]:模式切换成功，当前模式:[" + modeDesc + "]");
 
     }
 }

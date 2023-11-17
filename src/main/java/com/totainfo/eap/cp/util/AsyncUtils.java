@@ -55,4 +55,7 @@ public class AsyncUtils {
     public static <T> void setResponse(String key, T response){
         CacheMapUtils.put(key, response, CACHE_HOLD_TIME_1M);
     }
+    public static boolean existRequest(String key){
+        return CacheMapUtils.checkCacheName(key);
+    }
 }

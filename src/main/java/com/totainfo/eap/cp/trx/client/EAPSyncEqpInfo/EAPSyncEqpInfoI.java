@@ -11,7 +11,7 @@ public class EAPSyncEqpInfoI extends BaseTrxI {
     private String state;
     private String model;
     private String lotNo;
-    private String proberCardId;
+    private String probeCardId;
 
     public String getUserId() {
         return userId;
@@ -46,10 +46,10 @@ public class EAPSyncEqpInfoI extends BaseTrxI {
     }
 
     public String getProberCardId() {
-        return proberCardId;
+        return probeCardId;
     }
 
     public void setProberCardId(String proberCardId) {
-        this.proberCardId = proberCardId;
+        this.probeCardId = probeCardId;
     }
 }

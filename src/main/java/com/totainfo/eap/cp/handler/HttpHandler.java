@@ -1,6 +1,8 @@
 package com.totainfo.eap.cp.handler;
 
 import com.totainfo.eap.cp.base.trx.BaseTrxI;
+import com.totainfo.eap.cp.dao.ILotDao;
+import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import org.springframework.http.*;
@@ -11,8 +13,6 @@ import javax.annotation.Resource;
 
 @Component
 public class HttpHandler<I extends BaseTrxI> {
-
-
     @Resource
     private RestTemplate restTemplate;
 

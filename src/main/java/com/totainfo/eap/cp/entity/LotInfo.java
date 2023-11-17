@@ -18,6 +18,7 @@ public class LotInfo {
     private String deviceId;
     private String userId;
     private String waferLot;
+    private String temperatureRange;
     private String temperature;
 
     private Map<String, String> paramList;
@@ -101,6 +102,14 @@ public class LotInfo {
 
     public void setParamList(List paramList1) {
         this.paramList1 = paramList1;
+    }
+
+    public String getTemperatureRange() {
+        return temperatureRange;
+    }
+
+    public void setTemperatureRange(String temperatureRange) {
+        this.temperatureRange = temperatureRange;
     }
 
     public String getTemperature() {

@@ -31,7 +31,6 @@ public class EAPConnectService  extends EapBaseService<EAPConnectI, EAPConnectO>
     @Override
     public void mainProc(String evtNo, EAPConnectI inTrx, EAPConnectO outTrx) {
         EqptInfo eqptInfo = eqptDao.getEqpt();
-
         EAPSyncEqpInfoI eapSyncEqpInfoI = new EAPSyncEqpInfoI();
         eapSyncEqpInfoI.setTrxId("ConnectInfo");
         eapSyncEqpInfoI.setTrypeId("I");

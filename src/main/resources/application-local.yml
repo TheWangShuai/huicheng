@@ -1,7 +1,7 @@
 equipment:
-  id: P-N3-0C2
-  proberUrl: http://10.8.23.212:6960/matrix/sendMsg
-  testerUrl: http://localhost:8083/matrix/sendMsg
+  id: P-N4-018
+  proberUrl: http://10.8.23.224:8088/matrix/sendMsg
+  testerUrl: http://10.8.61.33：4444/matrix/sendMsg
 
 server:
   port: 8083
@@ -19,7 +19,7 @@ server:
 
 spring:
   redis:
-    host: localhost
+    host: 127.0.0.1
     port: 6379
     lettuce:
       pool:
@@ -27,16 +27,16 @@ spring:
         max-idle: 50
         max-active: 100
   rabbitmq:
-    host: 10.8.10.63
-    port: 5673
+    host: 127.0.0.1
+    port: 5672
     username: guest
     password: guest
     virtualHost: /
-    timeout: 120000
+    timeout: 60000
     simple:
       acknowledge-mode: manual
     mes:
-       queue: MES-QUEUE
+       queue: CP-MES
        exchange: MES
     client:
       queue: CLIENT-QUEUE
@@ -48,25 +48,8 @@ spring:
       checkFlag: false
       queue: TOTA.RMS
       exchange: RMS
-  logging:
-    config: classpath:log/log4j2-dev.xml
-  level:
-    cn.jay.repository: trace
+logging:
+  config: classpath:log/log4j2-dev.xml
+level:
+  cn.jay.repository: trace
 
-super:
-  user:
-    username: admin
-    password: 123
-
-async:
-  thread:
-    core_pool_size: 100
-    max_pool_size:  1000
-    queue_capacity: 200
-    keep_alive_seconds: 30
-
-webSocket:
-  enable: true
-
-
-version: @project.version@

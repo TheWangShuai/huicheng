@@ -11,7 +11,7 @@ public class EAPReqCheckInI extends BaseTrxI {
     private String evtUsr;
     private String lotNo;
     private String equipmentNo;
-    private String ProberCard;
+    private String ProbeCard;
     private String Temperature;
     private String TestProgram;
     private String Device;
@@ -48,12 +48,12 @@ public class EAPReqCheckInI extends BaseTrxI {
         this.equipmentNo = equipmentNo;
     }
 
-    public String getProberCard() {
-        return ProberCard;
+    public String getProbeCard() {
+        return ProbeCard;
     }
 
-    public void setProberCard(String proberCard) {
-        ProberCard = proberCard;
+    public void setProbeCard(String probeCard) {
+        ProbeCard = probeCard;
     }
 
     public String getTemperature() {
