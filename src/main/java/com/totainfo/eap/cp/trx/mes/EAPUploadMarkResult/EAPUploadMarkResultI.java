@@ -1,6 +1,7 @@
 package com.totainfo.eap.cp.trx.mes.EAPUploadMarkResult;
 
 import com.totainfo.eap.cp.base.trx.BaseTrxI;
+import com.totainfo.eap.cp.trx.client.EAPUploadNeedMark.EAPUploadNeedMarkIA;
 
 import java.awt.*;
 import java.util.List;
@@ -19,7 +20,7 @@ public class EAPUploadMarkResultI extends BaseTrxI {
     private String Result;
     private String equipmentNo;
     private String remark;
-    private List<String> datas;
+    private List<EAPUploadNeedMarkIA> datas;
 
     public String getComputerName() {
         return computerName;
@@ -85,11 +86,11 @@ public class EAPUploadMarkResultI extends BaseTrxI {
         this.remark = remark;
     }
 
-    public List<String> getDatas() {
+    public List<EAPUploadNeedMarkIA> getDatas() {
         return datas;
     }
 
-    public void setDatas(List<String> datas) {
+    public void setDatas(List<EAPUploadNeedMarkIA> datas) {
         this.datas = datas;
     }
 }

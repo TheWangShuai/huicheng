@@ -12,6 +12,10 @@ public class GenericDataDef {
 
     public static String testerUrl;
 
+    public static String recipeBodyUrl;
+
+    public static String eqpType;
+
     @Value("${equipment.id}")
     public void setEquipmentNo(String equipmentNo) {
         GenericDataDef.equipmentNo = equipmentNo;
@@ -25,5 +29,15 @@ public class GenericDataDef {
     @Value("${equipment.testerUrl}")
     public void setTesterUrl(String testerUrl) {
         GenericDataDef.testerUrl = testerUrl;
+    }
+
+    @Value("${client.recipeBodyUrl}")
+    public void setRecipeBodyUrl(String recipeBodyUrl)
+    {
+        GenericDataDef.recipeBodyUrl = recipeBodyUrl;
+    }
+    @Value("${equipment.type}")
+    public void setEqpType(String eqpType) {
+        GenericDataDef.eqpType = eqpType;
     }
 }

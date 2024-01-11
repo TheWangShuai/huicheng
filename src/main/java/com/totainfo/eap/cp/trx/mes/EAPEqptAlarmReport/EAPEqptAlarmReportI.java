@@ -14,6 +14,8 @@ public class EAPEqptAlarmReportI extends BaseTrxI {
     private String message;
     private String Time;
 
+    private String ID;
+
     public String getComputerName() {
         return computerName;
     }
@@ -60,5 +62,13 @@ public class EAPEqptAlarmReportI extends BaseTrxI {
 
     public void setTime(String time) {
         Time = time;
+    }
+
+    public String getID() {
+        return ID;
+    }
+
+    public void setID(String ID) {
+        this.ID = ID;
     }
 }

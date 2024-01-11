@@ -2,6 +2,9 @@ package com.totainfo.eap.cp.trx.client.EAPUploadNeedMark;
 
 import com.totainfo.eap.cp.base.trx.BaseTrxI;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author xiaobin.Guo
  * @date 2023年09月21日 10:21
@@ -13,6 +16,7 @@ public class EAPUploadNeedMarkI extends BaseTrxI {
     private String coordinate;
     private String result;
     private String remark;
+    private List<EAPUploadNeedMarkIA> datas;
 
     public String getUserId() {
         return userId;
@@ -60,5 +64,13 @@ public class EAPUploadNeedMarkI extends BaseTrxI {
 
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+
+    public List<EAPUploadNeedMarkIA> getDatas() {
+        return datas;
+    }
+
+    public void setDatas(List<EAPUploadNeedMarkIA> datas) {
+        this.datas = datas;
     }
 }

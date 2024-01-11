@@ -1,7 +1,10 @@
 equipment:
   id: P-N4-018
+  type: AP3000E
   proberUrl: http://10.8.23.224:8088/matrix/sendMsg
   testerUrl: http://10.8.61.33：4444/matrix/sendMsg
+client :
+  recipeBodyUrl: http://localhost:5000/api/DeviceOperate
 
 server:
   port: 8083
@@ -36,20 +39,26 @@ spring:
     simple:
       acknowledge-mode: manual
     mes:
-       queue: CP-MES
+       queue: CP-MES-MQ
        exchange: MES
     client:
       queue: CLIENT-QUEUE
       exchange: CLIENT
     eap:
+      checkName: false
       queue: TOTA.EAP.${equipment.id}
       exchange: EAP
     rms:
       checkFlag: false
       queue: TOTA.RMS
       exchange: RMS
+    ems:
+      queue: GS.TEST.EIB
+      exchange: EAPTEST
 logging:
   config: classpath:log/log4j2-dev.xml
 level:
   cn.jay.repository: trace
+number:
+  max: 5
 

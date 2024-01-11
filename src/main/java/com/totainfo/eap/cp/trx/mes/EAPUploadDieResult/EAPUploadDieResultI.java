@@ -1,6 +1,10 @@
 package com.totainfo.eap.cp.trx.mes.EAPUploadDieResult;
 
 import com.totainfo.eap.cp.base.trx.BaseTrxI;
+import com.totainfo.eap.cp.trx.gpib.GPIBUploadDieTestResult.GPIBUploadDieTestResultI;
+import com.totainfo.eap.cp.trx.gpib.GPIBUploadDieTestResult.GPIBUploadDieTestResultIA;
+
+import java.util.List;
 
 /**
  * @author xiaobin.Guo
@@ -14,6 +18,8 @@ public class EAPUploadDieResultI extends BaseTrxI {
     private String StartingCoordinates;
     private String Result;
     private String equipmentNo;
+
+    private List<GPIBUploadDieTestResultIA> datas;
 
     public String getComputerName() {
         return computerName;
@@ -69,5 +75,13 @@ public class EAPUploadDieResultI extends BaseTrxI {
 
     public void setEquipmentNo(String equipmentNo) {
         this.equipmentNo = equipmentNo;
+    }
+
+    public List<GPIBUploadDieTestResultIA> getDatas() {
+        return datas;
+    }
+
+    public void setDatas(List<GPIBUploadDieTestResultIA> datas) {
+        this.datas = datas;
     }
 }

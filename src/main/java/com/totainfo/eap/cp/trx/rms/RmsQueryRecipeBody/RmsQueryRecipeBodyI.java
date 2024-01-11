@@ -10,6 +10,7 @@ public class RmsQueryRecipeBodyI extends BaseTrxI {
      private String evtUsr;
      private String fabIdFk;
      private String toolId;
+     private String toolType;
      private String recipeId;
      private String recipeLevel;
 
@@ -51,5 +52,13 @@ public class RmsQueryRecipeBodyI extends BaseTrxI {
 
     public void setRecipeLevel(String recipeLevel) {
         this.recipeLevel = recipeLevel;
+    }
+
+    public String getToolType() {
+        return toolType;
+    }
+
+    public void setToolType(String toolType) {
+        this.toolType = toolType;
     }
 }

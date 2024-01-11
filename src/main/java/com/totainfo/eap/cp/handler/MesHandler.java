@@ -5,6 +5,12 @@ import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.dao.impl.LotDao;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.service.kvm.KVMOperateEndService;
+import com.totainfo.eap.cp.trx.gpib.GPIBLotEndReport.GPIBLotEndReportI;
+import com.totainfo.eap.cp.trx.gpib.GPIBLotEndReport.GPIBLotEndReportO;
+import com.totainfo.eap.cp.trx.gpib.GPIBLotStartReport.GPIBLotStartReportI;
+import com.totainfo.eap.cp.trx.gpib.GPIBLotStartReport.GPIBLotStartReportO;
+import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportI;
+import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportO;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportI;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportO;
 import com.totainfo.eap.cp.trx.mes.EAPEqptStatusReport.EAPEqptStatusReportI;
@@ -65,7 +71,7 @@ public class MesHandler {
 
 
 
-    public static EAPEqptAlarmReportO alarmReport(String evtNo,String alarmCode, String alarmText, String time){
+    public static EAPEqptAlarmReportO alarmReport(String evtNo,String alarmCode, String alarmText, String time,String ID){
         EAPEqptAlarmReportI eapEqptAlarmReportI = new EAPEqptAlarmReportI();
         EAPEqptAlarmReportO eapEqptAlarmReportO = new EAPEqptAlarmReportO();
         eapEqptAlarmReportI.setTrxId("uploadEquipmentErrorMessage");
@@ -194,15 +200,15 @@ public class MesHandler {
     }
 
 
-    public static EAPUploadDieResultO uploadDieResult(String evtNo, String lotNo, String waferId, String startCoordinates, String result, String userId){
+    public static EAPUploadDieResultO uploadDieResult(String evtNo, String lotNo, String waferId, List datas, String userId){
         EAPUploadDieResultI eapUploadDieResultI = new EAPUploadDieResultI();
         EAPUploadDieResultO eapUploadDieResultO = new EAPUploadDieResultO();
         eapUploadDieResultI.setTrxId("uploaddietestresult");
         eapUploadDieResultI.setEvtUsr(userId);
         eapUploadDieResultI.setLotNo(lotNo);
         eapUploadDieResultI.setWaferId(waferId);
-        eapUploadDieResultI.setStartingCoordinates(startCoordinates);
-        eapUploadDieResultI.setResult(result);
+        eapUploadDieResultI.setDatas(datas);
+
         eapUploadDieResultI.setComputerName(computerName);
         eapUploadDieResultI.setEquipmentNo(GenericDataDef.equipmentNo);
 
@@ -217,7 +223,7 @@ public class MesHandler {
         return eapUploadDieResultO;
     }
 
-    public static EAPUploadMarkResultO uploadMarkResult(String evtNo, String lotNo, String waferId, List datas, String remark, String userId) {
+    public static EAPUploadMarkResultO uploadMarkResult(String evtNo, String lotNo, String waferId,String remark,List datas, String userId) {
         EAPUploadMarkResultI eapUploadMarkResultI = new EAPUploadMarkResultI();
         EAPUploadMarkResultO eapUploadMarkResultO = new EAPUploadMarkResultO();
         eapUploadMarkResultI.setTrxId("uploadNeedleMarkResults");
@@ -261,9 +267,69 @@ public class MesHandler {
         return mesSyncProberCardO;
     }
 
+    public static GPIBLotStartReportO lotStart(String evtNo,String evtUsr,String lotNo){
+        GPIBLotStartReportI gpibLotStartReportI = new GPIBLotStartReportI();
+        GPIBLotStartReportO gpibLotStartReportO = new GPIBLotStartReportO();
+        gpibLotStartReportI.setTrxId("LotStart");
+        gpibLotStartReportI.setComputerName(computerName);
+        gpibLotStartReportI.setEvtUsr(evtUsr);
+        gpibLotStartReportI.setEquipmentNo(GenericDataDef.equipmentNo);
+        gpibLotStartReportI.setLotNo(lotNo);
+        String reply = rabbitmqHandler.sendForReply(evtNo, appName, mesQueue, mesExchange, gpibLotStartReportI);
+        if(!StringUtils.hasText(reply)){
+            gpibLotStartReportO.setRtnCode(MES_TIME_OUT);
+            gpibLotStartReportO.setRtnMesg("[EAP-MES]:EAP上报LotStart信息，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,gpibLotStartReportO.getRtnMesg());
+        }else {
+            gpibLotStartReportO = JacksonUtils.string2Object(reply, GPIBLotStartReportO.class);
+        }
+        return gpibLotStartReportO;
+    }
+
+    public static GPIBLotEndReportO lotEnd(String evtNo,String evtUsr,String LotNo){
+        GPIBLotEndReportI gpibLotEndReportI = new GPIBLotEndReportI();
+        GPIBLotEndReportO gpibLotEndReportO = new GPIBLotEndReportO();
+        gpibLotEndReportI.setTrxId("LotEnd");
+        gpibLotEndReportI.setComputerName(computerName);
+        gpibLotEndReportI.setEvtUsr(evtUsr);
+        gpibLotEndReportI.setEquipmentNo(GenericDataDef.equipmentNo);
+        gpibLotEndReportI.setLotNo(LotNo);
+        String reply = rabbitmqHandler.sendForReply(evtNo, appName, mesQueue, mesExchange, gpibLotEndReportI);
+        if(!StringUtils.hasText(reply)){
+            gpibLotEndReportO.setRtnCode(MES_TIME_OUT);
+            gpibLotEndReportO.setRtnMesg("[EAP-MES]:EAP上报LotEnd信息，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,gpibLotEndReportO.getRtnMesg());
+        }else {
+            gpibLotEndReportO = JacksonUtils.string2Object(reply, GPIBLotEndReportO.class);
+        }
+        return gpibLotEndReportO;
+
+    }
+
+    public static GPIBWaferStartReportO waferStart(String evtNo,String evtUsr,String lotNo,String waferId){
+        GPIBWaferStartReportI gpibWaferStartReportI = new GPIBWaferStartReportI();
+        GPIBWaferStartReportO gpibWaferStartReportO = new GPIBWaferStartReportO();
+        gpibWaferStartReportI.setTrxId("WaferStart");
+        gpibWaferStartReportI.setComputerName(computerName);
+        gpibWaferStartReportI.setEvtUsr(evtUsr);
+        gpibWaferStartReportI.setEquipmentNo(GenericDataDef.equipmentNo);
+        gpibWaferStartReportI.setLotNo(lotNo);
+        gpibWaferStartReportI.setWaferId(waferId);
+        String reply = rabbitmqHandler.sendForReply(evtNo, appName, mesQueue, mesExchange, gpibWaferStartReportI);
+        if (!StringUtils.hasText(reply)){
+            gpibWaferStartReportO.setRtnCode(MES_TIME_OUT);
+            gpibWaferStartReportO.setRtnMesg("[EAP-MES]:EAP上报WaferStart信息，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,gpibWaferStartReportO.getRtnMesg());
+        }else {
+            gpibWaferStartReportO = JacksonUtils.string2Object(reply, GPIBWaferStartReportO.class);
+        }
+        return gpibWaferStartReportO;
+    }
+
 
     @Autowired
     public void setRabbitmqHandler(RabbitmqHandler rabbitmqHandler) {
+
         MesHandler.rabbitmqHandler = rabbitmqHandler;
     }
 

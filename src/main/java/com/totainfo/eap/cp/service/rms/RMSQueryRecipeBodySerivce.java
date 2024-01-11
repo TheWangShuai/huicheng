@@ -2,6 +2,7 @@ package com.totainfo.eap.cp.service.rms;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.commdef.GenergicStatDef.EqptMode;
+import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.dao.IEqptDao;
 import com.totainfo.eap.cp.entity.EqptInfo;
 import com.totainfo.eap.cp.handler.ClientHandler;
@@ -45,35 +46,52 @@ public class RMSQueryRecipeBodySerivce  extends EapBaseService<RmsQueryRecipeBod
         EqptInfo eqptInfo = eqptDao.getEqpt();
         if(!EqptMode.Online.equals(eqptInfo.getEqptMode())){
             outTrx.setRtnCode(EQPT_MODE_DISMATCH);
-            outTrx.setRtnMesg("[EAP-Clinet]:设备当前是Offline 模式，请确认");
+            outTrx.setRtnMesg("[RMS-EAP]:设备当前是Offline 模式，请确认");
             ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
             return;
         }
 
         String recipeId = inTrx.getRecipeId();
-        EAPDeviceParamCollectionI eapDeviceParamCollectionI = new EAPDeviceParamCollectionI();
-        eapDeviceParamCollectionI.setTrxId("EAPACCEPT");
-        eapDeviceParamCollectionI.setTrypeId("I");
-        eapDeviceParamCollectionI.setActionFlg("RWPEE");
-        eapDeviceParamCollectionI.setDeviceName(recipeId);
-        eapDeviceParamCollectionI.setRequestKey(evtNo);
-        AsyncUtils.setRequest(evtNo, timeOut);
-        String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapDeviceParamCollectionI);
-        if(StringUtils.isEmpty(returnMesg)){
+//        String toolType = inTrx.getToolType();
+        String toolType = "AP3000";
+        RmsQueryRecipeBodyI rmsQueryRecipeBodyI = new RmsQueryRecipeBodyI();
+        rmsQueryRecipeBodyI.setRecipeId(recipeId);
+        rmsQueryRecipeBodyI.setToolType("AP3000");
+        ClientHandler.sendMessage(evtNo,false,2,"EAP向Clinet端发送采集recipebody成功");
+        String recipeBody = httpHandler.getbodyHttpForClient(evtNo, GenericDataDef.recipeBodyUrl, recipeId, toolType,rmsQueryRecipeBodyI);
+        if(StringUtils.isEmpty(recipeBody)){
             outTrx.setRtnCode(KVM_TIME_OUT);
-            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发Devce Name:["+recipeId+"]参数采集， KVM 没有返回");
+            outTrx.setRtnMesg("[EAP-Client]:EAP 下发Recipe :["+recipeId+"]参数采集， Client 没有返回");
             ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
-        EAPDeviceParamCollectionO eapDeviceParamCollectionO = JacksonUtils.string2Object(returnMesg, EAPDeviceParamCollectionO.class);
-        if(!RETURN_CODE_OK.equals(eapDeviceParamCollectionO.getRtnCode())){
-            outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发Devce Name:["+recipeId+"]参数采集， KVM 返回错误:[" + eapDeviceParamCollectionO.getRtnMesg() + "]");
-            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
-            return;
-        }
-        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:EAP 发送Device param采集指令成功。");
-        String recipeBody = AsyncUtils.getResponse(evtNo, timeOut);
+        outTrx.setRecipeId(recipeId);
+        outTrx.setToolId(inTrx.getToolId());
         outTrx.setRecipeBody(recipeBody);
+
+//        EAPDeviceParamCollectionI eapDeviceParamCollectionI = new EAPDeviceParamCollectionI();
+//        eapDeviceParamCollectionI.setTrxId("client");
+//        eapDeviceParamCollectionI.setTrypeId("I");
+//        eapDeviceParamCollectionI.setActionFlg("RWPEE");
+//        eapDeviceParamCollectionI.setDeviceName(recipeId);
+//        eapDeviceParamCollectionI.setRequestKey(evtNo);
+//        AsyncUtils.setRequest(evtNo, timeOut);
+//        String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapDeviceParamCollectionI);
+//        if(StringUtils.isEmpty(returnMesg)){
+//            outTrx.setRtnCode(KVM_TIME_OUT);
+//            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发Devce Name:["+recipeId+"]参数采集， KVM 没有返回");
+//            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
+//            return;
+//        }
+//        EAPDeviceParamCollectionO eapDeviceParamCollectionO = JacksonUtils.string2Object(returnMesg, EAPDeviceParamCollectionO.class);
+//        if(!RETURN_CODE_OK.equals(eapDeviceParamCollectionO.getRtnCode())){
+//            outTrx.setRtnCode(KVM_RETURN_ERROR);
+//            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发Devce Name:["+recipeId+"]参数采集， KVM 返回错误:[" + eapDeviceParamCollectionO.getRtnMesg() + "]");
+//            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
+//            return;
+//        }
+//        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:EAP 发送Device param采集指令成功。");
+//        String recipeBody = AsyncUtils.getResponse(evtNo, timeOut);
+//        outTrx.setRecipeBody(recipeBody);
     }
 }

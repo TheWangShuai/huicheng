@@ -2,16 +2,22 @@ package com.totainfo.eap.cp.service.client;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
+import com.totainfo.eap.cp.dao.IEqptDao;
 import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.dao.IStateDao;
+import com.totainfo.eap.cp.entity.EqptInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.entity.StateInfo;
-import com.totainfo.eap.cp.handler.ClientHandler;
-import com.totainfo.eap.cp.handler.HttpHandler;
-import com.totainfo.eap.cp.handler.MesHandler;
+import com.totainfo.eap.cp.handler.*;
 import com.totainfo.eap.cp.service.kvm.KVMOperateEndService;
 import com.totainfo.eap.cp.trx.client.EAPLotIdRead.EAPLotIdReadI;
 import com.totainfo.eap.cp.trx.client.EAPLotIdRead.EAPLotIdReadO;
+import com.totainfo.eap.cp.trx.client.EAPSyncEqpInfo.EAPSyncEqpInfoI;
+import com.totainfo.eap.cp.trx.ems.EMSDeviceParameterReport.EMSDeviceParameterReportI;
+import com.totainfo.eap.cp.trx.ems.EMSDeviceParameterReport.EMSDeviceParameterReportIA;
+import com.totainfo.eap.cp.trx.ems.EMSLotinfoReport.EMSLotInfoReportI;
+import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardI;
+import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardO;
 import com.totainfo.eap.cp.trx.kvm.EAPLotInfoWriteIn.EAPLotInfoWriteInI;
 import com.totainfo.eap.cp.trx.kvm.EAPLotInfoWriteIn.EAPLotInfoWriteInO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoO;
@@ -24,8 +30,13 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.*;
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
+import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
+import static com.totainfo.eap.cp.commdef.GenericDataDef.proberUrl;
 
 /**
  * @author xiaobin.Guo
@@ -41,6 +52,8 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
     private IStateDao stateDao;
     @Resource
     private HttpHandler httpHandler;
+    @Resource
+    private IEqptDao iEqptDao;
 
     @Override
     public void mainProc(String evtNo, EAPLotIdReadI inTrx, EAPLotIdReadO outTrx) {
@@ -83,6 +96,8 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         EAPReqLotInfoO eapReqLotInfoO = MesHandler.lotInfoReq(evtNo, lotId, proberId, userId);
         if(!RETURN_CODE_OK.equals(eapReqLotInfoO.getRtnCode())){
             Stateset("1","3",lotId);
+            EapEndCard(evtNo);
+            Remove(evtNo);
             return;
         }
         //发送给前端，LOT 校验成功。
@@ -100,8 +115,35 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         lotInfo.setUserId(userId);
         lotInfo.setParamList(eapReqLotInfoOA.getParamList());
         lotInfo.setTemperatureRange(eapReqLotInfoOA.getTemperatureRange());
-        lotInfo.setTemperature(eapReqLotInfoOA.getParamList().get(2).getParamValue());
+        List<EAPReqLotInfoOB> paramList = eapReqLotInfoOA.getParamList();
+        String tempValue = null;
+        for (EAPReqLotInfoOB eapReqLotInfoOB : paramList){
+            if ("Temp".equals(eapReqLotInfoOB.getParamName())){
+                tempValue = eapReqLotInfoOB.getParamValue();
+            }
+        }
+        LogUtils.info("mes下发的温度是[{}]",tempValue);
+        lotInfo.setTemperature(tempValue);
         lotDao.addLotInfo(lotInfo);
+
+        //上报设备参数信息给ems
+        EMSDeviceParameterReportI emsDeviceParameterReportI = new EMSDeviceParameterReportI();
+        ArrayList<EMSDeviceParameterReportIA> list = new ArrayList<>();
+
+        EMSDeviceParameterReportIA param1 = new EMSDeviceParameterReportIA();
+        param1.setParamCode("1");
+        param1.setParamName("温度");
+        param1.setParamValue(tempValue);
+        list.add(param1);
+
+        EMSDeviceParameterReportIA param2 = new EMSDeviceParameterReportIA();
+        param2.setParamCode("2");
+        param2.setParamName("温度范围");
+        param2.setParamValue(lotInfo.getTemperatureRange());
+        list.add(param2);
+        emsDeviceParameterReportI.setParamList(list);
+        EmsHandler.emsDeviceParameterReportToEms(evtNo,lotId,emsDeviceParameterReportI);
+
 
         //将信息下发给KVM
         EAPLotInfoWriteInI eapLotInfoWriteInI = new EAPLotInfoWriteInI();
@@ -127,6 +169,8 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
             Stateset("2","3",lotId);
             outTrx.setRtnCode(eapLotInfoWriteInO.getRtnCode());
             outTrx.setRtnMesg("[EAP-KVM]:EAP下发批次信息，KVM返回失败，原因:[" + eapLotInfoWriteInO.getRtnMesg() + "]");
+            EapEndCard(evtNo);
+            Remove(evtNo);
             ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
         }
         //发送给前端，LOT信息发送KVM成功
@@ -138,5 +182,25 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         stateInfo.setState(state);
         stateInfo.setLotNo(lotno);
         stateDao.addStateInfo(stateInfo);
+    }
+    public void EapEndCard(String evtNo){
+        EAPEndCardI eapEndCardI = new EAPEndCardI();
+        eapEndCardI.setTrxId("EAPACCEPT");
+        eapEndCardI.setActionFlg("RTL");
+        String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapEndCardI);
+        EAPEndCardO eapEndCardO1 = JacksonUtils.string2Object(returnMesg, EAPEndCardO.class);
+        EAPEndCardO eapEndCardO = new EAPEndCardO();
+        eapEndCardO.setRtnMesg(eapEndCardO1.getRtnMesg());
+    }
+    public void Remove(String evtNo){
+        RedisHandler.remove("EQPT:state", "EQPT:%s:LOTINFO".replace("%s", equipmentNo));
+        EqptInfo eqptInfo = iEqptDao.getEqpt();
+        EAPSyncEqpInfoI eapSyncEqpInfoI = new EAPSyncEqpInfoI();
+        eapSyncEqpInfoI.setTrxId("RtnConnectInfo");
+        eapSyncEqpInfoI.setActionFlg("RLC");
+        eapSyncEqpInfoI.setState(eqptInfo.getEqptStat());
+        eapSyncEqpInfoI.setModel(eqptInfo.getEqptMode());
+        ClientHandler.sendEqpInfo(evtNo, eapSyncEqpInfoI);
+        RedisHandler.remove("EQPTINFO:EQ:%s:KEY".replace("%s", equipmentNo));
     }
 }

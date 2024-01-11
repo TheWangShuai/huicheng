@@ -51,6 +51,7 @@ public class RMSHandler {
         rmsOnlineValidationI.setJobId(evtNo);
         rmsOnlineValidationI.setBisRecipeVOList(rmsOnlineValidationIAList);
 
+
         String returnMsg = rabbitmqHandler.sendForReply(evtNo, appName, rmsQueue, rmsExchange, rmsOnlineValidationI);
         if (!StringUtils.hasText(returnMsg)) {
             return null;

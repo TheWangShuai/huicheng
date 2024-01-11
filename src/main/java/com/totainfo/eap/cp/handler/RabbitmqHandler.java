@@ -57,7 +57,6 @@ public class RabbitmqHandler<I extends BaseTrxI> {
     }
 
     public String sendForReply(String evtNo, String appName, String queue, String exchange, I inObj) {
-
         String trxId = inObj.getTrxId();
         MessageProperties properties = new MessageProperties();
         properties.setMessageId(evtNo);

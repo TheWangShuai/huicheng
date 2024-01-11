@@ -2,18 +2,24 @@ package com.totainfo.eap.cp.service.client;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
+import com.totainfo.eap.cp.dao.IEqptDao;
 import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.dao.IStateDao;
+import com.totainfo.eap.cp.entity.EqptInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.entity.StateInfo;
 import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.HttpHandler;
 import com.totainfo.eap.cp.handler.MesHandler;
+import com.totainfo.eap.cp.handler.RedisHandler;
 import com.totainfo.eap.cp.service.kvm.KVMOperateEndService;
 import com.totainfo.eap.cp.trx.client.EAPEqpControl.EAPEqpControlI;
 import com.totainfo.eap.cp.trx.client.EAPEqpControl.EAPEqpControlO;
+import com.totainfo.eap.cp.trx.client.EAPSyncEqpInfo.EAPSyncEqpInfoI;
 import com.totainfo.eap.cp.trx.kvm.EAPControlCommand.EAPControlCommandI;
 import com.totainfo.eap.cp.trx.kvm.EAPControlCommand.EAPControlCommandO;
+import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardI;
+import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardO;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionI;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionO;
 import com.totainfo.eap.cp.trx.kvm.KVMOperateend.KVMOperateEndI;
@@ -23,13 +29,15 @@ import com.totainfo.eap.cp.trx.mes.EAPReqCheckIn.EAPReqCheckInO;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.*;
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
-import static com.totainfo.eap.cp.commdef.GenericDataDef.testerUrl;
+import static com.totainfo.eap.cp.commdef.GenericDataDef.*;
+import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
 
 
 /**
@@ -45,6 +53,11 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
     private IStateDao stateDao;
     @Resource
     private HttpHandler httpHandler;
+    @Resource
+    private IEqptDao iEqptDao;
+
+    @Value("${spring.rabbitmq.eap.checkName}")
+    private boolean eapCheckName;
 
     @Override
     public void mainProc(String evtNo, EAPEqpControlI inTrx, EAPEqpControlO outTrx) {
@@ -58,42 +71,44 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
             if (lotInfo == null) {
                 outTrx.setRtnCode(LOT_INFO_NOT_EXIST);
                 outTrx.setRtnMesg("[EAP-Client]:没有找需要制程的批次信息，请确认");
+                EapEndCard(evtNo);
                 ClientHandler.sendMessage(evtNo, true, 1, outTrx.getRtnMesg());
                 return;
             }
             String lotId = lotInfo.getLotId();
-            Stateset("6","1",lotId);
+            Stateset("7","1",lotId);
             EAPReqCheckInI eapReqCheckInI = new EAPReqCheckInI();
             eapReqCheckInI.setTrxId("checkIn");
             eapReqCheckInI.setEvtUsr(userId);
             eapReqCheckInI.setLotNo(lotInfo.getLotId());
             eapReqCheckInI.setEquipmentNo(GenericDataDef.equipmentNo);
             eapReqCheckInI.setProbeCard(lotInfo.getProberCard().split("-")[0]);
-
-            eapReqCheckInI.setTemperature(KVMOperateEndService.getStr());
+            eapReqCheckInI.setTemperature(lotInfo.getTemperature());
             eapReqCheckInI.setTestProgram(lotInfo.getTestProgram());
-            eapReqCheckInI.setDevice(KVMOperateEndService.getDn());
-
+            eapReqCheckInI.setDevice(lotInfo.getDevice());
+            LogUtils.info("[{}]",eapReqCheckInI);
             EAPReqCheckInO eapReqCheckInO = MesHandler.checkInReq(evtNo, lotInfo.getLotId(), userId, eapReqCheckInI);
             if (!RETURN_CODE_OK.equals(eapReqCheckInO.getRtnCode())) {
-                Stateset("6","3",lotId);
+                Stateset("7","3",lotId);
                 outTrx.setRtnCode(eapReqCheckInO.getRtnCode());
                 outTrx.setRtnMesg(eapReqCheckInO.getRtnMesg());
+                EapEndCard(evtNo);
+                Remove(evtNo);
                 return;
             }
             ClientHandler.sendMessage(evtNo, false, 2, "批次:[" + lotInfo.getLotId() + "] Check In 成功。");
-            Stateset("6","2",lotId);
+            Stateset("7","2",lotId);
             EAPOperationInstructionI eapOperationInstructionI = new EAPOperationInstructionI();
             eapOperationInstructionI.setTrxId("EAPACCEPT");
             eapOperationInstructionI.setTrypeId("I");
             eapOperationInstructionI.setActionFlg("RTT");
             eapOperationInstructionI.setLotId(lotInfo.getLotId());
-            eapOperationInstructionI.setUserId("HF0731");
+            eapOperationInstructionI.setUserId(userId);
 
             String returnMesg = httpHandler.postHttpForEqpt(evtNo, testerUrl, eapOperationInstructionI);
-            Stateset("7","1",lotId);
+            Stateset("8","1",lotId);
             if (StringUtils.isEmpty(returnMesg)) {
-                Stateset("7","3",lotId);
+                Stateset("8","3",lotId);
                 outTrx.setRtnCode(KVM_TIME_OUT);
                 outTrx.setRtnMesg("EAP 下发测试程序清除， KVM 没有返回");
                 ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
@@ -101,9 +116,11 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
             }
             EAPOperationInstructionO eapOperationInstructionO = JacksonUtils.string2Object(returnMesg, EAPOperationInstructionO.class);
             if (!RETURN_CODE_OK.equals(eapOperationInstructionO.getRtnCode())) {
-                Stateset("7","3",lotId);
+                Stateset("8","3",lotId);
                 outTrx.setRtnCode(KVM_RETURN_ERROR);
                 outTrx.setRtnMesg("EAP 下发测试程序清除， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
+                EapEndCard(evtNo);
+                Remove(evtNo);
                 ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                 return;
             }
@@ -140,5 +157,25 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
         stateInfo1.setState(state);
         stateInfo1.setLotNo(lotno);
         stateDao.addStateInfo(stateInfo1);
+    }
+    public void EapEndCard(String evtNo){
+        EAPEndCardI eapEndCardI = new EAPEndCardI();
+        eapEndCardI.setTrxId("EAPACCEPT");
+        eapEndCardI.setActionFlg("RTL");
+        String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapEndCardI);
+        EAPEndCardO eapEndCardO1 = JacksonUtils.string2Object(returnMesg, EAPEndCardO.class);
+        EAPEndCardO eapEndCardO = new EAPEndCardO();
+        eapEndCardO.setRtnMesg(eapEndCardO1.getRtnMesg());
+    }
+    public void Remove(String evtNo){
+        RedisHandler.remove("EQPT:state", "EQPT:%s:LOTINFO".replace("%s", equipmentNo));
+        EqptInfo eqptInfo = iEqptDao.getEqpt();
+        EAPSyncEqpInfoI eapSyncEqpInfoI = new EAPSyncEqpInfoI();
+        eapSyncEqpInfoI.setTrxId("RtnConnectInfo");
+        eapSyncEqpInfoI.setActionFlg("RLC");
+        eapSyncEqpInfoI.setState(eqptInfo.getEqptStat());
+        eapSyncEqpInfoI.setModel(eqptInfo.getEqptMode());
+        ClientHandler.sendEqpInfo(evtNo, eapSyncEqpInfoI);
+        RedisHandler.remove("EQPTINFO:EQ:%s:KEY".replace("%s", equipmentNo));
     }
 }

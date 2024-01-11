@@ -38,14 +38,14 @@ public class KVMAlarmReportService extends EapBaseService<KVMAlarmReportI, KVMAl
         String alarmCode = inTrx.getAlarmCode();
         String alarmText = inTrx.getAlarmMessage();
         String time = inTrx.getTime();
-        MesHandler.alarmReport(evtNo, alarmCode, alarmText, time);
+        MesHandler.alarmReport(evtNo, alarmCode, alarmText, time,null);
 
         //报警需要推送给Client端展示
         ClientHandler.sendMessage(evtNo, false, 2, "设备发送报警:[" + alarmCode + "]["+ alarmText +"]");
 
         //判断是不是制程结束的报警，如果是，发给MES Check Out
         if(!"00405".equals(alarmCode)){
-            EAPEqptAlarmReportO eapEqptAlarmReportO = MesHandler.alarmReport(evtNo, alarmCode, alarmText, time);
+            EAPEqptAlarmReportO eapEqptAlarmReportO = MesHandler.alarmReport(evtNo, alarmCode, alarmText, time,null);
             String s = eapEqptAlarmReportO.toString();
             ClientHandler.sendMessage(evtNo,false,2,s);
             return;

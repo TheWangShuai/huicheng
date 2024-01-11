@@ -1,10 +1,14 @@
 package com.totainfo.eap.cp.service.client;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.sun.org.apache.bcel.internal.generic.PUSH;
 import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.MesHandler;
 import com.totainfo.eap.cp.trx.client.EAPUploadNeedMark.EAPUploadNeedMarkI;
+import com.totainfo.eap.cp.trx.client.EAPUploadNeedMark.EAPUploadNeedMarkIA;
 import com.totainfo.eap.cp.trx.client.EAPUploadNeedMark.EAPUploadNeedMarkO;
+import com.totainfo.eap.cp.trx.mes.EAPUploadMarkResult.EAPUploadMarkResultI;
 import com.totainfo.eap.cp.trx.mes.EAPUploadMarkResult.EAPUploadMarkResultO;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import org.json.JSONArray;
@@ -15,6 +19,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
 
@@ -32,15 +38,15 @@ public class EAPUplaodNeedMarkService extends EapBaseService<EAPUploadNeedMarkI,
         String startCoordinate = inTrx.getCoordinate();
         String result = inTrx.getResult();
         String remark = inTrx.getRemark();
-        Map<String, String> map = new HashMap<>();
-        map.put("startCoordinates", startCoordinate);
-        map.put("result", result);
-        String s = map.toString();
-        List<String> datas = new ArrayList<>();
-        datas.add(s);
+        List<EAPUploadNeedMarkIA> datas= new ArrayList<>();
+
+        EAPUploadNeedMarkIA eapUploadNeedMarkIA = new EAPUploadNeedMarkIA();
+        eapUploadNeedMarkIA.setStartCoordinate(startCoordinate);
+        eapUploadNeedMarkIA.setResult(result);
+        datas.add(eapUploadNeedMarkIA);
 
 
-        EAPUploadMarkResultO eapUploadMarkResultO = MesHandler.uploadMarkResult(evtNo, lotId, waferId, datas, remark, userId);
+        EAPUploadMarkResultO eapUploadMarkResultO = MesHandler.uploadMarkResult(evtNo, lotId, waferId, remark, datas,userId);
         if (!RETURN_CODE_OK.equals(eapUploadMarkResultO.getRtnCode())) {
             outTrx.setRtnCode(eapUploadMarkResultO.getRtnCode());
             outTrx.setRtnMesg(eapUploadMarkResultO.getRtnMesg());
@@ -49,4 +55,6 @@ public class EAPUplaodNeedMarkService extends EapBaseService<EAPUploadNeedMarkI,
         }
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]:EAP 上传针痕信息成功。");
     }
+
+
 }
