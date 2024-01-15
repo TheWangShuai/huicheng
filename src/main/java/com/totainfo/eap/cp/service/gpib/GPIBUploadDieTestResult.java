@@ -2,6 +2,7 @@ package com.totainfo.eap.cp.service.gpib;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.dao.ILotDao;
+import com.totainfo.eap.cp.entity.DielInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.EmsHandler;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
 
@@ -27,10 +29,22 @@ public class GPIBUploadDieTestResult extends EapBaseService <GPIBUploadDieTestRe
     @Override
     public void mainProc(String evtNo, GPIBUploadDieTestResultI inTrx, GPIBUploadDieTestResultO outTrx) {
         LotInfo lotInfo = lotDao.getCurLotInfo();
+        if(lotInfo == null){
+            return;
+        }
+
         String userId = lotInfo.getUserId();
-        String lotNo = inTrx.getLotNo();
+        String lotNo = lotInfo.getLotId();
         String waferId = inTrx.getWaferId();
-        List<GPIBUploadDieTestResultIA> datas = inTrx.getDatas();
+
+        Map<String, List<DielInfo>> waferDieMap = lotInfo.getWaferDieMap();
+        if(waferDieMap == null || waferDieMap.isEmpty()){
+            return;
+        }
+        List<DielInfo> dielInfos = waferDieMap.get(waferId);
+        if(dielInfos == null ||dielInfos.isEmpty()){
+            return;
+        }
 
         //TODO 取到的卡控值 后续在加入判断
         EMSGetTestResultO testResult = EmsHandler.getTestResult(evtNo, lotInfo.getDevice());
@@ -42,7 +56,7 @@ public class GPIBUploadDieTestResult extends EapBaseService <GPIBUploadDieTestRe
 //        GPIBUploadDieTestResultIA gpibUploadDieTestResultIA = JacksonUtils.string2Object(string, GPIBUploadDieTestResultIA.class);
 //        String result = gpibUploadDieTestResultIA.getResult();
 //        String startCoorDinates = gpibUploadDieTestResultIA.getStartCoorDinates();
-        EAPUploadDieResultO eapUploadDieResultO = MesHandler.uploadDieResult(evtNo, lotNo, waferId, datas, userId);
+        EAPUploadDieResultO eapUploadDieResultO = MesHandler.uploadDieResult(evtNo, lotNo, waferId, dielInfos, userId);
         if (!RETURN_CODE_OK.equals(eapUploadDieResultO.getRtnCode())) {
             outTrx.setRtnCode(eapUploadDieResultO.getRtnCode());
             outTrx.setRtnMesg(eapUploadDieResultO.getRtnMesg());

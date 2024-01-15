@@ -19,7 +19,7 @@ public class EAPUploadDieResultI extends BaseTrxI {
     private String Result;
     private String equipmentNo;
 
-    private List<GPIBUploadDieTestResultIA> datas;
+    private List<EAPUploadDieResultIA> datas;
 
     public String getComputerName() {
         return computerName;
@@ -77,11 +77,11 @@ public class EAPUploadDieResultI extends BaseTrxI {
         this.equipmentNo = equipmentNo;
     }
 
-    public List<GPIBUploadDieTestResultIA> getDatas() {
+    public List<EAPUploadDieResultIA> getDatas() {
         return datas;
     }
 
-    public void setDatas(List<GPIBUploadDieTestResultIA> datas) {
+    public void setDatas(List<EAPUploadDieResultIA> datas) {
         this.datas = datas;
     }
 }

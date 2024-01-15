@@ -13,6 +13,7 @@ public class EAPReqLotInfoOA {
     private String testProgram;
     private String loadBoardId;
     private String deviceId;
+    private int DieCount;
     private String temperatureRange;
     private List<EAPReqLotInfoOB> paramList;
     private Map<String,String> paramList1;
@@ -86,5 +87,13 @@ public class EAPReqLotInfoOA {
 
     public void setTemperatureRange(String temperatureRange) {
         this.temperatureRange = temperatureRange;
+    }
+
+    public int getDieCount() {
+        return DieCount;
+    }
+
+    public void setDieCount(int dieCount) {
+        DieCount = dieCount;
     }
 }

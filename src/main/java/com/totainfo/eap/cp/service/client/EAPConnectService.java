@@ -1,6 +1,9 @@
 package com.totainfo.eap.cp.service.client;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
+import com.totainfo.eap.cp.commdef.GenergicStatDef.EqptMode;
+import com.totainfo.eap.cp.commdef.GenergicStatDef.EqptStat;
+import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.dao.IEqptDao;
 import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.entity.EqptInfo;
@@ -31,6 +34,14 @@ public class EAPConnectService  extends EapBaseService<EAPConnectI, EAPConnectO>
     @Override
     public void mainProc(String evtNo, EAPConnectI inTrx, EAPConnectO outTrx) {
         EqptInfo eqptInfo = eqptDao.getEqpt();
+        if(eqptInfo == null){
+            eqptInfo = new EqptInfo();
+            eqptInfo.setEqptId(GenericDataDef.equipmentNo);
+            eqptInfo.setEqptStat(EqptStat.IDLE);
+            eqptInfo.setEqptMode(EqptMode.Online);
+            eqptDao.addEqpt(eqptInfo);
+        }
+
         EAPSyncEqpInfoI eapSyncEqpInfoI = new EAPSyncEqpInfoI();
         eapSyncEqpInfoI.setTrxId("ConnectInfo");
         eapSyncEqpInfoI.setTrypeId("I");

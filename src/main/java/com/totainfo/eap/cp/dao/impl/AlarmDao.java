@@ -7,21 +7,35 @@ import com.totainfo.eap.cp.handler.RedisHandler;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
+
 @Repository("alarmDao")
 public class AlarmDao implements IAlarmDao {
-    public static final String KEY = "EQPT:%s";
+
+    private String EQPT_INFO_KEY = "EQPTALARM:EQ:%s:KEY";
     @Override
     public void addAlarmInfo(AlarmInfo alarmInfo) {
-        String key = String.format(KEY,"alarm");
-        String s = JacksonUtils.object2String(alarmInfo);
-        RedisHandler.set(key, s);
+        String key = String.format(EQPT_INFO_KEY, equipmentNo);
+        RedisHandler.hset(key, alarmInfo.getAlarmCode(), alarmInfo);
 
     }
 
     @Override
-    public AlarmInfo getAlarmInfo() {
-        String key = String.format(KEY,"alarm");
-        AlarmInfo alarmInfo = JacksonUtils.string2Object(RedisHandler.get(key), AlarmInfo.class);
-        return alarmInfo;
+    public Map<String, AlarmInfo> getAlarmInfo() {
+        String key = String.format(EQPT_INFO_KEY, equipmentNo);
+        Map<String, AlarmInfo> alarmInfoMap = RedisHandler.hmget(key);
+        if(alarmInfoMap == null){
+            alarmInfoMap = new HashMap<>(0);
+        }
+        return alarmInfoMap;
+    }
+
+    @Override
+    public void removeAlarm(String alarmCode){
+        String key = String.format(EQPT_INFO_KEY, equipmentNo);
+        RedisHandler.hdel(key, alarmCode);
     }
 }

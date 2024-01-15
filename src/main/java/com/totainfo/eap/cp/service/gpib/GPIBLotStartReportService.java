@@ -20,16 +20,24 @@ import java.time.LocalTime;
 
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
 
-@Service("LotStartReport")
+@Service("lotStartReport")
 public class GPIBLotStartReportService extends EapBaseService<GPIBLotStartReportI, GPIBLotStartReportO> {
     @Resource
     private ILotDao lotDao;
     @Override
     public void mainProc(String evtNo, GPIBLotStartReportI inTrx, GPIBLotStartReportO outTrx) {
-        LotInfo lotInfo = lotDao.getCurLotInfo();
-        String evtUsr = lotInfo.getUserId();
-//        String evtUsr = inTrx.getEvtUsr();
+
         String lotNo = inTrx.getLotNo();
+        LotInfo lotInfo = lotDao.getCurLotInfo();
+        if(lotInfo == null){
+            return;
+        }
+        if(!lotNo.equals(lotInfo.getLotId())){
+            outTrx.setRtnCode("0000001");
+            outTrx.setRtnMesg("GPIB上报的LotID:["+lotNo+"]与当前正在作业的LotID:["+lotInfo.getLotId()+"]不一致，请确认");
+            return;
+        }
+        String evtUsr = lotInfo.getUserId();
 
         //上传生产相关信息给ems
         EMSLotInfoReportI emsLotInfoReportI = new EMSLotInfoReportI();

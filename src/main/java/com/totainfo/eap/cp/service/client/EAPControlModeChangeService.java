@@ -1,6 +1,7 @@
 package com.totainfo.eap.cp.service.client;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
+import com.totainfo.eap.cp.commdef.GenergicStatDef.EqptStat;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.dao.impl.EqptDao;
 import com.totainfo.eap.cp.entity.EqptInfo;
@@ -41,6 +42,7 @@ public class EAPControlModeChangeService extends EapBaseService<EAPContrlModeCha
         if(eqptInfo == null){
             eqptInfo = new EqptInfo();
             eqptInfo.setEqptId(GenericDataDef.equipmentNo);
+            eqptInfo.setEqptStat(EqptStat.IDLE);
         }
         eqptInfo.setEqptMode(model);
         eqptDao.addEqpt(eqptInfo);

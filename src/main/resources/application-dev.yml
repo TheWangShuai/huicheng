@@ -1,7 +1,10 @@
 equipment:
   id: P-N4-018
+  type: AP3000E
   proberUrl: http://10.8.23.224:8088/matrix/sendMsg
   testerUrl: http://10.8.61.33：4444/matrix/sendMsg
+client :
+  recipeBodyUrl: http://localhost:5000/api/DeviceOperate
 
 server:
   port: 8083
@@ -19,7 +22,7 @@ server:
 
 spring:
   redis:
-    host: localhost
+    host: 127.0.0.1
     port: 6379
     lettuce:
       pool:
@@ -27,8 +30,8 @@ spring:
         max-idle: 50
         max-active: 100
   rabbitmq:
-    host: 10.8.10.63
-    port: 5673
+    host: 127.0.0.1
+    port: 5672
     username: guest
     password: guest
     virtualHost: /
@@ -36,20 +39,35 @@ spring:
     simple:
       acknowledge-mode: manual
     mes:
-      queue: CP-MES
+      queue: CP-MES-MQ
       exchange: MES
     client:
       queue: CLIENT-QUEUE
       exchange: CLIENT
     eap:
+      checkName: false
       queue: TOTA.EAP.${equipment.id}
       exchange: EAP
     rms:
       checkFlag: false
       queue: TOTA.RMS
       exchange: RMS
+    ems:
+      queue: GS.TEST.EIB
+      exchange: EAPTEST
 logging:
   config: classpath:log/log4j2-dev.xml
-level:
-  cn.jay.repository: trace
+  level:
+    cn.jay.repository: trace
+number:
+  max: 5
 
+tcp:
+  timeout: 30  # 同步通信等待时间，单位：秒
+  server:
+    ip: 10.8.61.210
+    port: 7000
+  client:
+    separator: \n  #分隔符
+    retry:
+      delay: 5    #TCP重连间隔时间，单位：秒

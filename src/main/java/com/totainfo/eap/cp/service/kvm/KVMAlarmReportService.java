@@ -33,6 +33,7 @@ public class KVMAlarmReportService extends EapBaseService<KVMAlarmReportI, KVMAl
     private ILotDao lotDao;
 
     private String stop;
+
     @Override
     public void mainProc(String evtNo, KVMAlarmReportI inTrx, KVMAlarmReportO outTrx) {
         String alarmCode = inTrx.getAlarmCode();

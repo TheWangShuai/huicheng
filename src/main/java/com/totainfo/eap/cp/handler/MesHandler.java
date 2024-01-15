@@ -3,6 +3,7 @@ package com.totainfo.eap.cp.handler;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.dao.impl.LotDao;
+import com.totainfo.eap.cp.entity.DielInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.service.kvm.KVMOperateEndService;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotEndReport.GPIBLotEndReportI;
@@ -24,6 +25,7 @@ import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoO;
 import com.totainfo.eap.cp.trx.mes.EAPReqMeasureResult.EAPReqMeasureResultI;
 import com.totainfo.eap.cp.trx.mes.EAPReqMeasureResult.EAPReqMeasureResultO;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultI;
+import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultIA;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultO;
 import com.totainfo.eap.cp.trx.mes.EAPUploadMarkResult.EAPUploadMarkResultI;
 import com.totainfo.eap.cp.trx.mes.EAPUploadMarkResult.EAPUploadMarkResultO;
@@ -42,6 +44,7 @@ import javax.annotation.Resource;
 import java.awt.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -200,14 +203,22 @@ public class MesHandler {
     }
 
 
-    public static EAPUploadDieResultO uploadDieResult(String evtNo, String lotNo, String waferId, List datas, String userId){
+    public static EAPUploadDieResultO uploadDieResult(String evtNo, String lotNo, String waferId, List<DielInfo> datas, String userId){
         EAPUploadDieResultI eapUploadDieResultI = new EAPUploadDieResultI();
         EAPUploadDieResultO eapUploadDieResultO = new EAPUploadDieResultO();
         eapUploadDieResultI.setTrxId("uploaddietestresult");
         eapUploadDieResultI.setEvtUsr(userId);
         eapUploadDieResultI.setLotNo(lotNo);
         eapUploadDieResultI.setWaferId(waferId);
-        eapUploadDieResultI.setDatas(datas);
+
+        List<EAPUploadDieResultIA> eapUploadDieResultIAS = new ArrayList<>(datas.size());
+        for(DielInfo dielInfo:datas){
+            EAPUploadDieResultIA eapUploadDieResultIA = new EAPUploadDieResultIA();
+            eapUploadDieResultIA.setStartCoorDinates(dielInfo.getCoordinate());
+            eapUploadDieResultIA.setResult(dielInfo.getResult());
+            eapUploadDieResultIAS.add(eapUploadDieResultIA);
+        }
+        eapUploadDieResultI.setDatas(eapUploadDieResultIAS);
 
         eapUploadDieResultI.setComputerName(computerName);
         eapUploadDieResultI.setEquipmentNo(GenericDataDef.equipmentNo);

@@ -8,6 +8,7 @@ public class GPIBWaferStartReportI extends BaseTrxI {
     private String equipmentNo;
     private String lotNo;
     private String waferId;
+    private String pvWaferId;
 
     public String getComputerName() {
         return computerName;
@@ -47,5 +48,13 @@ public class GPIBWaferStartReportI extends BaseTrxI {
 
     public void setWaferId(String waferId) {
         this.waferId = waferId;
+    }
+
+    public String getPvWaferId() {
+        return pvWaferId;
+    }
+
+    public void setPvWaferId(String pvWaferId) {
+        this.pvWaferId = pvWaferId;
     }
 }

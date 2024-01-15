@@ -1,4 +1,11 @@
-license.path: /opt/eap/${eap.name}/config/license.key
+equipment:
+  id: P-N4-018
+  type: AP3000E
+  proberUrl: http://10.8.23.224:8088/matrix/sendMsg
+  testerUrl: http://10.8.61.33：4444/matrix/sendMsg
+client :
+  recipeBodyUrl: http://localhost:5000/api/DeviceOperate
+
 server:
   port: 8083
   servlet:
@@ -6,17 +13,16 @@ server:
       timeout: 18000m
   tomcat:
     uri-encoding: UTF-8
-    max-connections: 1000   #最大连接数
+    max-connections: 5000   #最大并发数
     accept-count: 200   #可以放到处理队列中的请求数
     connection-timeout: 2000ms
-    max-threads: 150  #最大并发数
-    min-spare-threads: 30  #初始化时创建的线程数
-
-
+    threads:
+      max: 800  #最大并发数
+      min-spare: 80  #初始化时创建的线程数
 
 spring:
   redis:
-    host: 200.73.52.156
+    host: 127.0.0.1
     port: 6379
     lettuce:
       pool:
@@ -24,69 +30,44 @@ spring:
         max-idle: 50
         max-active: 100
   rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+    virtualHost: /
+    timeout: 60000
+    simple:
+      acknowledge-mode: manual
     mes:
-      host: 200.73.52.156
-      port: 5672
-      username: guest
-      password: guest
-      virtualHost: MES_LOADHIS_SIME
-      listener:
-      simple:
-        acknowledge-mode: manual
-    spc:
-      host: 200.73.52.156
-      port: 5672
-      username: guest
-      password: guest
-      virtualHost: /
-      listener:
-      simple:
-        acknowledge-mode: manual
-  logging:
-    config: classpath:log/log4j2-local.xml
-    path: /aplog/BC/%{bcName}/
-    level:
-      cn.jay.repository: trace
-
-super:
-  user:
-    username: admin
-    password: 123
-
-
-
-async:
-  thread:
-    core_pool_size: 100
-    max_pool_size:  1000
-    queue_capacity: 200
-    keep_alive_seconds: 30
-
-
-project:
-#  type: plc
-  config: /opt/eap/${eap.name}/config
-  param: /opt/eap/${eap.name}/param
-#  data:
-#    frequency: 1000
-
-http:
-  enable: true
+      queue: CP-MES-MQ
+      exchange: MES
+    client:
+      queue: CLIENT-QUEUE
+      exchange: CLIENT
+    eap:
+      checkName: false
+      queue: TOTA.EAP.${equipment.id}
+      exchange: EAP
+    rms:
+      checkFlag: false
+      queue: TOTA.RMS
+      exchange: RMS
+    ems:
+      queue: GS.TEST.EIB
+      exchange: EAPTEST
+logging:
+  config: classpath:log/log4j2-dev.xml
+  level:
+    cn.jay.repository: trace
+number:
+  max: 5
 
 tcp:
-  timeout: 100    #单位 秒
-  config: /opt/eap/${eap.name}/config/tcp.properties
+  timeout: 30  # 同步通信等待时间，单位：秒
+  server:
+    ip: 10.8.61.210
+    port: 7000
   client:
-    enable: true         #是否作为client
-    separator: "|"    #消息分隔符（结束符）
+    separator: \n  #分隔符
     retry:
-      delay: 5000        #多久重连一次，单位：毫秒
-
-#webService:
-#  enable: false
-
-webSocket:
-  enable: true
-
-
-version: @project.version@
+      delay: 5    #TCP重连间隔时间，单位：秒

@@ -113,6 +113,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         lotInfo.setTestProgram(eapReqLotInfoOA.getTestProgram());
         lotInfo.setDeviceId(eapReqLotInfoOA.getDeviceId());
         lotInfo.setUserId(userId);
+        lotInfo.setDieCount(eapReqLotInfoOA.getDieCount());
         lotInfo.setParamList(eapReqLotInfoOA.getParamList());
         lotInfo.setTemperatureRange(eapReqLotInfoOA.getTemperatureRange());
         List<EAPReqLotInfoOB> paramList = eapReqLotInfoOA.getParamList();
