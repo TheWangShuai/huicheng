@@ -100,7 +100,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
             }
             if(item.startsWith("sl") && item.length() > 2){ //DeviceName
                 GPIBDeviceNameReportI gpibDeviceNameReportI = new GPIBDeviceNameReportI();
-                gpibDeviceNameReportI.setDeviceName(item.substring(2).trim());
+                gpibDeviceNameReportI.setDeviceName(item.substring(3).trim());
                 eapBaseService = (EapBaseService) context.getBean("deviceNameReport");
                 eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(gpibDeviceNameReportI));
             }else if(item.startsWith("E") && item.length() > 2){  //AlarmCode
