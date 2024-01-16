@@ -1,6 +1,6 @@
 package com.totainfo.eap.cp.tcp.job;
 
-import com.totainfo.eap.cp.tcp.client.EchoClient;
+import com.totainfo.eap.cp.tcp.server.EchoServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -9,24 +9,20 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 @Component
-public class TcpClientStartJob implements CommandLineRunner {
+public class TcpServerStartJob implements CommandLineRunner {
 
 
-
-    @Value("${tcp.server.ip}")
-    private String serverIp;
 
     @Value("${tcp.server.port}")
     private int serverPort;
 
     @Autowired
-    private EchoClient echoClient;
+    private EchoServer echoServer;
 
     @Override
-    public void run(String... args) throws Exception {
-        String eqptId = "GPIB";
+    public void run(String... args) {
         new Thread(()->{
-                echoClient.start(eqptId, serverIp, serverPort);
+            echoServer.start(serverPort);
         }).start();
 
     }

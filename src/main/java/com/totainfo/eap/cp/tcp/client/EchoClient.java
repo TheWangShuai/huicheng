@@ -57,8 +57,8 @@ public class EchoClient{
                 @Override
                 protected void initChannel(SocketChannel socketChannel) throws Exception {
 //                            为监听客户端read/write事件的Channel添加用户自定义的ChannelHandler
-                    socketChannel.pipeline().addLast(new StringDecoder())
-                            .addLast(new StringEncoder());
+                    socketChannel.pipeline().addLast(new StringDecoder());
+                    socketChannel.pipeline().addLast(new StringEncoder());
                     socketChannel.pipeline().addLast(echoClientHandler);
                 }
             });
