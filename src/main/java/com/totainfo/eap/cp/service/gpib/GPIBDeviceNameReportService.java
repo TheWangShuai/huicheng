@@ -66,10 +66,11 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
             return;
         }
         String lotId = lotInfo.getLotId();
-
+        String deviceName = inTrx.getDeviceName();
+        ClientHandler.sendMessage(evtNo,false,2,deviceName);
         if(eapCheckName){
             String recipeId = lotInfo.getDevice();
-            String deviceName = inTrx.getDeviceName();
+//            String deviceName = inTrx.getDeviceName();
             if(!recipeId.equals(deviceName)){
                 stateset("3", "3", lotId);
                 outTrx.setRtnCode(DEVICE_DISMATCH);

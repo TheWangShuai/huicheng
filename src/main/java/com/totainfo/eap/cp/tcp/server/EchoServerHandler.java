@@ -4,6 +4,7 @@ package com.totainfo.eap.cp.tcp.server;
 
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
+import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.trx.gpib.GPIBDeviceNameReport.GPIBDeviceNameReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotEndReport.GPIBLotEndReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotStartReport.GPIBLotStartReportI;
@@ -86,7 +87,9 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
             return;
         }
         String message = msg.toString();
+        LogUtils.info("GPIB回复:[" + message + "]");
         if(StringUtils.isEmpty(message)){
+            LogUtils.info("GPIB回复超时");
             return;
         }
         message = message.replaceAll("\\r","").replaceAll("\\n", "");

@@ -50,7 +50,6 @@ public class KVMStatusReportService extends EapBaseService<KVMStatusReportI, KVM
         eqptInfo.setEqptStat(eqptStat);
         eqptDao.addEqpt(eqptInfo);
 
-        MesHandler.eqptStatReport(evtNo, eqptStat, "");
 
         EAPSyncEqpInfoI eapSyncEqpInfoI = new EAPSyncEqpInfoI();
         eapSyncEqpInfoI.setTrxId("ConnectInfo");
@@ -65,6 +64,7 @@ public class KVMStatusReportService extends EapBaseService<KVMStatusReportI, KVM
             eapSyncEqpInfoI.setLotNo(lotInfo.getLotId());
             eapSyncEqpInfoI.setProberCardId(lotInfo.getProberCard());
         }
+        MesHandler.eqptStatReport(evtNo, eqptStat, "",lotInfo.getUserId());
         ClientHandler.sendEqpInfo(evtNo, eapSyncEqpInfoI);
     }
 }

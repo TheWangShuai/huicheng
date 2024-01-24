@@ -123,9 +123,9 @@ public class LotInfo {
         this.temperature = temperature;
     }
 
-    public void setParamList(Map<String, String> paramList) {
-        this.paramList = paramList;
-    }
+//    public void setParamList(Map<String, String> paramList) {
+//        this.paramList = paramList;
+//    }
 
     public List getParamList1() {
         return paramList1;

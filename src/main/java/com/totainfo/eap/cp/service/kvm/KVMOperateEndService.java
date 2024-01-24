@@ -17,6 +17,7 @@ import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.entity.StateInfo;
 import com.totainfo.eap.cp.handler.*;
 import com.totainfo.eap.cp.trx.client.EAPSyncEqpInfo.EAPSyncEqpInfoI;
+import com.totainfo.eap.cp.trx.ems.EMSLotinfoReport.EMSLotInfoReportI;
 import com.totainfo.eap.cp.trx.ems.EMSStatusReport.EMSStatusReportO;
 import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardI;
 import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardO;
@@ -154,56 +155,76 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
     private void alarmReport(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx) {
 
         //KVM报警信息上报
-        String alarmCode = inTrx.getAlarmCode();
-        String time = DateUtils.getCurrentDateStr();
-        ClientHandler.sendMessage(evtNo, true, 1, "[KVM-EAP]设备发送报警:[" + alarmCode + "]");
-        if("O405".equals(alarmCode)){   //如实作业结束报警，直接结束
-            LotInfo lotInfo = lotDao.getCurLotInfo();
-            if(lotInfo == null){   //没有找到当前正在作业的批次信息
-                return;
-            }
-
-            //发送量测数据是否齐全的请求
-            EAPReqMeasureResultO eapReqMeasureResultO = MesHandler.measureResultReq(evtNo, lotInfo.getLotId());
-            String rtnCode = eapReqMeasureResultO.getRtnCode();
-            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]向mes请求量测数据");
-            int i = 0;
-            while (!RETURN_CODE_OK.equals(rtnCode) && i < max) {
-
-                try {
-                    TimeUnit.SECONDS.sleep(10);
-                } catch (InterruptedException e) {
-                    LogUtils.error("Sleep Exception", e);
-                }
-
-                EAPReqMeasureResultO Msg = MesHandler.measureResultReq(evtNo, lotInfo.getLotId());
-                rtnCode = Msg.getRtnCode();
-                i++;
-            }
-
-            if (!RETURN_CODE_OK.equals(rtnCode)) {
-                ClientHandler.sendMessage(evtNo, false, 2, "在轮询时间结束后，mes的量测数据仍未全部生成");
-                return;
-            }
-
-            ClientHandler.sendMessage(evtNo, false, 2, "[MES-EAP]量测结果均以生成");
-            EAPReqCheckOutO eapReqCheckOutO = MesHandler.checkOutReq(evtNo, lotInfo.getLotId());
-            if (!RETURN_CODE_OK.equals(eapReqCheckOutO.getRtnCode())) {
-                outTrx.setRtnCode(eapReqCheckOutO.getRtnCode());
-                outTrx.setRtnMesg(eapReqCheckOutO.getRtnMesg());
-                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
-                return;
-            }
-            ClientHandler.sendMessage(evtNo, true, 2, "[MES-EAP]批次:[" + lotInfo.getLotId() + "] Check Out 成功");
-            remove(evtNo);
+        //判断从GPIB获取的AlarmCode是否为空，为空不作处理；
+        String alarmCode = GPIBHandler.getAlarmCode();
+        if(StringUtils.isEmpty(alarmCode) ){
             return;
         }
+        String time = DateUtils.getCurrentDateStr();
+//        if("O0405".equals(alarmCode)){   //如实作业结束报警，直接结束
+//            LotInfo lotInfo = lotDao.getCurLotInfo();
+//            if(lotInfo == null){   //没有找到当前正在作业的批次信息
+//                return;
+//            }
+//
+//            //发送量测数据是否齐全的请求
+//            EAPReqMeasureResultO eapReqMeasureResultO = MesHandler.measureResultReq(evtNo, lotInfo.getLotId());
+//            String rtnCode = eapReqMeasureResultO.getRtnCode();
+//            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]向mes请求量测数据");
+//            int i = 0;
+//            while (!RETURN_CODE_OK.equals(rtnCode) && i < max) {
+//
+//                try {
+//                    TimeUnit.SECONDS.sleep(10);
+//                } catch (InterruptedException e) {
+//                    LogUtils.error("Sleep Exception", e);
+//                }
+//
+//                EAPReqMeasureResultO Msg = MesHandler.measureResultReq(evtNo, lotInfo.getLotId());
+//                rtnCode = Msg.getRtnCode();
+//                i++;
+//            }
+//
+//            if (!RETURN_CODE_OK.equals(rtnCode)) {
+//                ClientHandler.sendMessage(evtNo, false, 2, "在轮询时间结束后，mes的量测数据仍未全部生成");
+//                return;
+//            }
+//
+//            ClientHandler.sendMessage(evtNo, false, 2, "[MES-EAP]量测结果均以生成");
+//            EAPReqCheckOutO eapReqCheckOutO = MesHandler.checkOutReq(evtNo, lotInfo.getLotId());
+//            if (!RETURN_CODE_OK.equals(eapReqCheckOutO.getRtnCode())) {
+//                outTrx.setRtnCode(eapReqCheckOutO.getRtnCode());
+//                outTrx.setRtnMesg(eapReqCheckOutO.getRtnMesg());
+//                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+//                return;
+//            }
+//            ClientHandler.sendMessage(evtNo, true, 2, "[MES-EAP]批次:[" + lotInfo.getLotId() + "] Check Out 成功");
+//
+//            // 上传生产相关信息给ems
+//            EMSLotInfoReportI emsLotInfoReportI = new EMSLotInfoReportI();
+//            emsLotInfoReportI.setLotNo(lotInfo.getLotId());
+//            emsLotInfoReportI.setDeviceName(lotInfo.getDevice());
+//            emsLotInfoReportI.setEquipmentNo(GenericDataDef.equipmentNo);
+//            emsLotInfoReportI.setTestProgram(lotInfo.getTestProgram());
+//            emsLotInfoReportI.setProberCard(lotInfo.getProberCard());
+//            emsLotInfoReportI.setProcessState("4");
+//            emsLotInfoReportI.setOperator(lotInfo.getUserId());
+//            emsLotInfoReportI.setTemperature(lotInfo.getTemperature());
+//            ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上传结束生产相关信息指令成功");
+//            EmsHandler.emsLotInfoReporToEms(evtNo,emsLotInfoReportI);
+//
+//            MesHandler.eqptStatReport(evtNo, EqptStat.IDLE,"无",lotInfo.getUserId());
+//            remove(evtNo);
+//            return;
+//        }
 
         LotInfo lotInfo = lotDao.getCurLotInfo();
         if(lotInfo == null){
             lotInfo = new LotInfo();
             lotInfo.setLotId(_SPACE);
         }
+
+        MesHandler.eqptStatReport(evtNo, EqptStat.DOWN,"无",lotInfo.getUserId());
         //如果报警已经存在，认为是重复上报，只更新是时间
         Map<String, AlarmInfo> alarmInfoMap = alarmDao.getAlarmInfo();
         if(alarmInfoMap.containsKey(alarmCode)){
@@ -212,33 +233,32 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             alarmDao.addAlarmInfo(alarmInfo);
             return;
         }
+//        ClientHandler.sendMessage(evtNo, true, 1, "[KVM-EAP]设备发送报警:[" + alarmCode + "]");
         //如果Alarm不存在，认为是新报警，将之前的报警清除
         AlarmInfo pvAlarmInfo;
         for(Map.Entry<String,AlarmInfo> entry:alarmInfoMap.entrySet()){
             pvAlarmInfo = entry.getValue();
+            ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上报设备结束报警信息指令成功");
+            MesHandler.eqptStatReport(evtNo, EqptStat.RUN,"无",lotInfo.getUserId());
             EmsHandler.alarmReportToEms(evtNo,pvAlarmInfo.getAlarmCode(),pvAlarmInfo.getAlarmText(),lotInfo.getLotId(),"0");
-            MesHandler.alarmReport(evtNo, pvAlarmInfo.getAlarmCode(), pvAlarmInfo.getAlarmText(),pvAlarmInfo.getTime(), pvAlarmInfo.getID()) ;
+            MesHandler.alarmReport(evtNo, pvAlarmInfo.getAlarmCode(), pvAlarmInfo.getAlarmText(),pvAlarmInfo.getTime(), pvAlarmInfo.getId()) ;
             alarmDao.removeAlarm(entry.getKey());
         }
 
-        //判断从GPIB获取的AlarmCode是否为空，为空不作处理；
-        String realCode = GPIBHandler.getAlarmCode();
-        if(StringUtils.isEmpty(realCode) ){
-            return;
-        }
         String alarmMessage = GPIBHandler.getAlarmMessage();
 
         String id= null;
+        ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上报设备开始报警信息指令成功");
         EmsHandler.alarmReportToEms(evtNo, alarmCode, alarmMessage, lotInfo.getLotId(), "1");
         EAPEqptAlarmReportO eapEqptAlarmReportO = MesHandler.alarmReport(evtNo, alarmCode, alarmMessage, time,null);
         if(eapEqptAlarmReportO != null){
-            id = eapEqptAlarmReportO.getID();
+            id = eapEqptAlarmReportO.getId();
         }
         AlarmInfo alarmInfo = new AlarmInfo();
         alarmInfo.setAlarmCode(alarmCode);
         alarmInfo.setAlarmText(alarmMessage);
         alarmInfo.setTime(time);
-        alarmInfo.setID(id);
+        alarmInfo.setId(id);
         alarmDao.addAlarmInfo(alarmInfo);
         ClientHandler.sendMessage(evtNo, true, 1, "[KVM-EAP]设备发送报警:[" + alarmCode + "][" + alarmMessage + "]");
     }
@@ -278,7 +298,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
                 ClientHandler.sendMessage(evtNo, false, 1, "[Client-Eap]KVM上报设备状态切换为Idle");
             }
         }
-
+        ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上报设备状态信息指令成功");
         EMSStatusReportO emsStatusReportO = EmsHandler.emsStatusReportToEms(evtNo, eqptInfo.getEqptMode(), lastState, eqptStat);
         if (!RETURN_CODE_OK.equals(emsStatusReportO.getRtnCode())) {
             outTrx.setRtnCode(emsStatusReportO.getRtnCode());

@@ -13,6 +13,8 @@ public class EMSWaferReportI extends BaseTrxI {
 
     private String comment;
 
+    private String waferState;
+
     public String getLotNo() {
         return lotNo;
     }
@@ -51,5 +53,13 @@ public class EMSWaferReportI extends BaseTrxI {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public String getWaferState() {
+        return waferState;
+    }
+
+    public void setWaferState(String waferState) {
+        this.waferState = waferState;
     }
 }

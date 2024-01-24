@@ -26,12 +26,12 @@ public class GPIBLotStartReportService extends EapBaseService<GPIBLotStartReport
     private ILotDao lotDao;
     @Override
     public void mainProc(String evtNo, GPIBLotStartReportI inTrx, GPIBLotStartReportO outTrx) {
-
-        String lotNo = inTrx.getLotNo();
+        ;
         LotInfo lotInfo = lotDao.getCurLotInfo();
         if(lotInfo == null){
             return;
         }
+        String lotNo = lotInfo.getLotId();
         if(!lotNo.equals(lotInfo.getLotId())){
             outTrx.setRtnCode("0000001");
             outTrx.setRtnMesg("GPIB上报的LotID:["+lotNo+"]与当前正在作业的LotID:["+lotInfo.getLotId()+"]不一致，请确认");
@@ -49,6 +49,7 @@ public class GPIBLotStartReportService extends EapBaseService<GPIBLotStartReport
         emsLotInfoReportI.setProcessState("1");
         emsLotInfoReportI.setOperator(lotInfo.getUserId());
         emsLotInfoReportI.setTemperature(lotInfo.getTemperature());
+        ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上传开始生产相关信息指令成功");
         EmsHandler.emsLotInfoReporToEms(evtNo,emsLotInfoReportI);
 
         GPIBLotStartReportO gpibLotStartReportO = MesHandler.lotStart(evtNo, evtUsr, lotNo);

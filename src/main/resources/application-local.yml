@@ -61,6 +61,8 @@ logging:
     cn.jay.repository: trace
 number:
   max: 5
+GPIB:
+  address: 1
 
 tcp:
   timeout: 30  # 同步通信等待时间，单位：秒

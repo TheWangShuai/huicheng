@@ -7,14 +7,13 @@ import com.totainfo.eap.cp.base.trx.BaseTrxO;
  * @date 2023年09月14日 11:36
  */
 public class EAPEqptAlarmReportO extends BaseTrxO {
-    private String ID;
+    private String id;
 
-    public String getID() {
-        return ID;
+    public String getId() {
+        return id;
     }
 
-    public void setID(String ID) {
-        this.ID = ID;
+    public void setId(String id) {
+        this.id = id;
     }
-
 }

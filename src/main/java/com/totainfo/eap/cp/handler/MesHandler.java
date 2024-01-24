@@ -97,11 +97,11 @@ public class MesHandler {
         return eapEqptAlarmReportO;
     }
 
-    public static EAPEqptStatusReportO eqptStatReport(String evtNo, String eqptStat, String remark){
+    public static EAPEqptStatusReportO eqptStatReport(String evtNo, String eqptStat, String remark, String userId){
         EAPEqptStatusReportI eapEqptStatusReportI = new EAPEqptStatusReportI();
         EAPEqptStatusReportO eapEqptStatusReportO = new EAPEqptStatusReportO();
         eapEqptStatusReportI.setTrxId("equipmentStateChange");
-        eapEqptStatusReportI.setEvtUsr("");
+        eapEqptStatusReportI.setEvtUsr(userId);
         eapEqptStatusReportI.setComputerName(computerName);
         eapEqptStatusReportI.setEquipmentNo(GenericDataDef.equipmentNo);
         eapEqptStatusReportI.setLastState(eqptStat);

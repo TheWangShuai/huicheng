@@ -38,6 +38,10 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
         String evtUsr = lotInfo.getUserId();
         String waferId = inTrx.getWaferId();
         String pvWaferId = inTrx.getPvWaferId();
+        //TODO 从gpib获取waferState
+        EMSWaferReportI emsWaferReportI = new EMSWaferReportI();
+        emsWaferReportI.setLotNo(lotNo);
+        emsWaferReportI.setWaferNo(waferId);
 
         //Wafer Start时判断，上一片Wafer Die数据是否上报完成，如果没有，将上一片Wafer的Die数据上报完成
         if(StringUtils.isNotEmpty(pvWaferId)){
@@ -51,20 +55,21 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
                         outTrx.setRtnMesg(eapUploadDieResultO.getRtnMesg());
                         ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                     }
+                    EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,"End", emsWaferReportI);
+                    if (!RETURN_CODE_OK.equals(emsWaferReportO.getRtnCode())){
+                        outTrx.setRtnCode(emsWaferReportO.getRtnCode());
+                        outTrx.setRtnMesg(emsWaferReportO.getRtnMesg());
+                        ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+                    }
                 }
                 waferDieMap.remove(pvWaferId);
                 lotDao.addLotInfo(lotInfo);
             }
         }
 
-        String waferSeq = "1";
-        String comment = "1";
-        EMSWaferReportI emsWaferReportI = new EMSWaferReportI();
-        emsWaferReportI.setLotNo(lotNo);
-        emsWaferReportI.setWaferNo(waferId);
-        emsWaferReportI.setWaferSeq(waferSeq);
 
-        EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo, emsWaferReportI);
+        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-EMS]:EAP给EMS上传生产Wafer信息指令成功");
+        EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,"Start", emsWaferReportI);
         if (!RETURN_CODE_OK.equals(emsWaferReportO.getRtnCode())){
             outTrx.setRtnCode(emsWaferReportO.getRtnCode());
             outTrx.setRtnMesg(emsWaferReportO.getRtnMesg());

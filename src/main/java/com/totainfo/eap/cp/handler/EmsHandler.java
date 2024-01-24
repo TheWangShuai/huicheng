@@ -61,7 +61,7 @@ public class EmsHandler {
         String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, emsQueue, emsExchange, emsAlarmReportI);
         if(!StringUtils.hasText(outTrxStr)){
             emsAlarmReportO.setRtnCode("00000001");
-            emsAlarmReportO.setRtnMesg("[EAP-MES]:EAP发送设备报警，EMS没有回复");
+            emsAlarmReportO.setRtnMesg("[EAP-MES]:EAP上报设备报警，EMS没有回复");
             ClientHandler.sendMessage(evtNo,false,1,emsAlarmReportO.getRtnMesg());
         }else{
             emsAlarmReportO = JacksonUtils.string2Object(outTrxStr,EMSAlarmReportO.class);
@@ -81,7 +81,7 @@ public class EmsHandler {
         String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, emsQueue, emsExchange, emsStatusReportI);
         if(!StringUtils.hasText(outTrxStr)){
             emsStatusReportO.setRtnCode("00000001");
-            emsStatusReportO.setRtnMesg("[EAP-MES]:EAP发送设备报警，EMS没有回复");
+            emsStatusReportO.setRtnMesg("[EAP-MES]:EAP上报设备状态，EMS没有回复");
             ClientHandler.sendMessage(evtNo,false,1,emsStatusReportO.getRtnMesg());
         }else{
             emsStatusReportO = JacksonUtils.string2Object(outTrxStr,EMSStatusReportO.class);
@@ -95,7 +95,7 @@ public class EmsHandler {
         String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, emsQueue, emsExchange, emsLotInfoReportI);
         if(!StringUtils.hasText(outTrxStr)){
             emsLotInfoReportO.setRtnCode("00000001");
-            emsLotInfoReportO.setRtnMesg("[EAP-MES]:EAP发送设备报警，EMS没有回复");
+            emsLotInfoReportO.setRtnMesg("[EAP-MES]:EAP上传生产相关信息，EMS没有回复");
             ClientHandler.sendMessage(evtNo,false,1,emsLotInfoReportO.getRtnMesg());
         }else{
             emsLotInfoReportO = JacksonUtils.string2Object(outTrxStr,EMSLotInfoReportO.class);
@@ -111,7 +111,7 @@ public class EmsHandler {
         String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, emsQueue, emsExchange, emsDeviceParameterReportI);
         if(!StringUtils.hasText(outTrxStr)){
             emsDeviceParameterReportO.setRtnCode("00000001");
-            emsDeviceParameterReportO.setRtnMesg("[EAP-MES]:EAP发送设备报警，EMS没有回复");
+            emsDeviceParameterReportO.setRtnMesg("[EAP-MES]:EAP上报设备参数，EMS没有回复");
             ClientHandler.sendMessage(evtNo,false,1,emsDeviceParameterReportO.getRtnMesg());
         }else{
             emsDeviceParameterReportO = JacksonUtils.string2Object(outTrxStr,EMSDeviceParameterReportO.class);
@@ -129,7 +129,7 @@ public class EmsHandler {
         String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, emsQueue, emsExchange, emsGetAlarmI);
         if(!StringUtils.hasText(outTrxStr)){
             emsGetAlarmO.setRtnCode("00000001");
-            emsGetAlarmO.setRtnMesg("[EAP-MES]:EAP发送设备报警，EMS没有回复");
+            emsGetAlarmO.setRtnMesg("[EAP-MES]:EAP获取设备报警定义管控，EMS没有回复");
             ClientHandler.sendMessage(evtNo,false,1,emsGetAlarmO.getRtnMesg());
         }else{
             emsGetAlarmO = JacksonUtils.string2Object(outTrxStr,EMSGetAlarmO.class);
@@ -137,15 +137,16 @@ public class EmsHandler {
         return emsGetAlarmO;
     }
     // EAP上传生产Wafer信息
-    public static EMSWaferReportO waferInfotoEms(String evtNo,EMSWaferReportI emsWaferReportI){
+    public static EMSWaferReportO waferInfotoEms(String evtNo,String waferState, EMSWaferReportI emsWaferReportI){
 
         EMSWaferReportO emsWaferReportO = new EMSWaferReportO();
         emsWaferReportI.setTrxId("reportProcessingWaferData");
         emsWaferReportI.setEquipmentNo(GenericDataDef.equipmentNo);
+        emsWaferReportI.setWaferState(waferState);
         String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, emsQueue, emsExchange, emsWaferReportI);
         if(!StringUtils.hasText(outTrxStr)){
            emsWaferReportO.setRtnCode("00000001");
-           emsWaferReportO.setRtnMesg("[EAP-MES]:EAP发送设备报警，EMS没有回复");
+           emsWaferReportO.setRtnMesg("[EAP-MES]:EAP上传生产wafer信息，EMS没有回复");
             ClientHandler.sendMessage(evtNo,false,1,emsWaferReportO.getRtnMesg());
         }else{
             emsWaferReportO = JacksonUtils.string2Object(outTrxStr,EMSWaferReportO.class);
@@ -162,7 +163,7 @@ public class EmsHandler {
         String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, emsQueue, emsExchange, emsGetTestResultI);
         if(!StringUtils.hasText(outTrxStr)){
             emsGetTestResultO.setRtnCode("00000001");
-            emsGetTestResultO.setRtnMesg("[EAP-MES]:EAP发送设备报警，EMS没有回复");
+            emsGetTestResultO.setRtnMesg("[EAP-MES]:EAP获取测试结果实时卡控规则，EMS没有回复");
             ClientHandler.sendMessage(evtNo,false,1,emsGetTestResultO.getRtnMesg());
         }else{
              emsGetTestResultO = JacksonUtils.string2Object(outTrxStr,EMSGetTestResultO.class);

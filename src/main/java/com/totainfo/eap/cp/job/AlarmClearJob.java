@@ -56,7 +56,7 @@ public class AlarmClearJob {
             diffTime = DateUtils.getDiffMill(crTimestamtp, timestamp);
             if(diffTime < -10000 || diffTime > 10000){
                 EmsHandler.alarmReportToEms(evtNo,pvAlarmInfo.getAlarmCode(),pvAlarmInfo.getAlarmText(),lotInfo.getLotId(),"0");
-                MesHandler.alarmReport(evtNo, pvAlarmInfo.getAlarmCode(), pvAlarmInfo.getAlarmText(),pvAlarmInfo.getTime(), pvAlarmInfo.getID()) ;
+                MesHandler.alarmReport(evtNo, pvAlarmInfo.getAlarmCode(), pvAlarmInfo.getAlarmText(),pvAlarmInfo.getTime(), pvAlarmInfo.getId()) ;
                 alarmDao.removeAlarm(entry.getKey());
             }
 
