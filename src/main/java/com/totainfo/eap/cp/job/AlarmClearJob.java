@@ -1,5 +1,6 @@
 package com.totainfo.eap.cp.job;
 
+import com.totainfo.eap.cp.commdef.GenergicStatDef;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.dao.IAlarmDao;
 import com.totainfo.eap.cp.dao.ILotDao;
@@ -57,6 +58,7 @@ public class AlarmClearJob {
             if(diffTime < -10000 || diffTime > 10000){
                 EmsHandler.alarmReportToEms(evtNo,pvAlarmInfo.getAlarmCode(),pvAlarmInfo.getAlarmText(),lotInfo.getLotId(),"0");
                 MesHandler.alarmReport(evtNo, pvAlarmInfo.getAlarmCode(), pvAlarmInfo.getAlarmText(),pvAlarmInfo.getTime(), pvAlarmInfo.getId()) ;
+                MesHandler.eqptStatReport(evtNo, GenergicStatDef.EqptStat.RUN,"无",lotInfo.getUserId());
                 alarmDao.removeAlarm(entry.getKey());
             }
 

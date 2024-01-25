@@ -33,6 +33,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,28 +108,43 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         //发送给前端，LOT 校验成功。
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]:批次号:[" + lotId + "]探针:["+ proberId +"] MES 验证成功。");
         Stateset("1","2",lotId);
-//       //时间校验功能接口
-//        KVMTimeReportI kvmTimeReportI = new KVMTimeReportI();
-//        kvmTimeReportI.setTrxId("EAPACCEPT");
-//        kvmTimeReportI.setActionFlg("TIME");
-//        String returnMsg = httpHandler.postHttpForEqpt(evtNo, proberUrl, kvmTimeReportI);
-//        if(StringUtils.isEmpty(returnMsg)){
-//            outTrx.setRtnCode(KVM_TIME_OUT);
-//            outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报信息，KVM没有回复");
-//            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
-//            return;
-//        }
-//        KVMTimeReportO kvmTimeReportO = JacksonUtils.string2Object(returnMsg, KVMTimeReportO.class);
-//        if(!RETURN_CODE_OK.equals(kvmTimeReportO.getRtnCode())){
-//            outTrx.setRtnCode(kvmTimeReportO.getRtnCode());
-//            outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报信息，KVM返回失败，原因:[" + kvmTimeReportO.getRtnMesg() + "]");
-//            EapEndCard(evtNo);
-//            Remove(evtNo);
-//            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
-//        }
-//        String eqpTimeNow = kvmTimeReportO.getEqpTimeNow();
-//        ClientHandler.sendMessage(evtNo,false,1,"");
-//
+
+
+       //时间校验功能接口
+        KVMTimeReportI kvmTimeReportI = new KVMTimeReportI();
+        kvmTimeReportI.setTrxId("EAPACCEPT");
+        kvmTimeReportI.setActionFlg("TIME");
+        kvmTimeReportI.setEqpId(equipmentNo);
+        String returnMsg = httpHandler.postHttpForEqpt(evtNo, proberUrl, kvmTimeReportI);
+        if(StringUtils.isEmpty(returnMsg)){
+            outTrx.setRtnCode(KVM_TIME_OUT);
+            outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报指令，KVM没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
+            return;
+        }
+        KVMTimeReportO kvmTimeReportO = JacksonUtils.string2Object(returnMsg, KVMTimeReportO.class);
+        if(!RETURN_CODE_OK.equals(kvmTimeReportO.getRtnCode())){
+            outTrx.setRtnCode(kvmTimeReportO.getRtnCode());
+            outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报信息，KVM返回失败，原因:[" + kvmTimeReportO.getRtnMesg() + "]");
+            Remove(evtNo);
+            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        String eqpTimeNow = kvmTimeReportO.getOpeContent();
+        LogUtils.info("机台上报时间[{}]",eqpTimeNow);
+        LocalTime eqpTime = LocalTime.parse(eqpTimeNow, formatter);
+        // 得到当前的北京时间
+        ZonedDateTime beijingTime = ZonedDateTime.now(ZoneId.of("Asia/Shanghai"));
+        LocalTime localTimeNow = beijingTime.toLocalTime();
+        LogUtils.info("北京时间是[{}]",localTimeNow);
+        Duration duration = Duration.between(eqpTime, localTimeNow);
+        long differenceInMinutes = duration.toMinutes();
+        // 检查时间是否相差五分钟或以上
+        if (differenceInMinutes >= 5 || differenceInMinutes <= -5) {
+             ClientHandler.sendMessage(evtNo,true,1,"机台时间[" + eqpTime + "]与北京时间[" + localTimeNow +"]相差五分钟以上，请检查");
+             return;
+        }
+
         EAPReqLotInfoOA eapReqLotInfoOA = eapReqLotInfoO.getLotInfo();
         lotInfo = new LotInfo();
         lotInfo.setLotId(lotId);

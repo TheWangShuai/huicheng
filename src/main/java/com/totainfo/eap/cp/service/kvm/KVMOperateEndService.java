@@ -224,7 +224,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             lotInfo.setLotId(_SPACE);
         }
 
-        MesHandler.eqptStatReport(evtNo, EqptStat.DOWN,"无",lotInfo.getUserId());
+
         //如果报警已经存在，认为是重复上报，只更新是时间
         Map<String, AlarmInfo> alarmInfoMap = alarmDao.getAlarmInfo();
         if(alarmInfoMap.containsKey(alarmCode)){
@@ -260,6 +260,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         alarmInfo.setTime(time);
         alarmInfo.setId(id);
         alarmDao.addAlarmInfo(alarmInfo);
+        MesHandler.eqptStatReport(evtNo, EqptStat.DOWN,"无",lotInfo.getUserId());
         ClientHandler.sendMessage(evtNo, true, 1, "[KVM-EAP]设备发送报警:[" + alarmCode + "][" + alarmMessage + "]");
     }
 

@@ -85,37 +85,37 @@ public class GPIBLotEndReportService extends EapBaseService<GPIBLotEndReportI, G
         EmsHandler.emsLotInfoReporToEms(evtNo,emsLotInfoReportI);
 
         //发送量测数据是否齐全的请求
-        EAPReqMeasureResultO eapReqMeasureResultO = MesHandler.measureResultReq(evtNo, lotInfo.getLotId());
-        String rtnCode = eapReqMeasureResultO.getRtnCode();
-        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]向mes请求量测数据");
-        int i = 0;
-        while (!RETURN_CODE_OK.equals(rtnCode) && i < max) {
-
-            try {
-                TimeUnit.SECONDS.sleep(10);
-            } catch (InterruptedException e) {
-                LogUtils.error("Sleep Exception", e);
-            }
-
-            EAPReqMeasureResultO Msg = MesHandler.measureResultReq(evtNo, lotInfo.getLotId());
-            rtnCode = Msg.getRtnCode();
-            i++;
-        }
-
-        if (!RETURN_CODE_OK.equals(rtnCode)) {
-            ClientHandler.sendMessage(evtNo, false, 2, "在轮询时间结束后，mes的量测数据仍未全部生成");
-            return;
-        }
-
-        ClientHandler.sendMessage(evtNo, false, 2, "[MES-EAP]量测结果均以生成");
-        EAPReqCheckOutO eapReqCheckOutO = MesHandler.checkOutReq(evtNo, lotInfo.getLotId());
-        if (!RETURN_CODE_OK.equals(eapReqCheckOutO.getRtnCode())) {
-            outTrx.setRtnCode(eapReqCheckOutO.getRtnCode());
-            outTrx.setRtnMesg(eapReqCheckOutO.getRtnMesg());
-            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
-            return;
-        }
-        ClientHandler.sendMessage(evtNo, true, 2, "[MES-EAP]批次:[" + lotInfo.getLotId() + "] Check Out 成功");
+//        EAPReqMeasureResultO eapReqMeasureResultO = MesHandler.measureResultReq(evtNo, lotInfo.getLotId());
+//        String rtnCode = eapReqMeasureResultO.getRtnCode();
+//        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]向mes请求量测数据");
+//        int i = 0;
+//        while (!RETURN_CODE_OK.equals(rtnCode) && i < max) {
+//
+//            try {
+//                TimeUnit.SECONDS.sleep(10);
+//            } catch (InterruptedException e) {
+//                LogUtils.error("Sleep Exception", e);
+//            }
+//
+//            EAPReqMeasureResultO Msg = MesHandler.measureResultReq(evtNo, lotInfo.getLotId());
+//            rtnCode = Msg.getRtnCode();
+//            i++;
+//        }
+//
+//        if (!RETURN_CODE_OK.equals(rtnCode)) {
+//            ClientHandler.sendMessage(evtNo, false, 2, "在轮询时间结束后，mes的量测数据仍未全部生成");
+//            return;
+//        }
+//
+//        ClientHandler.sendMessage(evtNo, false, 2, "[MES-EAP]量测结果均以生成");
+//        EAPReqCheckOutO eapReqCheckOutO = MesHandler.checkOutReq(evtNo, lotInfo.getLotId());
+//        if (!RETURN_CODE_OK.equals(eapReqCheckOutO.getRtnCode())) {
+//            outTrx.setRtnCode(eapReqCheckOutO.getRtnCode());
+//            outTrx.setRtnMesg(eapReqCheckOutO.getRtnMesg());
+//            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+//            return;
+//        }
+//        ClientHandler.sendMessage(evtNo, true, 2, "[MES-EAP]批次:[" + lotInfo.getLotId() + "] Check Out 成功");
         MesHandler.eqptStatReport(evtNo, GenergicStatDef.EqptStat.IDLE,"无",lotInfo.getUserId());
         GPIBLotEndReportO gpibLotEndReportO = MesHandler.lotEnd(evtNo, evtUsr, lotNo);
         if (!RETURN_CODE_OK.equals(gpibLotEndReportO.getRtnCode())) {
@@ -123,7 +123,7 @@ public class GPIBLotEndReportService extends EapBaseService<GPIBLotEndReportI, G
             outTrx.setRtnMesg(gpibLotEndReportO.getRtnMesg());
             ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
         }
-        ClientHandler.sendMessage(evtNo, false, 2, "批次:[" + lotInfo.getLotId() + "] End结束时间上报成功");
+        ClientHandler.sendMessage(evtNo, false, 2, "批次:[" + lotInfo.getLotId() + "] End结束时间上报成功，制程结束");
         remove(evtNo);
 
     }

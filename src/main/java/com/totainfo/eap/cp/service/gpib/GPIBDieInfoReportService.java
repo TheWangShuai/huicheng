@@ -58,7 +58,7 @@ public class GPIBDieInfoReportService extends EapBaseService<GPIBDieInfoReportI,
             if (!RETURN_CODE_OK.equals(eapUploadDieResultO.getRtnCode())) {
                 outTrx.setRtnCode(eapUploadDieResultO.getRtnCode());
                 outTrx.setRtnMesg(eapUploadDieResultO.getRtnMesg());
-                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+//                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                 return;
             }
             //上报后将已经上报的数据清空，重新累计

@@ -84,6 +84,7 @@ public class MesHandler {
         eapEqptAlarmReportI.setErrorcode(alarmCode);
         eapEqptAlarmReportI.setMessage(alarmText);
         eapEqptAlarmReportI.setTime(time);
+        eapEqptAlarmReportI.setId(ID);
 
         String inTrxStr = JacksonUtils.object2String(eapEqptAlarmReportI);
         String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapEqptAlarmReportI);
