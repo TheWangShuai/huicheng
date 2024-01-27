@@ -35,6 +35,7 @@ public class GenergicStatDef {
     public static class LogType{
         public static final String BC_MESSAGE_LOG = "BC-LOGGER";
         public static final String SECS_LOG = "SECS-LOGGER";
+        public static final String GPIB_LOG = "GPIB-LOGGER";
     }
 
     public static class SecsProtocel{

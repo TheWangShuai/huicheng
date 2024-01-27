@@ -14,7 +14,7 @@ public class LogUtils {
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     private  static Logger bcLogger = LoggerFactory.getLogger(LogType.BC_MESSAGE_LOG);
-    private  static Logger secsLogger = LoggerFactory.getLogger(LogType.SECS_LOG);
+    private  static Logger gpibLog = LoggerFactory.getLogger(LogType.GPIB_LOG);
     public static Logger logger = LoggerFactory.getLogger(LogUtils.class);
 
 
@@ -63,6 +63,10 @@ public class LogUtils {
     private static void error(Logger logger, String msg, Throwable throwable) {
         checkNull(logger);
         logger.error(msg, throwable);
+    }
+
+    public static void gpib(String msg, Object... args){
+        gpibLog.info(msg,  args);
     }
 
     private static void checkNull(Logger logger) {

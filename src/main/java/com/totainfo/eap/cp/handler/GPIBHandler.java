@@ -22,24 +22,17 @@ import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
  */
 @Component
 public class GPIBHandler {
+
     private static String address;
-    @Value("${GPIB.address}")
-    public void setAddress(String address) {
-        GPIBHandler.address = address;
-    }
 
     private static EchoServerHandler echoServerHandler;
 
-    public static void main(String[] args) {
-        String format = "+addr " + address;
-        System.out.println(format);
-    }
+
     public static void changeMode(String modeCmmd) {
         if (modeCmmd.equals("++master")) {
             echoServerHandler.send("GPIB", modeCmmd);
-//            String format ="++addr 1";
-            String format = "+addr "+address;
-            LogUtils.info("format是[{}]",format);
+            String format ="++addr 1";
+//            String format = "+addr "+address;
             echoServerHandler.send("GPIB", format);
         } else {
             echoServerHandler.send("GPIB", modeCmmd);
@@ -76,5 +69,10 @@ public class GPIBHandler {
     @Autowired
     public void setEchoServerHandler(EchoServerHandler echoServerHandler) {
         GPIBHandler.echoServerHandler = echoServerHandler;
+    }
+
+    @Value("${GPIB.address}")
+    public void setAddress(String address) {
+        GPIBHandler.address = address;
     }
 }

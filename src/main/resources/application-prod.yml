@@ -56,7 +56,7 @@ spring:
       queue: GS.TEST.EIB
       exchange: EAPTEST
 logging:
-  config: classpath:log/log4j2-dev.xml
+  config: classpath:log/log4j2-prod.xml
   level:
     cn.jay.repository: trace
 number:

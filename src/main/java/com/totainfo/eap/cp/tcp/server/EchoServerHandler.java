@@ -73,6 +73,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx){
         String remoteIp = ctx.channel().remoteAddress().toString().split(":")[0].substring(1);
         LogUtils.info("GPIB："+ remoteIp + " 连接成功。");
+        LogUtils.gpib("GPIB："+ remoteIp + " 连接成功。");
         socketMap.put("GPIB", ctx);
     }
          /**
@@ -88,12 +89,15 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
         }
         String message = msg.toString();
         LogUtils.info("GPIB回复的原文:[" + message + "]");
+        LogUtils.gpib("GPIB->EAP:[" + message + "]");
         if(StringUtils.isEmpty(message)){
             LogUtils.info("GPIB回复超时");
+            LogUtils.gpib("GPIB回复超时");
             return;
         }
         message = message.replaceAll("\\r","").replaceAll("\\n", "");
         LogUtils.info("GPIB->EAP:["+ message + "]");
+//        LogUtils.gpib("GPIB->EAP:["+ message + "]");
         String[] strs = message.split("\"");
         String evtNo = GUIDGenerator.javaGUID();
         EapBaseService eapBaseService;
@@ -178,6 +182,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
         super.channelInactive(ctx);
         socketMap.remove("GPIB");
         LogUtils.info("GPIB断开连接。");
+        LogUtils.gpib("GPIB断开连接。");
     }
 
     public void send(String eqptId, String message){
@@ -193,6 +198,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
         }
         ByteBuf byteBuf = Unpooled.copiedBuffer((message).getBytes());
         LogUtils.info("EAP->GPIB:[]",message);
+        LogUtils.gpib("EAP->GPIB:[]",message);
         ctrx.writeAndFlush(byteBuf);
     }
 

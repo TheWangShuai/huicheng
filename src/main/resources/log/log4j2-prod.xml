@@ -61,22 +61,15 @@
         </RollingFile>
 
         <!--        log event 动态生成文件 -->
-        <Routing name="secsLog">
-            <Routes pattern="$${ctx:EQPTID}}">
-                <Route>
-                    <RollingFile name="secs" fileName="${LOG_HOME}/${ctx:eqptId}/secs.log"
-                                 filePattern="${LOG_HOME}/${ctx:eqptId}/secs.log.%d{yyyy-MM-dd}.%i">
-                        <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
-                        <PatternLayout pattern="${secsPatternLayout}"/>
-                        <Policies>
-                            <TimeBasedTriggeringPolicy interval="1"/>
-                            <SizeBasedTriggeringPolicy size="200MB"/>
-                        </Policies>
-                        <DefaultRolloverStrategy max="30"/>
-                    </RollingFile>
-                </Route>
-            </Routes>
-        </Routing>
+        <RollingFile name="GPIBLog" fileName="${LOG_HOME}/GPIB.log" filePattern="${LOG_HOME}/GPIB.log.%d{yyyy-MM-dd}.%i">
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="${interfacePatternLayout}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="200MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
 
         <!--        log event 动态生成文件 -->
         <Routing name="messageLog">
@@ -102,24 +95,14 @@
             <AppenderRef ref="warnLog"/>
         </Async>
 
-        <Async name="AsyncSecs">
-            <AppenderRef ref="secsLog"/>
+        <Async name="AsyncGpib">
+            <AppenderRef ref="GPIBLog"/>
         </Async>
 
-        <Async name="AsyncMessage">
-            <AppenderRef ref="messageLog"/>
-        </Async>
     </Appenders>
     <Loggers>
-
-        <Logger name="com.totainfo.matrix.github.secs4java8.secs.AbstractSecsCommunicator" level="OFF"/>
-
-        <Logger name="SECS-LOGGER" level="INFO" additivity="false">
-            <AppenderRef ref="AsyncSecs"/>
-        </Logger>
-
-        <Logger name="BC-LOGGER" level="INFO" additivity="false">
-            <AppenderRef ref="AsyncMessage"/>
+        <Logger name="GPIB-LOGGER" level="INFO" additivity="false">
+            <AppenderRef ref="AsyncGpib"/>
         </Logger>
 
         <Root level="info">
