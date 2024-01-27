@@ -8,19 +8,20 @@ import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.entity.DielInfo;
 import com.totainfo.eap.cp.entity.EqptInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
-import com.totainfo.eap.cp.handler.ClientHandler;
-import com.totainfo.eap.cp.handler.EmsHandler;
-import com.totainfo.eap.cp.handler.MesHandler;
-import com.totainfo.eap.cp.handler.RedisHandler;
+import com.totainfo.eap.cp.handler.*;
 import com.totainfo.eap.cp.trx.client.EAPSyncEqpInfo.EAPSyncEqpInfoI;
 import com.totainfo.eap.cp.trx.ems.EMSLotinfoReport.EMSLotInfoReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotEndReport.GPIBLotEndReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotEndReport.GPIBLotEndReportO;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotStartReport.GPIBLotStartReportO;
+import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionO;
+import com.totainfo.eap.cp.trx.kvm.KVMSlotmapMode.KVMSlotmapModeI;
 import com.totainfo.eap.cp.trx.mes.EAPReqCheckOut.EAPReqCheckOutO;
 import com.totainfo.eap.cp.trx.mes.EAPReqMeasureResult.EAPReqMeasureResultO;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultO;
+import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
+import com.totainfo.eap.cp.util.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -30,8 +31,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.totainfo.eap.cp.commdef.GenergicCodeDef.KVM_RETURN_ERROR;
+import static com.totainfo.eap.cp.commdef.GenergicCodeDef.KVM_TIME_OUT;
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
 import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
+import static com.totainfo.eap.cp.commdef.GenericDataDef.proberUrl;
 
 @Service("lotEndReport")
 public class GPIBLotEndReportService extends EapBaseService<GPIBLotEndReportI, GPIBLotEndReportO> {
@@ -40,6 +44,9 @@ public class GPIBLotEndReportService extends EapBaseService<GPIBLotEndReportI, G
 
     @Resource
     private IEqptDao eqptDao;
+
+    @Resource
+    private HttpHandler httpHandler;
 
     @Value("${number.max}")
     private int max;

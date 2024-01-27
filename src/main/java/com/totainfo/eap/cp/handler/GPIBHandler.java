@@ -1,5 +1,6 @@
 package com.totainfo.eap.cp.handler;
 
+import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.tcp.client.EchoClient;
 import com.totainfo.eap.cp.tcp.client.EchoClientHandler;
 import com.totainfo.eap.cp.tcp.server.EchoServerHandler;
@@ -21,16 +22,23 @@ import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
  */
 @Component
 public class GPIBHandler {
-    @Value("${GPIB.address}")
     private static String address;
+    @Value("${GPIB.address}")
+    public void setAddress(String address) {
+        GPIBHandler.address = address;
+    }
 
     private static EchoServerHandler echoServerHandler;
 
-
+    public static void main(String[] args) {
+        String format = "+addr " + address;
+        System.out.println(format);
+    }
     public static void changeMode(String modeCmmd) {
         if (modeCmmd.equals("++master")) {
             echoServerHandler.send("GPIB", modeCmmd);
-            String format ="++addr 1";
+//            String format ="++addr 1";
+            String format = "+addr "+address;
             LogUtils.info("format是[{}]",format);
             echoServerHandler.send("GPIB", format);
         } else {

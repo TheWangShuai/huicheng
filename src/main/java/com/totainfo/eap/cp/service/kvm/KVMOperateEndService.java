@@ -28,8 +28,11 @@ import com.totainfo.eap.cp.trx.kvm.EAPSingleParamCollection.EAPSingleParamCollec
 import com.totainfo.eap.cp.trx.kvm.EAPSingleParamCollection.EAPSingleParamCollectionO;
 import com.totainfo.eap.cp.trx.kvm.KVMOperateend.KVMOperateEndI;
 import com.totainfo.eap.cp.trx.kvm.KVMOperateend.KVMOperateEndO;
+import com.totainfo.eap.cp.trx.kvm.KVMSlotmapMode.KVMSlotmapModeI;
+import com.totainfo.eap.cp.trx.kvm.KVMSlotmapMode.KVMSlotmapModeO;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportO;
 import com.totainfo.eap.cp.trx.mes.EAPReqCheckOut.EAPReqCheckOutO;
+import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
 import com.totainfo.eap.cp.trx.mes.EAPReqMeasureResult.EAPReqMeasureResultO;
 import com.totainfo.eap.cp.trx.rms.RmsOnlineValidation.RmsOnlineValidationO;
 import com.totainfo.eap.cp.util.*;
@@ -224,7 +227,6 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             lotInfo.setLotId(_SPACE);
         }
 
-
         //如果报警已经存在，认为是重复上报，只更新是时间
         Map<String, AlarmInfo> alarmInfoMap = alarmDao.getAlarmInfo();
         if(alarmInfoMap.containsKey(alarmCode)){
@@ -250,9 +252,10 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         String id= null;
         ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上报设备开始报警信息指令成功");
         EmsHandler.alarmReportToEms(evtNo, alarmCode, alarmMessage, lotInfo.getLotId(), "1");
-        EAPEqptAlarmReportO eapEqptAlarmReportO = MesHandler.alarmReport(evtNo, alarmCode, alarmMessage, time,null);
+        EAPEqptAlarmReportO eapEqptAlarmReportO = MesHandler.alarmReport(evtNo, alarmCode, alarmMessage, time,id);
         if(eapEqptAlarmReportO != null){
-            id = eapEqptAlarmReportO.getId();
+            id = eapEqptAlarmReportO.getRtnMesg();
+            LogUtils.info("mes返回的id是[{}]",id);
         }
         AlarmInfo alarmInfo = new AlarmInfo();
         alarmInfo.setAlarmCode(alarmCode);
@@ -681,6 +684,35 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         ClientHandler.sendMessage(evtNo, false, 2, "KVM Device 温度采集校验成功，设备Device 温度:[" + numericPart + "], 批次Device的温度:[" + temperature + "],在该温度范围内");
         str = lotInfo.getTemperature();
         Stateset("6", "2", lotId);
+
+//        //eap给kvm下发指令执行slotmap代操
+//        KVMSlotmapModeI kvmSlotmapModeI = new KVMSlotmapModeI();
+//        kvmSlotmapModeI.setTrxId("EAPACCEPT");
+//        kvmSlotmapModeI.setActionFlg("SLT");
+//        kvmSlotmapModeI.setEqpId(equipmentNo);
+//        String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, kvmSlotmapModeI);
+//        if (StringUtils.isEmpty(returnMesg)) {
+//            outTrx.setRtnCode(KVM_TIME_OUT);
+//            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发slotmap代操指令， KVM 没有返回");
+//            ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
+//            return;
+//        }
+//        KVMSlotmapModeO kvmSlotmapModeO = JacksonUtils.string2Object(returnMesg, KVMSlotmapModeO.class);
+//        if (!RETURN_CODE_OK.equals(kvmSlotmapModeO.getRtnCode())) {
+//            outTrx.setRtnCode(KVM_RETURN_ERROR);
+//            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发slotmap代操指令， KVM 返回错误:[" + kvmSlotmapModeO.getRtnMesg() + "]");
+//            ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
+//            return;
+//        }
+//        String kvmSlotNo= kvmSlotmapModeO.getOpeContent();
+//        List<EAPReqLotInfoOB> paramList = lotInfo.getParamList();
+//        String datas = null;
+//        for (EAPReqLotInfoOB eapReqLotInfoOB : paramList){
+//            if ("Sample".equals(eapReqLotInfoOB.getParamName())){
+//               datas = eapReqLotInfoOB.getParamValue();
+//            }
+//        }
+
         //PROBER机台做完操作后先进行check in，在给test机台下指令
         ClientHandler.sendMessage(evtNo, true, 2, "产前校验完成，请点击client端check in按钮开始check in");
 

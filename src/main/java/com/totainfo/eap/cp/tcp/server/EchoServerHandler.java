@@ -87,7 +87,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
             return;
         }
         String message = msg.toString();
-        LogUtils.info("GPIB回复:[" + message + "]");
+        LogUtils.info("GPIB回复的原文:[" + message + "]");
         if(StringUtils.isEmpty(message)){
             LogUtils.info("GPIB回复超时");
             return;
@@ -181,12 +181,18 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void send(String eqptId, String message){
+        try {
+            Thread.sleep(2000); // 暂停2秒
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         ChannelHandlerContext ctrx = socketMap.get(eqptId);
         if(ctrx == null){
             LogUtils.error("设备:[" + eqptId + "]没有连接，请确认");
             return;
         }
         ByteBuf byteBuf = Unpooled.copiedBuffer((message).getBytes());
+        LogUtils.info("EAP->GPIB:[]",message);
         ctrx.writeAndFlush(byteBuf);
     }
 

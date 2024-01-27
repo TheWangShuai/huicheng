@@ -88,6 +88,7 @@ public class MesHandler {
 
         String inTrxStr = JacksonUtils.object2String(eapEqptAlarmReportI);
         String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapEqptAlarmReportI);
+        LogUtils.info("mes警报回复的原文是[{}]",outTrxStr);
         if(!StringUtils.hasText(outTrxStr)){
             eapEqptAlarmReportO.setRtnCode("00000001");
             eapEqptAlarmReportO.setRtnMesg("[EAP-MES]:EAP发送设备报警，MES没有回复");
