@@ -1,15 +1,10 @@
 package com.totainfo.eap.cp.handler;
 
-import com.totainfo.eap.cp.commdef.GenericDataDef;
-import com.totainfo.eap.cp.tcp.client.EchoClient;
-import com.totainfo.eap.cp.tcp.client.EchoClientHandler;
+
 import com.totainfo.eap.cp.tcp.server.EchoServerHandler;
 import com.totainfo.eap.cp.util.AsyncUtils;
-import com.totainfo.eap.cp.util.LogUtils;
-import com.totainfo.eap.cp.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -18,7 +13,7 @@ import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
 
 /**
  * @author xiaobin.Guo
- * @date 2024年01月15日 9:44
+ * @date 2024年01月15日 9:4
  */
 @Component
 public class GPIBHandler {

@@ -87,15 +87,16 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
         if(msg == null){
             return;
         }
-        String message = msg.toString();
+        ByteBuf in = (ByteBuf) msg;
+        String message = in.toString(CharsetUtil.UTF_8);
         LogUtils.info("GPIB回复的原文:["+ message +"]");
-        LogUtils.gpib("GPIB->EAP:["+ message +"]");
+        LogUtils.gpib("GPIB->EAP:"+ message +"]");
         if(StringUtils.isEmpty(message)){
             LogUtils.info("GPIB回复超时");
             LogUtils.gpib("GPIB回复超时");
             return;
         }
-        message = message.replaceAll("\\r","").replaceAll("\\n", "");
+        message = message.replaceAll("\\r","").replaceAll("\\n", "").substring(message.indexOf("[")+1);
         LogUtils.info("GPIB->EAP:["+ message +"]");
 //        LogUtils.gpib("GPIB->EAP:["+ message + "]");
         String[] strs = message.split("\"");
@@ -196,7 +197,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
             LogUtils.error("设备:[" + eqptId + "]没有连接，请确认");
             return;
         }
-        ByteBuf byteBuf = Unpooled.copiedBuffer((message).getBytes());
+        ByteBuf byteBuf = Unpooled.copiedBuffer((message+System.lineSeparator()).getBytes());
         LogUtils.info("EAP->GPIB:["+ message + "]");
         LogUtils.gpib("EAP->GPIB:["+ message + "]");
         ctrx.writeAndFlush(byteBuf);
