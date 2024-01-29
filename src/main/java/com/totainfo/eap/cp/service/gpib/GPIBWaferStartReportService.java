@@ -54,25 +54,25 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
         emsWaferReportI.setWaferNo(waferId);
 
         //上报给RCM有关wafer的信息
-        EapReportAlarmInfoI eapReportAlarmInfoI = new EapReportAlarmInfoI();
-        eapReportAlarmInfoI.setTrxId("eapReportAlarmInfo");
-        eapReportAlarmInfoI.setEquipmentNo(GenericDataDef.equipmentNo);
-        eapReportAlarmInfoI.setEquipmentState(GenergicStatDef.EqptStat.RUN);
-        eapReportAlarmInfoI.setLotId(lotInfo.getLotId());
-        eapReportAlarmInfoI.setWaferDates(waferId);
-        String returnMsgFromRcm = httpHandler.postHttpForRcm(evtNo, GenericDataDef.rcmUrl, eapReportAlarmInfoI);
-        if (StringUtils.isEmpty(returnMsgFromRcm)){
-            outTrx.setRtnCode(RCM_TIME_OUT);
-            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
-            return;
-        }
-        EapReportAlarmInfoO eapReportAlarmInfoO = JacksonUtils.string2Object(returnMsgFromRcm, EapReportAlarmInfoO.class);
-        if(!RETURN_CODE_OK.equals(eapReportAlarmInfoO.getRtnCode())){
-            outTrx.setRtnCode(eapReportAlarmInfoO.getRtnCode());
-            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM返回失败，原因:[" + eapReportAlarmInfoO.getRtnMesg() + "]");
-            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
-        }
+//        EapReportAlarmInfoI eapReportAlarmInfoI = new EapReportAlarmInfoI();
+//        eapReportAlarmInfoI.setTrxId("eapReportAlarmInfo");
+//        eapReportAlarmInfoI.setEquipmentNo(GenericDataDef.equipmentNo);
+//        eapReportAlarmInfoI.setEquipmentState(GenergicStatDef.EqptStat.RUN);
+//        eapReportAlarmInfoI.setLotId(lotInfo.getLotId());
+//        eapReportAlarmInfoI.setWaferDates(waferId);
+//        String returnMsgFromRcm = httpHandler.postHttpForRcm(evtNo, GenericDataDef.rcmUrl, eapReportAlarmInfoI);
+//        if (StringUtils.isEmpty(returnMsgFromRcm)){
+//            outTrx.setRtnCode(RCM_TIME_OUT);
+//            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM没有回复");
+//            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
+//            return;
+//        }
+//        EapReportAlarmInfoO eapReportAlarmInfoO = JacksonUtils.string2Object(returnMsgFromRcm, EapReportAlarmInfoO.class);
+//        if(!RETURN_CODE_OK.equals(eapReportAlarmInfoO.getRtnCode())){
+//            outTrx.setRtnCode(eapReportAlarmInfoO.getRtnCode());
+//            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM返回失败，原因:[" + eapReportAlarmInfoO.getRtnMesg() + "]");
+//            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
+//        }
 
 
         //Wafer Start时判断，上一片Wafer Die数据是否上报完成，如果没有，将上一片Wafer的Die数据上报完成

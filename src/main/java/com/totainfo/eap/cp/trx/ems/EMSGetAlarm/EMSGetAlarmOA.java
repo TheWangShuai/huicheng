@@ -9,6 +9,8 @@ public class EMSGetAlarmOA {
 
     private String needClear;
 
+    private String needRefund;
+
     public String getAlarmCode() {
         return alarmCode;
     }
@@ -39,5 +41,12 @@ public class EMSGetAlarmOA {
 
     public void setAlarmType(String alarmType) {
         this.alarmType = alarmType;
+    }
+
+    public String getNeedRefund() {
+        return needRefund;
+    }
+    public void setNeedRefund(String needRefund) {
+        this.needRefund = needRefund;
     }
 }

@@ -90,15 +90,17 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
         ByteBuf in = (ByteBuf) msg;
         String message = in.toString(CharsetUtil.UTF_8);
         LogUtils.info("GPIB回复的原文:["+ message +"]");
-        LogUtils.gpib("GPIB->EAP:"+ message +"]");
         if(StringUtils.isEmpty(message)){
             LogUtils.info("GPIB回复超时");
             LogUtils.gpib("GPIB回复超时");
             return;
         }
-        message = message.replaceAll("\\r","").replaceAll("\\n", "").substring(message.indexOf("[")+1);
-        LogUtils.info("GPIB->EAP:["+ message +"]");
-//        LogUtils.gpib("GPIB->EAP:["+ message + "]");
+        message = message.replaceAll("\\r","").replaceAll("\\n", "");
+        int index = message.indexOf("[");
+        if(index>= 0){
+            message = message.substring(index+1);
+        }
+        LogUtils.gpib("GPIB->EAP:["+ message +"]");
         String[] strs = message.split("\"");
         String evtNo = GUIDGenerator.javaGUID();
         EapBaseService eapBaseService;

@@ -95,13 +95,13 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         }
 
         LotInfo lotInfo = lotDao.getCurLotInfo();
-        EAPReqUserAuthorityO eapReqUserAuthorityO = MesHandler.userAuth(evtNo, lotInfo.getUserId());
-        if (!RETURN_CODE_OK.equals(eapReqUserAuthorityO.getRtnCode())) {
-            outTrx.setRtnCode(eapReqUserAuthorityO.getRtnCode());
-            outTrx.setRtnMesg(eapReqUserAuthorityO.getRtnMesg());
-            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
-            return;
-        }
+//        EAPReqUserAuthorityO eapReqUserAuthorityO = MesHandler.userAuth(evtNo, lotInfo.getUserId());
+//        if (!RETURN_CODE_OK.equals(eapReqUserAuthorityO.getRtnCode())) {
+//            outTrx.setRtnCode(eapReqUserAuthorityO.getRtnCode());
+//            outTrx.setRtnMesg(eapReqUserAuthorityO.getRtnMesg());
+//            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+//            return;
+//        }
         if(lotInfo != null){
             Stateset("1","3",lotId);
             outTrx.setRtnCode(LOT_INFO_EXIST);
@@ -123,7 +123,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         Stateset("1","2",lotId);
 
 
-//       //时间校验功能接口
+       //时间校验功能接口
 //        KVMTimeReportI kvmTimeReportI = new KVMTimeReportI();
 //        kvmTimeReportI.setTrxId("EAPACCEPT");
 //        kvmTimeReportI.setActionFlg("TIME");
@@ -202,27 +202,27 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         EmsHandler.emsDeviceParameterReportToEms(evtNo,lotId,emsDeviceParameterReportI);
 
         //上报信息给RCM
-        EapReportAlarmInfoI eapReportAlarmInfoI = new EapReportAlarmInfoI();
-        eapReportAlarmInfoI.setTrxId("eapReportAarmInfo");
-        eapReportAlarmInfoI.setLotId(lotInfo.getLotId());
-        eapReportAlarmInfoI.setEquipmentNo(equipmentNo);
-        eapReportAlarmInfoI.setEquipmentState(GenergicStatDef.EqptStat.RUN);
-        String returnFromRcm = httpHandler.postHttpForRcm(evtNo, GenericDataDef.rcmUrl, eapReportAlarmInfoI);
-        if (StringUtils.isEmpty(returnFromRcm)){
-            outTrx.setRtnCode(RCM_TIME_OUT);
-            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
-            return;
-        }
-        EapReportAlarmInfoO eapReportAlarmInfoO = JacksonUtils.string2Object(returnFromRcm, EapReportAlarmInfoO.class);
-        if(!RETURN_CODE_OK.equals(eapReportAlarmInfoO.getRtnCode())){
-            Stateset("2","3",lotId);
-            outTrx.setRtnCode(eapReportAlarmInfoO.getRtnCode());
-            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM返回失败，原因:[" + eapReportAlarmInfoO.getRtnMesg() + "]");
-            EapEndCard(evtNo);
-            Remove(evtNo);
-            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
-        }
+//        EapReportAlarmInfoI eapReportAlarmInfoI = new EapReportAlarmInfoI();
+//        eapReportAlarmInfoI.setTrxId("eapReportAarmInfo");
+//        eapReportAlarmInfoI.setLotId(lotInfo.getLotId());
+//        eapReportAlarmInfoI.setEquipmentNo(equipmentNo);
+//        eapReportAlarmInfoI.setEquipmentState(GenergicStatDef.EqptStat.RUN);
+//        String returnFromRcm = httpHandler.postHttpForRcm(evtNo, GenericDataDef.rcmUrl, eapReportAlarmInfoI);
+//        if (StringUtils.isEmpty(returnFromRcm)){
+//            outTrx.setRtnCode(RCM_TIME_OUT);
+//            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM没有回复");
+//            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
+//            return;
+//        }
+//        EapReportAlarmInfoO eapReportAlarmInfoO = JacksonUtils.string2Object(returnFromRcm, EapReportAlarmInfoO.class);
+//        if(!RETURN_CODE_OK.equals(eapReportAlarmInfoO.getRtnCode())){
+//            Stateset("2","3",lotId);
+//            outTrx.setRtnCode(eapReportAlarmInfoO.getRtnCode());
+//            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM返回失败，原因:[" + eapReportAlarmInfoO.getRtnMesg() + "]");
+//            EapEndCard(evtNo);
+//            Remove(evtNo);
+//            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
+//        }
 
         //将信息下发给KVM
         EAPLotInfoWriteInI eapLotInfoWriteInI = new EAPLotInfoWriteInI();
