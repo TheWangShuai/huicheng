@@ -720,33 +720,33 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         str = lotInfo.getTemperature();
         Stateset("6", "2", lotId);
 
-//        //eap给kvm下发指令执行slotmap代操
-//        KVMSlotmapModeI kvmSlotmapModeI = new KVMSlotmapModeI();
-//        kvmSlotmapModeI.setTrxId("EAPACCEPT");
-//        kvmSlotmapModeI.setActionFlg("SLT");
-//        kvmSlotmapModeI.setEqpId(equipmentNo);
-//        String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, kvmSlotmapModeI);
-//        if (StringUtils.isEmpty(returnMesg)) {
-//            outTrx.setRtnCode(KVM_TIME_OUT);
-//            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发slotmap代操指令， KVM 没有返回");
-//            ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
-//            return;
-//        }
-//        KVMSlotmapModeO kvmSlotmapModeO = JacksonUtils.string2Object(returnMesg, KVMSlotmapModeO.class);
-//        if (!RETURN_CODE_OK.equals(kvmSlotmapModeO.getRtnCode())) {
-//            outTrx.setRtnCode(KVM_RETURN_ERROR);
-//            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发slotmap代操指令， KVM 返回错误:[" + kvmSlotmapModeO.getRtnMesg() + "]");
-//            ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
-//            return;
-//        }
-//        String kvmSlotNo= kvmSlotmapModeO.getOpeContent();
-//        List<EAPReqLotInfoOB> paramList = lotInfo.getParamList();
-//        String datas = null;
-//        for (EAPReqLotInfoOB eapReqLotInfoOB : paramList){
-//            if ("Sample".equals(eapReqLotInfoOB.getParamName())){
-//               datas = eapReqLotInfoOB.getParamValue();
-//            }
-//        }
+        //eap给kvm下发指令执行slotmap代操
+        KVMSlotmapModeI kvmSlotmapModeI = new KVMSlotmapModeI();
+        kvmSlotmapModeI.setTrxId("EAPACCEPT");
+        kvmSlotmapModeI.setActionFlg("SLT");
+        kvmSlotmapModeI.setEqpId(equipmentNo);
+        String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, kvmSlotmapModeI);
+        if (StringUtils.isEmpty(returnMesg)) {
+            outTrx.setRtnCode(KVM_TIME_OUT);
+            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发slotmap代操指令， KVM 没有返回");
+            ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
+            return;
+        }
+        KVMSlotmapModeO kvmSlotmapModeO = JacksonUtils.string2Object(returnMesg, KVMSlotmapModeO.class);
+        if (!RETURN_CODE_OK.equals(kvmSlotmapModeO.getRtnCode())) {
+            outTrx.setRtnCode(KVM_RETURN_ERROR);
+            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发slotmap代操指令， KVM 返回错误:[" + kvmSlotmapModeO.getRtnMesg() + "]");
+            ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
+            return;
+        }
+        String kvmSlotNo= kvmSlotmapModeO.getOpeContent();
+        List<EAPReqLotInfoOB> paramList = lotInfo.getParamList();
+        String datas = null;
+        for (EAPReqLotInfoOB eapReqLotInfoOB : paramList){
+            if ("Sample".equals(eapReqLotInfoOB.getParamName())){
+               datas = eapReqLotInfoOB.getParamValue();
+            }
+        }
 
         //PROBER机台做完操作后先进行check in，在给test机台下指令
         ClientHandler.sendMessage(evtNo, true, 2, "产前校验完成，请点击client端check in按钮开始check in");
