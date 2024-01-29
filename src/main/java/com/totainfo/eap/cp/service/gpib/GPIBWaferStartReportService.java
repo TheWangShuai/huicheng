@@ -17,12 +17,21 @@ import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportO;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultO;
 import com.totainfo.eap.cp.trx.rcm.EapReportAlarmInfoI;
 import com.totainfo.eap.cp.trx.rcm.EapReportAlarmInfoO;
+import com.totainfo.eap.cp.util.FtpUtils;
 import com.totainfo.eap.cp.util.JacksonUtils;
+import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +46,22 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
     @Resource
     private HttpHandler httpHandler;
 
+    @Value("${equipment.id}")
+    private String proberName;
+
+    @Value("${equipment.tsId}")
+    private String tsId;
+
+    @Value("${ftp.host}")
+    private String host;
+    @Value("${ftp.port}")
+    private int port;
+    @Value("${ftp.user}")
+    private String user;
+    @Value("${ftp.password}")
+    private String password;
+    @Value("${ftp.path}")
+    private String path;
 
     @Override
     public void mainProc(String evtNo, GPIBWaferStartReportI inTrx, GPIBWaferStartReportO outTrx) {
@@ -96,6 +121,30 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
                 }
                 waferDieMap.remove(pvWaferId);
                 lotDao.addLotInfo(lotInfo);
+            }
+            Path dataPath = Paths.get(System.getProperty("user.dir"),"data", pvWaferId + ".XTR");
+            if (!Files.exists(dataPath.getParent())){
+                try {
+                    Files.createDirectories(dataPath.getParent());
+                } catch (IOException e) {
+                    LogUtils.error("文件夹创建失败");
+                }
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("LotID=").append(lotInfo.getLotId()).append("\n")
+                    .append("TestProgram=").append(lotInfo.getTestProgram()).append("\n")
+                    .append("P/C=").append(lotInfo.getProberCard()).append("\n")
+                    .append("touchdown=").append(lotInfo.getDieCount()).append("\n")
+                    .append("OPID=").append(lotInfo.getUserId()).append("\n")
+                    .append("ChuckTemp=").append(lotInfo.getTemperature()).append("\n")
+                    .append("ProberName=").append(proberName).append("\n")
+                    .append("TSID=").append(tsId).append("\n");
+            try {
+                Files.write(dataPath, sb.toString().getBytes());
+                FtpUtils.uploadFile(host, user, password, port, path,dataPath.toString());
+                Files.delete(dataPath);
+            } catch (IOException e) {
+                LogUtils.error("xtr文件写入失败");
             }
         }
 

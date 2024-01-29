@@ -1,6 +1,7 @@
 equipment:
   id: P-N4-018
   type: AP3000E
+  tsId: ts
   proberUrl: http://10.8.23.224:8088/matrix/sendMsg
   testerUrl: http://10.8.61.33：4444/matrix/sendMsg
 client :
@@ -71,3 +72,10 @@ tcp:
     separator: \n  #分隔符
     retry:
       delay: 5    #TCP重连间隔时间，单位：秒
+
+ftp:
+  host: 10.8.10.36
+  port: 21
+  user: cpmap
+  password: cpmap123
+  path: /edamap/MapBackup/CPMAP/XTR_EAP
