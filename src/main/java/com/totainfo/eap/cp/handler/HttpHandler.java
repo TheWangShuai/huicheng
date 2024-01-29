@@ -44,6 +44,26 @@ public class HttpHandler<I extends BaseTrxI> {
         return returnMesg;
     }
 
+    public String postHttpForRcm(String evtNo, String url, I inObj) {
+        String trxId = inObj.getTrxId();
+        String requestMesg = JacksonUtils.object2String(inObj);
+        String realUrl = url;
+        LogUtils.info("[{}][{}]:[{}]->[{}]", evtNo,"EAP->RCM", trxId, requestMesg);
+        String returnMesg = null;
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("traceId", evtNo);
+            headers.set("Accept", "application/json, text/plain, */*");
+            headers.set("Content-Type", "application/json;charset=UTF-8");
+            ResponseEntity<String> exchange = restTemplate.exchange(realUrl, HttpMethod.POST, new HttpEntity<>(requestMesg, headers), String.class);
+            returnMesg = exchange.getBody();
+        } catch (Exception e) {
+            LogUtils.error("HTTP异常:", e);
+        }
+        LogUtils.info("[{}][{}] :[{}]->[{}]", evtNo, "RCM->EAP", trxId, returnMesg);
+        return returnMesg;
+    }
+
     public String getbodyHttpForClient(String evtNo, String url,String recipeId,String toolType, I inObj) {
         String trxId = inObj.getTrxId();
         String trxName = inObj.getTrxName();

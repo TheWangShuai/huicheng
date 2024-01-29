@@ -1,17 +1,23 @@
 package com.totainfo.eap.cp.service.gpib;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
+import com.totainfo.eap.cp.commdef.GenergicStatDef;
+import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.entity.DielInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.EmsHandler;
+import com.totainfo.eap.cp.handler.HttpHandler;
 import com.totainfo.eap.cp.handler.MesHandler;
 import com.totainfo.eap.cp.trx.ems.EMSWaferReport.EMSWaferReportI;
 import com.totainfo.eap.cp.trx.ems.EMSWaferReport.EMSWaferReportO;
 import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportO;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultO;
+import com.totainfo.eap.cp.trx.rcm.EapReportAlarmInfoI;
+import com.totainfo.eap.cp.trx.rcm.EapReportAlarmInfoO;
+import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -20,12 +26,16 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 
+import static com.totainfo.eap.cp.commdef.GenergicCodeDef.RCM_TIME_OUT;
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
 
 @Service("waferStartReport")
 public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartReportI, GPIBWaferStartReportO> {
     @Resource
     private ILotDao lotDao;
+
+    @Resource
+    private HttpHandler httpHandler;
 
 
     @Override
@@ -42,6 +52,28 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
         EMSWaferReportI emsWaferReportI = new EMSWaferReportI();
         emsWaferReportI.setLotNo(lotNo);
         emsWaferReportI.setWaferNo(waferId);
+
+        //上报给RCM有关wafer的信息
+        EapReportAlarmInfoI eapReportAlarmInfoI = new EapReportAlarmInfoI();
+        eapReportAlarmInfoI.setTrxId("eapReportAlarmInfo");
+        eapReportAlarmInfoI.setEquipmentNo(GenericDataDef.equipmentNo);
+        eapReportAlarmInfoI.setEquipmentState(GenergicStatDef.EqptStat.RUN);
+        eapReportAlarmInfoI.setLotId(lotInfo.getLotId());
+        eapReportAlarmInfoI.setWaferDates(waferId);
+        String returnMsgFromRcm = httpHandler.postHttpForRcm(evtNo, GenericDataDef.rcmUrl, eapReportAlarmInfoI);
+        if (StringUtils.isEmpty(returnMsgFromRcm)){
+            outTrx.setRtnCode(RCM_TIME_OUT);
+            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
+            return;
+        }
+        EapReportAlarmInfoO eapReportAlarmInfoO = JacksonUtils.string2Object(returnMsgFromRcm, EapReportAlarmInfoO.class);
+        if(!RETURN_CODE_OK.equals(eapReportAlarmInfoO.getRtnCode())){
+            outTrx.setRtnCode(eapReportAlarmInfoO.getRtnCode());
+            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM返回失败，原因:[" + eapReportAlarmInfoO.getRtnMesg() + "]");
+            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
+        }
+
 
         //Wafer Start时判断，上一片Wafer Die数据是否上报完成，如果没有，将上一片Wafer的Die数据上报完成
         if(StringUtils.isNotEmpty(pvWaferId)){

@@ -88,15 +88,15 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
             return;
         }
         String message = msg.toString();
-        LogUtils.info("GPIB回复的原文:[" + message + "]");
-        LogUtils.gpib("GPIB->EAP:[" + message + "]");
+        LogUtils.info("GPIB回复的原文:["+ message +"]");
+        LogUtils.gpib("GPIB->EAP:["+ message +"]");
         if(StringUtils.isEmpty(message)){
             LogUtils.info("GPIB回复超时");
             LogUtils.gpib("GPIB回复超时");
             return;
         }
         message = message.replaceAll("\\r","").replaceAll("\\n", "");
-        LogUtils.info("GPIB->EAP:["+ message + "]");
+        LogUtils.info("GPIB->EAP:["+ message +"]");
 //        LogUtils.gpib("GPIB->EAP:["+ message + "]");
         String[] strs = message.split("\"");
         String evtNo = GUIDGenerator.javaGUID();
@@ -197,8 +197,8 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
             return;
         }
         ByteBuf byteBuf = Unpooled.copiedBuffer((message).getBytes());
-        LogUtils.info("EAP->GPIB:[]",message);
-        LogUtils.gpib("EAP->GPIB:[]",message);
+        LogUtils.info("EAP->GPIB:["+ message + "]");
+        LogUtils.gpib("EAP->GPIB:["+ message + "]");
         ctrx.writeAndFlush(byteBuf);
     }
 

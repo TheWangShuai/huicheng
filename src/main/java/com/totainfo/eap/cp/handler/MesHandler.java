@@ -24,6 +24,8 @@ import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoI;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoO;
 import com.totainfo.eap.cp.trx.mes.EAPReqMeasureResult.EAPReqMeasureResultI;
 import com.totainfo.eap.cp.trx.mes.EAPReqMeasureResult.EAPReqMeasureResultO;
+import com.totainfo.eap.cp.trx.mes.EAPReqUserAuthority.EAPReqUserAuthorityI;
+import com.totainfo.eap.cp.trx.mes.EAPReqUserAuthority.EAPReqUserAuthorityO;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultI;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultIA;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultO;
@@ -337,6 +339,23 @@ public class MesHandler {
             gpibWaferStartReportO = JacksonUtils.string2Object(reply, GPIBWaferStartReportO.class);
         }
         return gpibWaferStartReportO;
+    }
+    // EAP向mes询问作业人员手k权限
+    public static EAPReqUserAuthorityO userAuth(String evtNo,String evtUsr){
+        EAPReqUserAuthorityI eapReqUserAuthorityI = new EAPReqUserAuthorityI();
+        EAPReqUserAuthorityO eapReqUserAuthorityO = new EAPReqUserAuthorityO();
+        eapReqUserAuthorityI.setTrxId("IsHaveKeyInAuth");
+        eapReqUserAuthorityI.setComputerName(computerName);
+        eapReqUserAuthorityI.setEvtUsr(evtUsr);
+        String reply = rabbitmqHandler.sendForReply(evtNo, appName, mesQueue, mesExchange, eapReqUserAuthorityI);
+        if (!StringUtils.hasText(reply)){
+            eapReqUserAuthorityO.setRtnCode(MES_TIME_OUT);
+            eapReqUserAuthorityO.setRtnMesg("[EAP-MES]:EAP向mes询问作业人员是否有手K权限，MES没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,eapReqUserAuthorityO.getRtnMesg());
+        }else {
+             eapReqUserAuthorityO = JacksonUtils.string2Object(reply, EAPReqUserAuthorityO.class);
+        }
+        return eapReqUserAuthorityO;
     }
 
 

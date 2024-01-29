@@ -16,6 +16,8 @@ public class GenericDataDef {
 
     public static String eqpType;
 
+    public static String rcmUrl;
+
     @Value("${equipment.id}")
     public void setEquipmentNo(String equipmentNo) {
         GenericDataDef.equipmentNo = equipmentNo;
@@ -40,4 +42,6 @@ public class GenericDataDef {
     public void setEqpType(String eqpType) {
         GenericDataDef.eqpType = eqpType;
     }
+    @Value("${rcm.rcmUrl}")
+    public void setRcmUrl(String rcmUrl) {GenericDataDef.rcmUrl = rcmUrl;}
 }

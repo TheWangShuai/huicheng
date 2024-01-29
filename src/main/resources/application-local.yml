@@ -5,6 +5,8 @@ equipment:
   testerUrl: http://10.8.61.33：4444/matrix/sendMsg
 client :
   recipeBodyUrl: http://localhost:5000/api/DeviceOperate
+rcm:
+  rcmUrl:
 
 server:
   port: 8083

@@ -34,6 +34,8 @@ import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportO;
 import com.totainfo.eap.cp.trx.mes.EAPReqCheckOut.EAPReqCheckOutO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
 import com.totainfo.eap.cp.trx.mes.EAPReqMeasureResult.EAPReqMeasureResultO;
+import com.totainfo.eap.cp.trx.rcm.EapReportAlarmInfoI;
+import com.totainfo.eap.cp.trx.rcm.EapReportAlarmInfoO;
 import com.totainfo.eap.cp.trx.rms.RmsOnlineValidation.RmsOnlineValidationO;
 import com.totainfo.eap.cp.util.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -242,6 +244,22 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             pvAlarmInfo = entry.getValue();
             ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上报设备结束报警信息指令成功");
             MesHandler.eqptStatReport(evtNo, EqptStat.RUN,"无",lotInfo.getUserId());
+
+            //给RCM上报报警结束时间
+            EapReportAlarmInfoI eapReportAlarmInfoI = new EapReportAlarmInfoI();
+            eapReportAlarmInfoI.setEquipmentState(EqptStat.RUN);
+            eapReportAlarmInfoI.setLotId(lotInfo.getLotId());
+            eapReportAlarmInfoI.setAlarmCode(pvAlarmInfo.getAlarmCode());
+            eapReportAlarmInfoI.setAlarmMessage(pvAlarmInfo.getAlarmText());
+            eapReportAlarmInfoI.setAlarmEndTime(pvAlarmInfo.getTime());
+            EapReportAlarmInfoO eapReportAlarmInfoO = eapReportAlarmInfoO(evtNo, eapReportAlarmInfoI);
+            if (!RETURN_CODE_OK.equals(eapReportAlarmInfoO.getRtnCode())) {
+                outTrx.setRtnCode(eapReportAlarmInfoO.getRtnCode());
+                outTrx.setRtnMesg(eapReportAlarmInfoO.getRtnMesg());
+                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+                return;
+            }
+
             EmsHandler.alarmReportToEms(evtNo,pvAlarmInfo.getAlarmCode(),pvAlarmInfo.getAlarmText(),lotInfo.getLotId(),"0");
             MesHandler.alarmReport(evtNo, pvAlarmInfo.getAlarmCode(), pvAlarmInfo.getAlarmText(),pvAlarmInfo.getTime(), pvAlarmInfo.getId()) ;
             alarmDao.removeAlarm(entry.getKey());
@@ -251,6 +269,23 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
 
         String id= null;
         ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上报设备开始报警信息指令成功");
+
+        //给RCM上报报警开始时间
+        EapReportAlarmInfoI eapReportAlarmInfoI = new EapReportAlarmInfoI();
+        eapReportAlarmInfoI.setEquipmentState(EqptStat.DOWN);
+        eapReportAlarmInfoI.setLotId(lotInfo.getLotId());
+        eapReportAlarmInfoI.setAlarmCode(alarmCode);
+        eapReportAlarmInfoI.setAlarmMessage(alarmMessage);
+        eapReportAlarmInfoI.setAlarmBeginTime(time);
+        EapReportAlarmInfoO eapReportAlarmInfoO = eapReportAlarmInfoO(evtNo, eapReportAlarmInfoI);
+        if (!RETURN_CODE_OK.equals(eapReportAlarmInfoO.getRtnCode())) {
+            outTrx.setRtnCode(eapReportAlarmInfoO.getRtnCode());
+            outTrx.setRtnMesg(eapReportAlarmInfoO.getRtnMesg());
+            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+            return;
+        }
+
+
         EmsHandler.alarmReportToEms(evtNo, alarmCode, alarmMessage, lotInfo.getLotId(), "1");
         EAPEqptAlarmReportO eapEqptAlarmReportO = MesHandler.alarmReport(evtNo, alarmCode, alarmMessage, time,id);
         if(eapEqptAlarmReportO != null){
@@ -792,6 +827,20 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         eapSyncEqpInfoI.setModel(eqptInfo.getEqptMode());
         ClientHandler.sendEqpInfo(evtNo, eapSyncEqpInfoI);
         RedisHandler.remove("EQPTINFO:EQ:%s:KEY".replace("%s", equipmentNo));
+    }
+    public EapReportAlarmInfoO eapReportAlarmInfoO (String evtNo, EapReportAlarmInfoI eapReportAlarmInfoI){
+        EapReportAlarmInfoO eapReportAlarmInfoO = new EapReportAlarmInfoO();
+        eapReportAlarmInfoI.setTrxId("eapReportAlarmInfo");
+        eapReportAlarmInfoI.setEquipmentNo(equipmentNo);
+        String returnMsgFromRcm = httpHandler.postHttpForRcm(evtNo, GenericDataDef.rcmUrl, eapReportAlarmInfoI);
+        if(!org.springframework.util.StringUtils.hasText(returnMsgFromRcm)){
+            eapReportAlarmInfoO.setRtnCode("00000001");
+            eapReportAlarmInfoO.setRtnMesg("[EAP-RCM]:EAP上报设备信息，RCM没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,eapReportAlarmInfoO.getRtnMesg());
+        }else{
+            eapReportAlarmInfoO = JacksonUtils.string2Object(returnMsgFromRcm, EapReportAlarmInfoO.class);
+        }
+        return eapReportAlarmInfoO;
     }
 
 }

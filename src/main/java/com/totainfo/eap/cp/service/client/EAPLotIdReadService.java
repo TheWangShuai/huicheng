@@ -1,6 +1,7 @@
 package com.totainfo.eap.cp.service.client;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
+import com.totainfo.eap.cp.commdef.GenergicCodeDef;
 import com.totainfo.eap.cp.commdef.GenergicStatDef;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.dao.IEqptDao;
@@ -26,6 +27,9 @@ import com.totainfo.eap.cp.trx.kvm.KVMTimeReport.KVMTimeReportO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOA;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
+import com.totainfo.eap.cp.trx.mes.EAPReqUserAuthority.EAPReqUserAuthorityO;
+import com.totainfo.eap.cp.trx.rcm.EapReportAlarmInfoI;
+import com.totainfo.eap.cp.trx.rcm.EapReportAlarmInfoO;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.StringUtils;
@@ -89,7 +93,15 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
             ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
             return;
         }
+
         LotInfo lotInfo = lotDao.getCurLotInfo();
+        EAPReqUserAuthorityO eapReqUserAuthorityO = MesHandler.userAuth(evtNo, lotInfo.getUserId());
+        if (!RETURN_CODE_OK.equals(eapReqUserAuthorityO.getRtnCode())) {
+            outTrx.setRtnCode(eapReqUserAuthorityO.getRtnCode());
+            outTrx.setRtnMesg(eapReqUserAuthorityO.getRtnMesg());
+            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+            return;
+        }
         if(lotInfo != null){
             Stateset("1","3",lotId);
             outTrx.setRtnCode(LOT_INFO_EXIST);
@@ -105,6 +117,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
             Remove(evtNo);
             return;
         }
+
         //发送给前端，LOT 校验成功。
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]:批次号:[" + lotId + "]探针:["+ proberId +"] MES 验证成功。");
         Stateset("1","2",lotId);
@@ -188,6 +201,28 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上报设备参数信息指令成功");
         EmsHandler.emsDeviceParameterReportToEms(evtNo,lotId,emsDeviceParameterReportI);
 
+        //上报信息给RCM
+        EapReportAlarmInfoI eapReportAlarmInfoI = new EapReportAlarmInfoI();
+        eapReportAlarmInfoI.setTrxId("eapReportAarmInfo");
+        eapReportAlarmInfoI.setLotId(lotInfo.getLotId());
+        eapReportAlarmInfoI.setEquipmentNo(equipmentNo);
+        eapReportAlarmInfoI.setEquipmentState(GenergicStatDef.EqptStat.RUN);
+        String returnFromRcm = httpHandler.postHttpForRcm(evtNo, GenericDataDef.rcmUrl, eapReportAlarmInfoI);
+        if (StringUtils.isEmpty(returnFromRcm)){
+            outTrx.setRtnCode(RCM_TIME_OUT);
+            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
+            return;
+        }
+        EapReportAlarmInfoO eapReportAlarmInfoO = JacksonUtils.string2Object(returnFromRcm, EapReportAlarmInfoO.class);
+        if(!RETURN_CODE_OK.equals(eapReportAlarmInfoO.getRtnCode())){
+            Stateset("2","3",lotId);
+            outTrx.setRtnCode(eapReportAlarmInfoO.getRtnCode());
+            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM返回失败，原因:[" + eapReportAlarmInfoO.getRtnMesg() + "]");
+            EapEndCard(evtNo);
+            Remove(evtNo);
+            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
+        }
 
         //将信息下发给KVM
         EAPLotInfoWriteInI eapLotInfoWriteInI = new EAPLotInfoWriteInI();
