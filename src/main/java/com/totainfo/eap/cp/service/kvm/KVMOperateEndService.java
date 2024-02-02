@@ -130,6 +130,8 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
     private String password;
     @Value("${ftp.path}")
     private String path;
+    @Value("${equipment.testEqp}")
+    private String testEqp;
 
     @Override
     public void mainProc(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx) {
@@ -970,26 +972,26 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         }
         StringBuilder sb = new StringBuilder();
         sb.append("TP_NAME:").append(lotInfo.getTestProgram()).append("\n")
-                .append("TESTER_ID:").append("").append("\n")
-                .append("PART_NO:").append("").append("\n")
-                .append("QTY:").append("").append("\n")
-                .append("C_LOT:").append("").append("\n")
+                .append("TESTER_ID:").append(testEqp).append("\n")
+                .append("PART_NO:").append("NA").append("\n")
+                .append("QTY:").append(lotInfo.getParamMap().get("Sample").length()).append("\n")
+                .append("C_LOT:").append("NA").append("\n")
                 .append("HANDLER:").append("NA").append("\n")
                 .append("PROBER:").append("NA").append("\n")
                 .append("LOADBOARD:").append("NA").append("\n")
                 .append("PROBERCARD:").append(lotInfo.getProberCard()).append("\n")
                 .append("SOCKET:").append("NA").append("\n")
-                .append("PROCESS:").append("").append("\n")
-                .append("STEP:").append("").append("\n")
+                .append("PROCESS:").append("CP").append("\n")
+                .append("STEP:").append("NA").append("\n")
                 .append("RETEST:").append("NA").append("\n")
                 .append("RT_BIN:").append("NA").append("\n")
-                .append("SUBCON_NAME:").append("").append("\n")
-                .append("SUBCON_LOT:").append("").append("\n")
+                .append("SUBCON_NAME:").append("NA").append("\n")
+                .append("SUBCON_LOT:").append("NA").append("\n")
                 .append("DATE_CODE:").append("NA").append("\n")
-                .append("OPID:").append("").append("\n")
-                .append("PASS_BIN:").append("").append("\n")
-                .append("WORK_MODE:").append("").append("\n")
-                .append("EXTENSION:").append("").append("\n");
+                .append("OPID:").append(lotInfo.getUserId()).append("\n")
+                .append("PASS_BIN:").append("NA").append("\n")
+                .append("WORK_MODE:").append("TEST").append("\n")
+                .append("EXTENSION:").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddhhmmss"))).append("\n");
         try {
             Files.write(dataPath, sb.toString().getBytes());
             FtpUtils.uploadFile(host, user, password, port, path, dataPath.toString());

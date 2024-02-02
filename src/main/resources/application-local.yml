@@ -2,6 +2,7 @@ equipment:
   id: P-N4-018
   type: AP3000E
   tsId: ts
+  testEqp: testEqp
   proberUrl: http://10.8.23.224:8088/matrix/sendMsg
   testerUrl: http://10.8.61.33：4444/matrix/sendMsg
 client :
