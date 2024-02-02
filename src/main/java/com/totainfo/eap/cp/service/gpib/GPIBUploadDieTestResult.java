@@ -47,10 +47,10 @@ public class GPIBUploadDieTestResult extends EapBaseService <GPIBUploadDieTestRe
         }
 
         //TODO 取到的卡控值 后续在加入判断
-        EMSGetTestResultO testResult = EmsHandler.getTestResult(evtNo, lotInfo.getDevice());
-        String itemName = testResult.getItemList().getItemName();
-        String itemEnable = testResult.getItemList().getItemEnable();
-        String itemValue = testResult.getItemList().getItemValue();
+//        EMSGetTestResultO testResult = EmsHandler.getTestResult(evtNo, lotInfo.getDevice());
+//        String itemName = testResult.getItemList().getItemName();
+//        String itemEnable = testResult.getItemList().getItemEnable();
+//        String itemValue = testResult.getItemList().getItemValue();
 
 //        String string = datas.toString();
 //        GPIBUploadDieTestResultIA gpibUploadDieTestResultIA = JacksonUtils.string2Object(string, GPIBUploadDieTestResultIA.class);

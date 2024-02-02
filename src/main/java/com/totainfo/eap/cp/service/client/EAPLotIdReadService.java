@@ -64,6 +64,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
     @Resource
     private IEqptDao iEqptDao;
 
+    private static String proberCardId;
     @Override
     public void mainProc(String evtNo, EAPLotIdReadI inTrx, EAPLotIdReadO outTrx) {
         String lotId = inTrx.getLotNo();
@@ -78,6 +79,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         Stateset("1","1",lotId);
 
         String proberId = inTrx.getProberCardId();
+        proberCardId = proberId;
         if(StringUtils.isEmpty(proberId)){
             Stateset("1","3",lotId);
             outTrx.setRtnCode(PROBER_ID_EMPTY);
@@ -95,13 +97,6 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         }
 
         LotInfo lotInfo = lotDao.getCurLotInfo();
-//        EAPReqUserAuthorityO eapReqUserAuthorityO = MesHandler.userAuth(evtNo, lotInfo.getUserId());
-//        if (!RETURN_CODE_OK.equals(eapReqUserAuthorityO.getRtnCode())) {
-//            outTrx.setRtnCode(eapReqUserAuthorityO.getRtnCode());
-//            outTrx.setRtnMesg(eapReqUserAuthorityO.getRtnMesg());
-//            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
-//            return;
-//        }
         if(lotInfo != null){
             Stateset("1","3",lotId);
             outTrx.setRtnCode(LOT_INFO_EXIST);
@@ -121,42 +116,6 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         //发送给前端，LOT 校验成功。
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]:批次号:[" + lotId + "]探针:["+ proberId +"] MES 验证成功。");
         Stateset("1","2",lotId);
-
-
-       //时间校验功能接口
-//        KVMTimeReportI kvmTimeReportI = new KVMTimeReportI();
-//        kvmTimeReportI.setTrxId("EAPACCEPT");
-//        kvmTimeReportI.setActionFlg("TIME");
-//        kvmTimeReportI.setEqpId(equipmentNo);
-//        String returnMsg = httpHandler.postHttpForEqpt(evtNo, proberUrl, kvmTimeReportI);
-//        if(StringUtils.isEmpty(returnMsg)){
-//            outTrx.setRtnCode(KVM_TIME_OUT);
-//            outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报指令，KVM没有回复");
-//            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
-//            return;
-//        }
-//        KVMTimeReportO kvmTimeReportO = JacksonUtils.string2Object(returnMsg, KVMTimeReportO.class);
-//        if(!RETURN_CODE_OK.equals(kvmTimeReportO.getRtnCode())){
-//            outTrx.setRtnCode(kvmTimeReportO.getRtnCode());
-//            outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报信息，KVM返回失败，原因:[" + kvmTimeReportO.getRtnMesg() + "]");
-//            Remove(evtNo);
-//            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
-//        }
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-//        String eqpTimeNow = kvmTimeReportO.getOpeContent();
-//        LogUtils.info("机台上报时间[{}]",eqpTimeNow);
-//        LocalTime eqpTime = LocalTime.parse(eqpTimeNow, formatter);
-//        // 得到当前的北京时间
-//        ZonedDateTime beijingTime = ZonedDateTime.now(ZoneId.of("Asia/Shanghai"));
-//        LocalTime localTimeNow = beijingTime.toLocalTime();
-//        LogUtils.info("北京时间是[{}]",localTimeNow);
-//        Duration duration = Duration.between(eqpTime, localTimeNow);
-//        long differenceInMinutes = duration.toMinutes();
-//        // 检查时间是否相差五分钟或以上
-//        if (differenceInMinutes >= 5 || differenceInMinutes <= -5) {
-//             ClientHandler.sendMessage(evtNo,true,1,"机台时间[" + eqpTime + "]与北京时间[" + localTimeNow +"]相差五分钟以上，请检查");
-//             return;
-//        }
 
         EAPReqLotInfoOA eapReqLotInfoOA = eapReqLotInfoO.getLotInfo();
         lotInfo = new LotInfo();
@@ -224,37 +183,29 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
 //            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
 //        }
 
-        //将信息下发给KVM
-        EAPLotInfoWriteInI eapLotInfoWriteInI = new EAPLotInfoWriteInI();
-        eapLotInfoWriteInI.setTrxId("EAPACCEPT");
-        eapLotInfoWriteInI.setActionFlg("RJI");
-        eapLotInfoWriteInI.setUserId(userId);
-        eapLotInfoWriteInI.setProberCardId(inTrx.getProberCardId());
-        eapLotInfoWriteInI.setLoadBoardId(lotInfo.getLoadBoardId());
-        eapLotInfoWriteInI.setWaferLot(lotInfo.getWaferLot());
-        eapLotInfoWriteInI.setDeviceId(lotInfo.getDeviceId());
-        eapLotInfoWriteInI.setTestProgram(lotInfo.getTestProgram());
-        String returnMesg  = httpHandler.postHttpForEqpt(evtNo, GenericDataDef.proberUrl, eapLotInfoWriteInI);
-        Stateset("2","1",lotId);
-        if(StringUtils.isEmpty(returnMesg)){
-            Stateset("2","3",lotId);
+
+       //时间校验功能接口
+        KVMTimeReportI kvmTimeReportI = new KVMTimeReportI();
+        kvmTimeReportI.setTrxId("EAPACCEPT");
+        kvmTimeReportI.setActionFlg("TIME");
+        kvmTimeReportI.setEqpId(equipmentNo);
+        String returnMsg = httpHandler.postHttpForEqpt(evtNo, proberUrl, kvmTimeReportI);
+        if(StringUtils.isEmpty(returnMsg)){
             outTrx.setRtnCode(KVM_TIME_OUT);
-            outTrx.setRtnMesg("[EAP-KVM]:EAP下发批次信息，KVM没有回复");
+            outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报指令，KVM没有回复");
             ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
             return;
         }
-        EAPLotInfoWriteInO eapLotInfoWriteInO = JacksonUtils.string2Object(returnMesg, EAPLotInfoWriteInO.class);
-        if(!RETURN_CODE_OK.equals(eapLotInfoWriteInO.getRtnCode())){
-            Stateset("2","3",lotId);
-            outTrx.setRtnCode(eapLotInfoWriteInO.getRtnCode());
-            outTrx.setRtnMesg("[EAP-KVM]:EAP下发批次信息，KVM返回失败，原因:[" + eapLotInfoWriteInO.getRtnMesg() + "]");
-            EapEndCard(evtNo);
+        KVMTimeReportO kvmTimeReportO = JacksonUtils.string2Object(returnMsg, KVMTimeReportO.class);
+        if(!RETURN_CODE_OK.equals(kvmTimeReportO.getRtnCode())){
+            outTrx.setRtnCode(kvmTimeReportO.getRtnCode());
+            outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报信息，KVM返回失败，原因:[" + kvmTimeReportO.getRtnMesg() + "]");
             Remove(evtNo);
             ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
+            return;
         }
-        //发送给前端，LOT信息发送KVM成功
-        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:批次:[" + lotId + "]信息下发KVM成功。");
-        MesHandler.eqptStatReport(evtNo, GenergicStatDef.EqptStat.RUN,"无",lotInfo.getUserId());
+        ClientHandler.sendMessage(evtNo,false,2,"EAP开始进行时间校验");
+
     }
     public void Stateset(String step, String state,String lotno) {
         StateInfo stateInfo = new StateInfo();
@@ -282,5 +233,9 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         eapSyncEqpInfoI.setModel(eqptInfo.getEqptMode());
         ClientHandler.sendEqpInfo(evtNo, eapSyncEqpInfoI);
         RedisHandler.remove("EQPTINFO:EQ:%s:KEY".replace("%s", equipmentNo));
+    }
+
+    public static String getProberCardId() {
+        return proberCardId;
     }
 }
