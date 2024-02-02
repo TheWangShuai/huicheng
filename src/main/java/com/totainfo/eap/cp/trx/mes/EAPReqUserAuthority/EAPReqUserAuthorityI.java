@@ -5,6 +5,8 @@ import com.totainfo.eap.cp.base.trx.BaseTrxI;
 public class EAPReqUserAuthorityI extends BaseTrxI {
     private String computerName;
 
+    private String userId;
+
     private String evtUsr;
 
     public String getComputerName() {
@@ -13,6 +15,14 @@ public class EAPReqUserAuthorityI extends BaseTrxI {
 
     public void setComputerName(String computerName) {
         this.computerName = computerName;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getEvtUsr() {
