@@ -46,7 +46,7 @@ spring:
        queue: CP-MES-MQ
        exchange: MES
     client:
-      queue: CLIENT-QUEUE
+      queue: CLIENT-QUEUE.${equipment.id}
       exchange: CLIENT
     eap:
       checkName: false
@@ -59,6 +59,9 @@ spring:
     ems:
       queue: GS.TEST.EIB
       exchange: EAPTEST
+    rcm:
+      queue:
+      exchange:
 logging:
   config: classpath:log/log4j2-dev.xml
   level:

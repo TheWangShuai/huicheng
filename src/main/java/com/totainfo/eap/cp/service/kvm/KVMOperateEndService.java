@@ -3,7 +3,6 @@ package com.totainfo.eap.cp.service.kvm;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.totainfo.eap.cp.base.service.EapBaseService;
-import com.totainfo.eap.cp.commdef.GenergicCodeDef;
 import com.totainfo.eap.cp.commdef.GenergicStatDef;
 import com.totainfo.eap.cp.commdef.GenergicStatDef.EqptStat;
 import com.totainfo.eap.cp.commdef.GenergicStatDef.KVMOperateState;
@@ -23,7 +22,6 @@ import com.totainfo.eap.cp.service.client.EAPLotIdReadService;
 import com.totainfo.eap.cp.trx.client.EAPSyncEqpInfo.EAPSyncEqpInfoI;
 import com.totainfo.eap.cp.trx.ems.EMSGetAlarm.EMSGetAlarmO;
 import com.totainfo.eap.cp.trx.ems.EMSGetAlarm.EMSGetAlarmOA;
-import com.totainfo.eap.cp.trx.ems.EMSLotinfoReport.EMSLotInfoReportI;
 import com.totainfo.eap.cp.trx.ems.EMSStatusReport.EMSStatusReportO;
 import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardI;
 import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardO;
@@ -43,39 +41,31 @@ import com.totainfo.eap.cp.trx.kvm.KVMOperateend.KVMOperateEndO;
 import com.totainfo.eap.cp.trx.kvm.KVMSlotmapMode.KVMSlotmapModeI;
 import com.totainfo.eap.cp.trx.kvm.KVMSlotmapMode.KVMSlotmapModeO;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportO;
-import com.totainfo.eap.cp.trx.mes.EAPReqCheckOut.EAPReqCheckOutO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
-import com.totainfo.eap.cp.trx.mes.EAPReqMeasureResult.EAPReqMeasureResultO;
-import com.totainfo.eap.cp.trx.rcm.EapReportAlarmInfoI;
-import com.totainfo.eap.cp.trx.rcm.EapReportAlarmInfoO;
+import com.totainfo.eap.cp.trx.rcm.EapReportInfoI;
+import com.totainfo.eap.cp.trx.rcm.EapReportInfoO;
 import com.totainfo.eap.cp.trx.rms.RmsOnlineValidation.RmsOnlineValidationO;
 import com.totainfo.eap.cp.util.*;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.retry.backoff.Sleeper;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.swing.event.TreeWillExpandListener;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.*;
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.*;
 import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
 import static com.totainfo.eap.cp.commdef.GenericDataDef.proberUrl;
-import static com.totainfo.eap.cp.commdef.GenericDataDef.testerUrl;
 
 
 //import org.json.JSONObject;
@@ -378,16 +368,16 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             MesHandler.eqptStatReport(evtNo, EqptStat.RUN, "无", lotInfo.getUserId());
 
             //给RCM上报报警结束时间
-//            EapReportAlarmInfoI eapReportAlarmInfoI = new EapReportAlarmInfoI();
-//            eapReportAlarmInfoI.setEquipmentState(EqptStat.RUN);
-//            eapReportAlarmInfoI.setLotId(lotInfo.getLotId());
-//            eapReportAlarmInfoI.setAlarmCode(pvAlarmInfo.getAlarmCode());
-//            eapReportAlarmInfoI.setAlarmMessage(pvAlarmInfo.getAlarmText());
-//            eapReportAlarmInfoI.setAlarmEndTime(pvAlarmInfo.getTime());
-//            EapReportAlarmInfoO eapReportAlarmInfoO = eapReportAlarmInfoO(evtNo, eapReportAlarmInfoI);
-//            if (!RETURN_CODE_OK.equals(eapReportAlarmInfoO.getRtnCode())) {
-//                outTrx.setRtnCode(eapReportAlarmInfoO.getRtnCode());
-//                outTrx.setRtnMesg(eapReportAlarmInfoO.getRtnMesg());
+//            EapReportInfoI eapReportInfoI = new EapReportInfoI();
+//            eapReportInfoI.setEquipmentState(EqptStat.RUN);
+//            eapReportInfoI.setLotId(lotInfo.getLotId());
+//            eapReportInfoI.setAlarmCode(pvAlarmInfo.getAlarmCode());
+//            eapReportInfoI.setAlarmMessage(pvAlarmInfo.getAlarmText());
+//            eapReportInfoI.setAlarmEndTime(pvAlarmInfo.getTime());
+//            EapReportInfoO eapReportInfoO = RcmHandler.lotInfoReport(evtNo, eapReportInfoI);
+//            if (!RETURN_CODE_OK.equals(eapReportInfoO.getRtnCode())) {
+//                outTrx.setRtnCode(eapReportInfoO.getRtnCode());
+//                outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM返回失败，原因:[" + eapReportInfoO.getRtnMesg() + "]");
 //                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
 //                return;
 //            }
@@ -403,16 +393,16 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-EMS]:EAP给EMS上报设备开始报警信息指令成功");
 
         //给RCM上报报警开始时间
-//        EapReportAlarmInfoI eapReportAlarmInfoI = new EapReportAlarmInfoI();
-//        eapReportAlarmInfoI.setEquipmentState(EqptStat.DOWN);
-//        eapReportAlarmInfoI.setLotId(lotInfo.getLotId());
-//        eapReportAlarmInfoI.setAlarmCode(alarmCode);
-//        eapReportAlarmInfoI.setAlarmMessage(alarmMessage);
-//        eapReportAlarmInfoI.setAlarmBeginTime(time);
-//        EapReportAlarmInfoO eapReportAlarmInfoO = eapReportAlarmInfoO(evtNo, eapReportAlarmInfoI);
-//        if (!RETURN_CODE_OK.equals(eapReportAlarmInfoO.getRtnCode())) {
-//            outTrx.setRtnCode(eapReportAlarmInfoO.getRtnCode());
-//            outTrx.setRtnMesg(eapReportAlarmInfoO.getRtnMesg());
+//        EapReportInfoI eapReportInfoI = new EapReportInfoI();
+//        eapReportInfoI.setEquipmentState(EqptStat.DOWN);
+//        eapReportInfoI.setLotId(lotInfo.getLotId());
+//        eapReportInfoI.setAlarmCode(alarmCode);
+//        eapReportInfoI.setAlarmMessage(alarmMessage);
+//        eapReportInfoI.setAlarmBeginTime(time);
+//        EapReportInfoO eapReportInfoO = RcmHandler.lotInfoReport(evtNo, eapReportInfoI);
+//        if (!RETURN_CODE_OK.equals(eapReportInfoO.getRtnCode())) {
+//            outTrx.setRtnCode(eapReportInfoO.getRtnCode());
+//            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM返回失败，原因:[" + eapReportInfoO.getRtnMesg() + "]");
 //            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
 //            return;
 //        }
@@ -1040,19 +1030,19 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         RedisHandler.remove("EQPTINFO:EQ:%s:KEY".replace("%s", equipmentNo));
     }
 
-    public EapReportAlarmInfoO eapReportAlarmInfoO(String evtNo, EapReportAlarmInfoI eapReportAlarmInfoI) {
-        EapReportAlarmInfoO eapReportAlarmInfoO = new EapReportAlarmInfoO();
-        eapReportAlarmInfoI.setTrxId("eapReportAlarmInfo");
-        eapReportAlarmInfoI.setEquipmentNo(equipmentNo);
-        String returnMsgFromRcm = httpHandler.postHttpForRcm(evtNo, GenericDataDef.rcmUrl, eapReportAlarmInfoI);
+    public EapReportInfoO eapReportInfoO(String evtNo, EapReportInfoI eapReportInfoI) {
+        EapReportInfoO eapReportInfoO = new EapReportInfoO();
+        eapReportInfoI.setTrxId("eapReportAlarmInfo");
+        eapReportInfoI.setEquipmentNo(equipmentNo);
+        String returnMsgFromRcm = httpHandler.postHttpForRcm(evtNo, GenericDataDef.rcmUrl, eapReportInfoI);
         if (!org.springframework.util.StringUtils.hasText(returnMsgFromRcm)) {
-            eapReportAlarmInfoO.setRtnCode("00000001");
-            eapReportAlarmInfoO.setRtnMesg("[EAP-RCM]:EAP上报设备信息，RCM没有回复");
-            ClientHandler.sendMessage(evtNo, false, 1, eapReportAlarmInfoO.getRtnMesg());
+            eapReportInfoO.setRtnCode("00000001");
+            eapReportInfoO.setRtnMesg("[EAP-RCM]:EAP上报设备信息，RCM没有回复");
+            ClientHandler.sendMessage(evtNo, false, 1, eapReportInfoO.getRtnMesg());
         } else {
-            eapReportAlarmInfoO = JacksonUtils.string2Object(returnMsgFromRcm, EapReportAlarmInfoO.class);
+            eapReportInfoO = JacksonUtils.string2Object(returnMsgFromRcm, EapReportInfoO.class);
         }
-        return eapReportAlarmInfoO;
+        return eapReportInfoO;
     }
 
 }

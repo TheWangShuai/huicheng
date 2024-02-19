@@ -2,7 +2,7 @@ package com.totainfo.eap.cp.trx.rcm;
 
 import com.totainfo.eap.cp.base.trx.BaseTrxI;
 
-public class EapReportAlarmInfoI extends BaseTrxI {
+public class EapReportInfoI extends BaseTrxI {
     private String equipmentNo;
 
     private String equipmentState;

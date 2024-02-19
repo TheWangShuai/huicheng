@@ -1,9 +1,7 @@
 package com.totainfo.eap.cp.service.client;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
-import com.totainfo.eap.cp.commdef.GenergicCodeDef;
 import com.totainfo.eap.cp.commdef.GenergicStatDef;
-import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.dao.IEqptDao;
 import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.dao.IStateDao;
@@ -11,25 +9,20 @@ import com.totainfo.eap.cp.entity.EqptInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.entity.StateInfo;
 import com.totainfo.eap.cp.handler.*;
-import com.totainfo.eap.cp.service.kvm.KVMOperateEndService;
 import com.totainfo.eap.cp.trx.client.EAPLotIdRead.EAPLotIdReadI;
 import com.totainfo.eap.cp.trx.client.EAPLotIdRead.EAPLotIdReadO;
 import com.totainfo.eap.cp.trx.client.EAPSyncEqpInfo.EAPSyncEqpInfoI;
 import com.totainfo.eap.cp.trx.ems.EMSDeviceParameterReport.EMSDeviceParameterReportI;
 import com.totainfo.eap.cp.trx.ems.EMSDeviceParameterReport.EMSDeviceParameterReportIA;
-import com.totainfo.eap.cp.trx.ems.EMSLotinfoReport.EMSLotInfoReportI;
 import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardI;
 import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardO;
-import com.totainfo.eap.cp.trx.kvm.EAPLotInfoWriteIn.EAPLotInfoWriteInI;
-import com.totainfo.eap.cp.trx.kvm.EAPLotInfoWriteIn.EAPLotInfoWriteInO;
 import com.totainfo.eap.cp.trx.kvm.KVMTimeReport.KVMTimeReportI;
 import com.totainfo.eap.cp.trx.kvm.KVMTimeReport.KVMTimeReportO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOA;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
-import com.totainfo.eap.cp.trx.mes.EAPReqUserAuthority.EAPReqUserAuthorityO;
-import com.totainfo.eap.cp.trx.rcm.EapReportAlarmInfoI;
-import com.totainfo.eap.cp.trx.rcm.EapReportAlarmInfoO;
+import com.totainfo.eap.cp.trx.rcm.EapReportInfoI;
+import com.totainfo.eap.cp.trx.rcm.EapReportInfoO;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.StringUtils;
@@ -37,8 +30,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
-import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -160,24 +151,15 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上报设备参数信息指令成功");
         EmsHandler.emsDeviceParameterReportToEms(evtNo,lotId,emsDeviceParameterReportI);
 
-        //上报信息给RCM
-//        EapReportAlarmInfoI eapReportAlarmInfoI = new EapReportAlarmInfoI();
-//        eapReportAlarmInfoI.setTrxId("eapReportAarmInfo");
-//        eapReportAlarmInfoI.setLotId(lotInfo.getLotId());
-//        eapReportAlarmInfoI.setEquipmentNo(equipmentNo);
-//        eapReportAlarmInfoI.setEquipmentState(GenergicStatDef.EqptStat.RUN);
-//        String returnFromRcm = httpHandler.postHttpForRcm(evtNo, GenericDataDef.rcmUrl, eapReportAlarmInfoI);
-//        if (StringUtils.isEmpty(returnFromRcm)){
-//            outTrx.setRtnCode(RCM_TIME_OUT);
-//            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM没有回复");
-//            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
-//            return;
-//        }
-//        EapReportAlarmInfoO eapReportAlarmInfoO = JacksonUtils.string2Object(returnFromRcm, EapReportAlarmInfoO.class);
-//        if(!RETURN_CODE_OK.equals(eapReportAlarmInfoO.getRtnCode())){
+          //上报信息给RCM
+//        EapReportInfoI eapReportInfoI = new EapReportInfoI();
+//        eapReportInfoI.setLotId(lotInfo.getLotId());
+//        eapReportInfoI.setEquipmentState(GenergicStatDef.EqptStat.RUN);
+//        EapReportInfoO eapReportInfoO = RcmHandler.lotInfoReport(evtNo, eapReportInfoI);
+//        if(!RETURN_CODE_OK.equals(eapReportInfoO.getRtnCode())){
 //            Stateset("2","3",lotId);
-//            outTrx.setRtnCode(eapReportAlarmInfoO.getRtnCode());
-//            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM返回失败，原因:[" + eapReportAlarmInfoO.getRtnMesg() + "]");
+//            outTrx.setRtnCode(eapReportInfoO.getRtnCode());
+//            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM返回失败，原因:[" + eapReportInfoO.getRtnMesg() + "]");
 //            EapEndCard(evtNo);
 //            Remove(evtNo);
 //            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
