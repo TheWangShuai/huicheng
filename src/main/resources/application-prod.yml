@@ -57,6 +57,9 @@ spring:
     ems:
       queue: GS.TEST.EIB
       exchange: EAPTEST
+    rcm:
+      queue: RCM.SERVER
+      exchange: RCM
 logging:
   config: classpath:log/log4j2-prod.xml
   level:
