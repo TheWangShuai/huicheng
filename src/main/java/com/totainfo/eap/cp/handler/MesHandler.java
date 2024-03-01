@@ -138,7 +138,6 @@ public class MesHandler {
         if(!StringUtils.hasText(outTrxStr)){
             eapReqLotInfoO.setRtnCode(MES_TIME_OUT);
             eapReqLotInfoO.setRtnMesg("[EAP-MES]:EAP发送设备状态，MES没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,eapReqLotInfoO.getRtnMesg());
         }else{
             eapReqLotInfoO = JacksonUtils.string2Object(outTrxStr, EAPReqLotInfoO.class);
         }
@@ -156,7 +155,6 @@ public class MesHandler {
         if(!StringUtils.hasText(outTrxStr)){
             eapReqCheckInO.setRtnCode(MES_TIME_OUT);
             eapReqCheckInO.setRtnMesg("[EAP-MES]:EAP发送Lot:["+lotNo+"] Check In，MES没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,eapReqCheckInO.getRtnMesg());
         }else{
             eapReqCheckInO = JacksonUtils.string2Object(outTrxStr, EAPReqCheckInO.class);
         }
@@ -178,7 +176,6 @@ public class MesHandler {
         if(!StringUtils.hasText(outTrxStr)){
             eapReqCheckOutO.setRtnCode(MES_TIME_OUT);
             eapReqCheckOutO.setRtnMesg("[EAP-MES]:EAP发送Lot:["+lotNo+"] Check Out，MES没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,eapReqCheckOutO.getRtnMesg());
         }else{
             eapReqCheckOutO = JacksonUtils.string2Object(outTrxStr, EAPReqCheckOutO.class);
         }
@@ -194,12 +191,10 @@ public class MesHandler {
         eapReqMeasureResultI.setComputerName(computerName);
         eapReqMeasureResultI.setEquipmentNo(GenericDataDef.equipmentNo);
 
-        String inTrxStr = JacksonUtils.object2String(eapReqMeasureResultI);
         String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapReqMeasureResultI);
         if(!StringUtils.hasText(outTrxStr)){
             eapReqMeasureResultO.setRtnCode(MES_TIME_OUT);
             eapReqMeasureResultO.setRtnMesg("[EAP-MES]:EAP请求Lot:["+lotNo+"] 量测结果，MES没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,eapReqMeasureResultO.getRtnMesg());
         }else{
             eapReqMeasureResultO = JacksonUtils.string2Object(outTrxStr, EAPReqMeasureResultO.class);
         }
@@ -231,7 +226,6 @@ public class MesHandler {
         if(!StringUtils.hasText(outTrxStr)){
             eapUploadDieResultO.setRtnCode(MES_TIME_OUT);
             eapUploadDieResultO.setRtnMesg("[EAP-MES]:EAP上传Lot:["+lotNo+"],Wafer:["+waferId+"],DIE 测试结果，MES没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,eapUploadDieResultO.getRtnMesg());
         }else{
             eapUploadDieResultO = JacksonUtils.string2Object(outTrxStr, EAPUploadDieResultO.class);
         }
@@ -254,7 +248,6 @@ public class MesHandler {
         if (!StringUtils.hasText(outTrxStr)) {
             eapUploadMarkResultO.setRtnCode(MES_TIME_OUT);
             eapUploadMarkResultO.setRtnMesg("[EAP-MES]:EAP上传Lot:[" + lotNo + "],Wafer:[" + waferId + "] 针痕检测结果，MES没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,eapUploadMarkResultO.getRtnMesg());
         } else {
             eapUploadMarkResultO = JacksonUtils.string2Object(outTrxStr, EAPUploadMarkResultO.class);
         }
@@ -275,7 +268,6 @@ public class MesHandler {
         if (!StringUtils.hasText(outTrxStr)) {
             mesSyncProberCardO.setRtnCode(MES_TIME_OUT);
             mesSyncProberCardO.setRtnMesg("[EAP-MES]:EAP同步探针:["+proberCardId+"] 信息，MES没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,mesSyncProberCardO.getRtnMesg());
         } else {
             mesSyncProberCardO = JacksonUtils.string2Object(outTrxStr, MESSyncProberCardO.class);
         }
@@ -294,7 +286,6 @@ public class MesHandler {
         if(!StringUtils.hasText(reply)){
             gpibLotStartReportO.setRtnCode(MES_TIME_OUT);
             gpibLotStartReportO.setRtnMesg("[EAP-MES]:EAP上报LotStart信息，MES没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,gpibLotStartReportO.getRtnMesg());
         }else {
             gpibLotStartReportO = JacksonUtils.string2Object(reply, GPIBLotStartReportO.class);
         }
@@ -313,7 +304,6 @@ public class MesHandler {
         if(!StringUtils.hasText(reply)){
             gpibLotEndReportO.setRtnCode(MES_TIME_OUT);
             gpibLotEndReportO.setRtnMesg("[EAP-MES]:EAP上报LotEnd信息，MES没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,gpibLotEndReportO.getRtnMesg());
         }else {
             gpibLotEndReportO = JacksonUtils.string2Object(reply, GPIBLotEndReportO.class);
         }
@@ -334,7 +324,6 @@ public class MesHandler {
         if (!StringUtils.hasText(reply)){
             gpibWaferStartReportO.setRtnCode(MES_TIME_OUT);
             gpibWaferStartReportO.setRtnMesg("[EAP-MES]:EAP上报WaferStart信息，MES没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,gpibWaferStartReportO.getRtnMesg());
         }else {
             gpibWaferStartReportO = JacksonUtils.string2Object(reply, GPIBWaferStartReportO.class);
         }

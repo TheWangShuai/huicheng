@@ -57,12 +57,12 @@ public class AlarmClearJob {
             diffTime = DateUtils.getDiffMill(crTimestamtp, timestamp);
             if(diffTime < -10000 || diffTime > 10000){
                 EmsHandler.alarmReportToEms(evtNo,pvAlarmInfo.getAlarmCode(),pvAlarmInfo.getAlarmText(),lotInfo.getLotId(),"0");
-                MesHandler.alarmReport(evtNo, pvAlarmInfo.getAlarmCode(), pvAlarmInfo.getAlarmText(),pvAlarmInfo.getTime(), pvAlarmInfo.getId()) ;
-                MesHandler.eqptStatReport(evtNo, GenergicStatDef.EqptStat.RUN,"无",lotInfo.getUserId());
+                MesHandler.alarmReport(evtNo, pvAlarmInfo.getAlarmCode(), pvAlarmInfo.getAlarmText(),DateUtils.timestampFormat(crTimestamtp), pvAlarmInfo.getId()) ;
+
                 alarmDao.removeAlarm(entry.getKey());
             }
-
         }
+        MesHandler.eqptStatReport(evtNo, GenergicStatDef.EqptStat.RUN,"无",lotInfo.getUserId());
 
     }
 }

@@ -2,6 +2,7 @@ package com.totainfo.eap.cp.service.gpib;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.commdef.GenergicStatDef;
+import com.totainfo.eap.cp.commdef.GenergicStatDef.MessageType;
 import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.entity.DielInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
@@ -32,11 +33,9 @@ import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_O
 
 @Service("waferStartReport")
 public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartReportI, GPIBWaferStartReportO> {
-    @Resource
-    private ILotDao lotDao;
 
     @Resource
-    private HttpHandler httpHandler;
+    private ILotDao lotDao;
 
     @Value("${equipment.id}")
     private String proberName;
@@ -65,23 +64,6 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
         String evtUsr = lotInfo.getUserId();
         String waferId = inTrx.getWaferId();
         String pvWaferId = inTrx.getPvWaferId();
-        //TODO 从gpib获取waferState
-        EMSWaferReportI emsWaferReportI = new EMSWaferReportI();
-        emsWaferReportI.setLotNo(lotNo);
-        emsWaferReportI.setWaferNo(waferId);
-
-          //上报给RCM有关wafer的信息
-//        EapReportInfoI eapReportInfoI = new EapReportInfoI();
-//        eapReportInfoI.setEquipmentState(GenergicStatDef.EqptStat.RUN);
-//        eapReportInfoI.setLotId(lotInfo.getLotId());
-//        eapReportInfoI.setWaferDates(waferId);
-//        EapReportInfoO eapReportInfoO = RcmHandler.lotInfoReport(evtNo, eapReportInfoI);
-//        if(!RETURN_CODE_OK.equals(eapReportInfoO.getRtnCode())){
-//            outTrx.setRtnCode(eapReportInfoO.getRtnCode());
-//            outTrx.setRtnMesg("[EAP-RCM]:EAP上报批次信息，RCM返回失败，原因:[" + eapReportInfoO.getRtnMesg() + "]");
-//            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
-//        }
-
 
         //Wafer Start时判断，上一片Wafer Die数据是否上报完成，如果没有，将上一片Wafer的Die数据上报完成
         if(StringUtils.isNotEmpty(pvWaferId)){
@@ -95,7 +77,8 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
                         outTrx.setRtnMesg(eapUploadDieResultO.getRtnMesg());
                         ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                     }
-                    EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,"End", emsWaferReportI);
+
+                    EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,lotNo,waferId, "End");
                     if (!RETURN_CODE_OK.equals(emsWaferReportO.getRtnCode())){
                         outTrx.setRtnCode(emsWaferReportO.getRtnCode());
                         outTrx.setRtnMesg(emsWaferReportO.getRtnMesg());
@@ -131,22 +114,18 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
             }
         }
 
-
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-EMS]:EAP给EMS上传生产Wafer信息指令成功");
-        EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,"Start", emsWaferReportI);
+        EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,lotNo, waferId, "Start");
         if (!RETURN_CODE_OK.equals(emsWaferReportO.getRtnCode())){
-            outTrx.setRtnCode(emsWaferReportO.getRtnCode());
-            outTrx.setRtnMesg(emsWaferReportO.getRtnMesg());
-            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+            ClientHandler.sendMessage(evtNo, false, 2, emsWaferReportO.getRtnMesg());
         }
+
         GPIBWaferStartReportO gpibWaferStartReportO = MesHandler.waferStart(evtNo, evtUsr, lotNo, waferId);
         if (!RETURN_CODE_OK.equals(gpibWaferStartReportO.getRtnCode())) {
-            outTrx.setRtnCode(gpibWaferStartReportO.getRtnCode());
-            outTrx.setRtnMesg(gpibWaferStartReportO.getRtnMesg());
-            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+            ClientHandler.sendMessage(evtNo, false, MessageType.ERROR, gpibWaferStartReportO.getRtnMesg());
             return;
         }
-        ClientHandler.sendMessage(evtNo, false, 2, "批次:[" + lotInfo.getLotId() + "] WaferStart时间上报成功");
+        ClientHandler.sendMessage(evtNo, false, MessageType.INFO, "批次:[" + lotInfo.getLotId() + "] WaferStart时间上报成功");
     }
 }
 

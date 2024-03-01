@@ -38,60 +38,27 @@ public class GenergicStatDef {
         public static final String GPIB_LOG = "GPIB-LOGGER";
     }
 
-    public static class SecsProtocel{
-        public static final String HSMS = "HSMS";
-        public static final String SECS1 = "SECS1";
-        public static final String RS232 = "RS232";
+
+    public static class StepName{
+        public static final String FIRST = "1";
+        public static final String SECOND = "2";
+        public static final String THIRD = "3";
+        public static final String FOURTH = "4";
+        public static final String FITTH = "5";
+        public static final String SIXTH = "6";
+        public static final String SEVENTH = "7";
+        public static final String EIGTH = "8";
     }
 
-    public static class SecsDateType{
-        public static final String ASCII = "A";
-        public static final String BINARY = "BINARY";
-        public static final String U1 = "U1";
-        public static final String U2 = "U2";
-        public static final String U4 = "U4";
-        public static final String U8 = "U8";
-        public static final String I1 = "I1";
-        public static final String I2 = "I2";
-        public static final String I4 = "I4";
-        public static final String I8 = "I8";
-        public static final String BOOLEAN = "BOOLEAN";
-
+    public static class StepStat{
+        public static final String INPROCESS = "1";
+        public static final String COMP = "2";
+        public static final String FAIL = "3";
     }
 
-    public static class DriverType {
-        public static final String EAP = "EAP"; //EAP
-        public static final String EQP = "EQP"; //设备
-    }
-
-    public static class  TransferDirect{
-        public static final String EQP_BC = "EQP->BC";
-        public static final String EAP_BC = "EAP->BC";
-        public static final String BC_EQP = "BC->EQP";
-        public static final String BC_EAP = "BC -EAP";
-    }
-
-
-    public static class ControlMode{
-        public static final String BCOffline = "1";
-        public static final String AttemptOnline = "2";
-        public static final String EAPOffline = "3";
-        public static final String OnlineLocal = "4";
-        public static final String OnlineRemote = "5";
-    }
-
-    public static class SecsKey{
-        public static final String VID = "VID";
-        public static final String CEID = "CEID";
-        public static final String RPTID = "RPTID";
-        public static final String DATAID = "DATAID";
-        public static final String ECID = "ECID";
-
-    }
-
-    public static class AlarmAction{
-        public static final String AlarmClear = "1";
-        public static final String AlarmSet = "2";
+    public static class MessageType{
+        public static final int INFO = 1;
+        public static final int ERROR = 2;
     }
 
     public static class KVMOperateState{

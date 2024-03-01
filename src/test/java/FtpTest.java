@@ -1,11 +1,15 @@
+import com.totainfo.eap.cp.trx.ems.EMSDeviceParameterReport.EMSDeviceParameterReportIA;
 import com.totainfo.eap.cp.util.FtpUtils;
 import com.totainfo.eap.cp.util.LogUtils;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author xiaobin.Guo
@@ -51,5 +55,24 @@ public class FtpTest {
         } catch (IOException e) {
             LogUtils.error("xtr文件写入失败");
         }
+    }
+
+    @Test
+    public void listTest(){
+        List<EMSDeviceParameterReportIA> emsDeviceParameterReportIAS = new ArrayList<>(2);
+
+        EMSDeviceParameterReportIA emsDeviceParameterReportIA = new EMSDeviceParameterReportIA();
+        emsDeviceParameterReportIA.setParamCode("1");
+        emsDeviceParameterReportIA.setParamName("温度");
+        emsDeviceParameterReportIA.setParamValue("1");
+        emsDeviceParameterReportIAS.add(emsDeviceParameterReportIA);
+
+        emsDeviceParameterReportIA = new EMSDeviceParameterReportIA();
+        emsDeviceParameterReportIA.setParamCode("2");
+        emsDeviceParameterReportIA.setParamName("温度范围");
+        emsDeviceParameterReportIA.setParamValue("1");
+        emsDeviceParameterReportIAS.add(emsDeviceParameterReportIA);
+        System.out.println(emsDeviceParameterReportIAS.size());
+
     }
 }

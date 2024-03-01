@@ -79,7 +79,6 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         }
         if (rtnMessage != null) {
             reply = new String(rtnMessage.getBody());
-            ClientHandler.sendMessage(evtNo,false,2,reply);
         }
         LogUtils.info("[{}][{}]:[{}][{}]",  evtNo,appName+"->EAP",trxId,  reply);
         return reply;

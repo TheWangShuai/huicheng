@@ -137,11 +137,13 @@ public class EmsHandler {
         return emsGetAlarmO;
     }
     // EAP上传生产Wafer信息
-    public static EMSWaferReportO waferInfotoEms(String evtNo,String waferState, EMSWaferReportI emsWaferReportI){
-
+    public static EMSWaferReportO waferInfotoEms(String evtNo,String lotId, String waferId, String waferState){
         EMSWaferReportO emsWaferReportO = new EMSWaferReportO();
+        EMSWaferReportI emsWaferReportI = new EMSWaferReportI();
         emsWaferReportI.setTrxId("reportProcessingWaferData");
         emsWaferReportI.setEquipmentNo(GenericDataDef.equipmentNo);
+        emsWaferReportI.setLotNo(lotId);
+        emsWaferReportI.setWaferNo(waferId);
         emsWaferReportI.setWaferState(waferState);
         String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, emsQueue, emsExchange, emsWaferReportI);
         if(!StringUtils.hasText(outTrxStr)){

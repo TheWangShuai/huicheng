@@ -29,4 +29,10 @@ public class LotDao implements ILotDao {
         String key = String.format(LOTINFO_KEY, equipmentNo);
         return RedisHandler.get(key);
     }
+
+    @Override
+    public void removeLotInfo(){
+        String key = String.format(LOTINFO_KEY, equipmentNo);
+        RedisHandler.remove(key);
+    }
 }

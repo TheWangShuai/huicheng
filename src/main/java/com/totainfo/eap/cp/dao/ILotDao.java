@@ -10,4 +10,6 @@ public interface ILotDao {
     void addLotInfo(LotInfo lotInfo);
 
     LotInfo getCurLotInfo();
+
+    void removeLotInfo();
 }

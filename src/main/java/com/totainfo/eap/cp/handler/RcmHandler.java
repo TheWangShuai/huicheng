@@ -1,6 +1,7 @@
 package com.totainfo.eap.cp.handler;
 
 import com.totainfo.eap.cp.commdef.GenergicCodeDef;
+import com.totainfo.eap.cp.commdef.GenergicStatDef;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.trx.rcm.EapReportInfoI;
 import com.totainfo.eap.cp.trx.rcm.EapReportInfoO;
@@ -32,6 +33,21 @@ public class RcmHandler {
             eapReportInfoO = JacksonUtils.string2Object(reply, EapReportInfoO.class);
         }
         return eapReportInfoO;
+
+    }
+
+    public static void eqptInfoReport(String evtNo,String lotId, String eqptStat,String alarmCode,String alarmMesg, String alarmStartTimestamp, String alarmEndTimestamp){
+
+        EapReportInfoI eapReportInfoI = new EapReportInfoI();
+        eapReportInfoI.setTrxId("eapReportAarmInfo");
+        eapReportInfoI.setLotId(lotId);
+        eapReportInfoI.setEquipmentNo(GenericDataDef.equipmentNo);
+        eapReportInfoI.setEquipmentState(eqptStat);
+        eapReportInfoI.setAlarmCode(alarmCode);
+        eapReportInfoI.setAlarmMessage(alarmMesg);
+        eapReportInfoI.setAlarmBeginTime(alarmStartTimestamp);
+        eapReportInfoI.setAlarmEndTime(alarmEndTimestamp);
+        rabbitmqHandler.send(evtNo, appName, rcmExchange, rcmQueue, eapReportInfoI);
 
     }
 

@@ -60,8 +60,8 @@ spring:
       queue: GS.TEST.EIB
       exchange: EAPTEST
     rcm:
-      queue:
-      exchange:
+      queue: RCM.SERVER
+      exchange: RCM
 logging:
   config: classpath:log/log4j2-dev.xml
   level:

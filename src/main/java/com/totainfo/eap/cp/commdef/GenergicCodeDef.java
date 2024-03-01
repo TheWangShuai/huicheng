@@ -20,6 +20,7 @@ public class GenergicCodeDef {
     public static final String LOT_INFO_EXIST = "0000007";
     public static final String CLIENT_TIME_OUT = "6666666";
     public static final String RCM_TIME_OUT= "0000008";
+    public static final String SLOT_MAP_ERROR = "0000009";
 
 
 }
