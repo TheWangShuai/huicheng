@@ -57,6 +57,7 @@ spring:
       queue: TOTA.RMS
       exchange: RMS
     ems:
+      checkFlag: false
       queue: GS.TEST.EIB
       exchange: EAPTEST
     rcm:
@@ -70,6 +71,9 @@ logging:
 
 number:
   max: 5
+
+time:
+  max: 4
 
 
 GPIB:
