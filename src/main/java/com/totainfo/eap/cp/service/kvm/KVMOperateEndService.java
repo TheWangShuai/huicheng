@@ -209,12 +209,12 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
             LogUtils.info("机台上报时间[{}]", eqpTimeNow);
-            LocalTime eqpTime = LocalTime.parse(eqpTimeNow, formatter);
+            LocalDateTime eqpTime = LocalDateTime.parse(eqpTimeNow, formatter);
             // 得到当前的北京时间
             ZoneId beijingZone = ZoneId.of("Asia/Shanghai");
             LocalDateTime localDateTime = LocalDateTime.now(beijingZone);
             String formattedDateTime = localDateTime.format(formatter);
-            LocalTime bjNowTime = LocalTime.parse(formattedDateTime, formatter);
+            LocalDateTime bjNowTime = LocalDateTime.parse(formattedDateTime, formatter);
             LogUtils.info("北京时间是[{}]", bjNowTime);
             // 检查时间是否相差五分钟或以上
             Duration duration = Duration.between(eqpTime, bjNowTime);
