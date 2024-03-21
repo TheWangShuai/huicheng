@@ -1,6 +1,7 @@
 package com.totainfo.eap.cp.trx.kvm.KVMAlarmReport;
 
 import com.totainfo.eap.cp.base.trx.BaseTrxI;
+import sun.dc.pr.PRError;
 
 /**
  * @author xiaobin.Guo
@@ -10,6 +11,14 @@ public class KVMAlarmReportI extends BaseTrxI {
     private String alarmCode;
     private String alarmMessage;
     private String time;
+    private String path;
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
 
     public String getAlarmCode() {
         return alarmCode;

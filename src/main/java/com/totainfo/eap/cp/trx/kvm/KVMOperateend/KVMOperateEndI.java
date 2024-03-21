@@ -17,6 +17,25 @@ public class KVMOperateEndI extends BaseTrxI {
     private String alarmCode;
     private String alarmMessage;
     private String time;
+    private String path;
+    private String testProgram;
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public String getTestProgram() {
+        return testProgram;
+    }
+
+    public void setTestProgram(String testProgram) {
+        this.testProgram = testProgram;
+    }
+
     public void setOpeContent(String opeContent) {
         this.opeContent = opeContent;
     }

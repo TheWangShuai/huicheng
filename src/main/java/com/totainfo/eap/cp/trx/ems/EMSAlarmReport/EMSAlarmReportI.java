@@ -12,6 +12,15 @@ public class EMSAlarmReportI extends BaseTrxI {
     private String alarmTab;
 
     private String lotNo;
+    private String alarmImg;
+
+    public String getAlarmImg() {
+        return alarmImg;
+    }
+
+    public void setAlarmImg(String alarmImg) {
+        this.alarmImg = alarmImg;
+    }
 
     public String getAlarmCode() {
         return alarmCode;

@@ -7,9 +7,18 @@ public class AlarmInfo {
     private String id;
 
     private String alarmText;
+    private String alarmImg;
 
     public String getTime() {
         return time;
+    }
+
+    public String getAlarmImg() {
+        return alarmImg;
+    }
+
+    public void setAlarmImg(String alarmImg) {
+        this.alarmImg = alarmImg;
     }
 
     public void setTime(String time) {

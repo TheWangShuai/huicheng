@@ -49,7 +49,7 @@ public class EmsHandler {
         computerName = address.getHostName();
     }
     //上报设备报警信息
-    public static EMSAlarmReportO alarmReportToEms(String evtNo,String alarmCode, String alarmMessage,String lotNo,String alarmTab){
+    public static EMSAlarmReportO alarmReportToEms(String evtNo,String alarmCode, String alarmMessage,String lotNo,String alarmTab,String alarmImg){
         EMSAlarmReportI emsAlarmReportI = new EMSAlarmReportI();
         EMSAlarmReportO emsAlarmReportO = new EMSAlarmReportO();
         emsAlarmReportI.setTrxId("reportEqpAlarm");
@@ -58,6 +58,7 @@ public class EmsHandler {
         emsAlarmReportI.setAlarmTab(alarmTab);
         emsAlarmReportI.setAlarmCode(alarmCode);
         emsAlarmReportI.setAlarmMessage(alarmMessage);
+        emsAlarmReportI.setAlarmImg(alarmImg);
         String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, emsQueue, emsExchange, emsAlarmReportI);
         if(!StringUtils.hasText(outTrxStr)){
             emsAlarmReportO.setRtnCode("00000001");
