@@ -9,6 +9,7 @@ import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.handler.*;
 import com.totainfo.eap.cp.trx.ems.EMSWaferReport.EMSWaferReportI;
 import com.totainfo.eap.cp.trx.ems.EMSWaferReport.EMSWaferReportO;
+import com.totainfo.eap.cp.trx.gpib.GBIPWaferEndReport.GPIBWaferEndReportO;
 import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportO;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultO;
@@ -84,6 +85,20 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
                         outTrx.setRtnMesg(emsWaferReportO.getRtnMesg());
                         ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                     }
+                }
+
+                GPIBWaferEndReportO gpibWaferEndReportO = MesHandler.waferEnd(evtNo, evtUsr, lotNo, waferId);
+                if (!RETURN_CODE_OK.equals(gpibWaferEndReportO.getRtnCode())) {
+                    outTrx.setRtnCode(gpibWaferEndReportO.getRtnCode());
+                    outTrx.setRtnMesg(gpibWaferEndReportO.getRtnMesg());
+                    ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+                }
+
+                EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,lotNo,waferId, "End");
+                if (!RETURN_CODE_OK.equals(emsWaferReportO.getRtnCode())){
+                    outTrx.setRtnCode(emsWaferReportO.getRtnCode());
+                    outTrx.setRtnMesg(emsWaferReportO.getRtnMesg());
+                    ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                 }
                 waferDieMap.remove(pvWaferId);
                 lotDao.addLotInfo(lotInfo);

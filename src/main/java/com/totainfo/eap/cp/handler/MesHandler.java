@@ -6,6 +6,8 @@ import com.totainfo.eap.cp.dao.impl.LotDao;
 import com.totainfo.eap.cp.entity.DielInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.service.kvm.KVMOperateEndService;
+import com.totainfo.eap.cp.trx.gpib.GBIPWaferEndReport.GPIBWaferEndReportI;
+import com.totainfo.eap.cp.trx.gpib.GBIPWaferEndReport.GPIBWaferEndReportO;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotEndReport.GPIBLotEndReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotEndReport.GPIBLotEndReportO;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotStartReport.GPIBLotStartReportI;
@@ -329,6 +331,27 @@ public class MesHandler {
         }
         return gpibWaferStartReportO;
     }
+
+    // Wafer测试完成刻号比对
+    public static GPIBWaferEndReportO waferEnd(String evtNo,String evtUsr,String lotNo,String waferId){
+        GPIBWaferEndReportI gpibWaferEndReportI = new GPIBWaferEndReportI();
+        GPIBWaferEndReportO gpibWaferEndReportO = new GPIBWaferEndReportO();
+        gpibWaferEndReportI.setTrxId("WaferEnd");
+        gpibWaferEndReportI.setComputerName(computerName);
+        gpibWaferEndReportI.setEvtUsr(evtUsr);
+        gpibWaferEndReportI.setEquipmentNo(GenericDataDef.equipmentNo);
+        gpibWaferEndReportI.setLotNo(lotNo);
+        gpibWaferEndReportI.setWaferId(waferId);
+        String reply = rabbitmqHandler.sendForReply(evtNo, appName, mesQueue, mesExchange, gpibWaferEndReportI);
+        if (!StringUtils.hasText(reply)){
+            gpibWaferEndReportO.setRtnCode(MES_TIME_OUT);
+            gpibWaferEndReportO.setRtnMesg("[EAP-MES]:EAP上报WaferEnd信息，MES没有回复");
+        }else {
+            gpibWaferEndReportO = JacksonUtils.string2Object(reply, GPIBWaferEndReportO.class);
+        }
+        return gpibWaferEndReportO;
+    }
+
     // EAP向mes询问作业人员手k权限
     public static EAPReqUserAuthorityO userAuth(String evtNo,String evtUsr){
         EAPReqUserAuthorityI eapReqUserAuthorityI = new EAPReqUserAuthorityI();
