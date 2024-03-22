@@ -26,6 +26,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -58,6 +60,7 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
     @Value("${spring.rabbitmq.eap.checkName}")
     private boolean eapCheckName;
 
+    @Override
     public void mainProc(String evtNo, GPIBDeviceNameReportI inTrx, GPIBDeviceNameReportO outTrx) {
 
         LotInfo lotInfo = lotDao.getCurLotInfo();

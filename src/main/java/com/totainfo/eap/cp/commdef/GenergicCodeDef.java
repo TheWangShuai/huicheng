@@ -21,6 +21,7 @@ public class GenergicCodeDef {
     public static final String CLIENT_TIME_OUT = "6666666";
     public static final String RCM_TIME_OUT= "0000008";
     public static final String SLOT_MAP_ERROR = "0000009";
+    public static final String TESTER_PROGRAM_ERROR = "00000010";
 
 
 }
