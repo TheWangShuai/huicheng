@@ -2,16 +2,26 @@ package com.totainfo.eap.cp.handler;
 
 import com.rabbitmq.client.Channel;
 import com.totainfo.eap.cp.base.service.IEapBaseInterface;
+import com.totainfo.eap.cp.trx.client.EAPChangeGPIBModel.EAPChangeGPIBModelI;
+import com.totainfo.eap.cp.trx.client.EAPChangeGPIBModel.EAPChangeGPIBModelO;
 import com.totainfo.eap.cp.trx.client.EAPMessageSend.EAPMessageSendI;
+import com.totainfo.eap.cp.trx.client.EAPMessageSendK.EAPMessageSentKO;
+import com.totainfo.eap.cp.trx.client.EAPRepCurModel.EAPRepCurModelI;
+import com.totainfo.eap.cp.trx.client.EAPRepCurModel.EAPRepCurModelO;
 import com.totainfo.eap.cp.trx.client.EAPSyncEqpInfo.EAPSyncEqpInfoI;
+import com.totainfo.eap.cp.trx.client.EAPUserPermission.EAPUserPermissionO;
+import com.totainfo.eap.cp.trx.client.EAPWaferLocation.EAPWaferLocationI;
+import com.totainfo.eap.cp.trx.client.EAPWaferLocation.EAPWaferLocationO;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportI;
 import com.totainfo.eap.cp.trx.mes.EAPEqptAlarmReport.EAPEqptAlarmReportO;
 import com.totainfo.eap.cp.trx.mes.EAPEqptStatusReport.EAPEqptStatusReportI;
 import com.totainfo.eap.cp.trx.mes.EAPEqptStatusReport.EAPEqptStatusReportO;
+import com.totainfo.eap.cp.trx.mes.EAPLotInfoBase.EAPLotInfoBaseO;
 import com.totainfo.eap.cp.trx.mes.EAPReqCheckIn.EAPReqCheckInI;
 import com.totainfo.eap.cp.trx.mes.EAPReqCheckIn.EAPReqCheckInO;
 import com.totainfo.eap.cp.trx.mes.EAPReqCheckOut.EAPReqCheckOutI;
 import com.totainfo.eap.cp.trx.mes.EAPReqCheckOut.EAPReqCheckOutO;
+import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfo0D;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoI;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoO;
 import com.totainfo.eap.cp.trx.mes.EAPReqMeasureResult.EAPReqMeasureResultI;
@@ -90,16 +100,60 @@ public class ClientHandler {
 
     public static void sendMessage(String evtNo, boolean isPopUp, int messageType, String message){
         EAPMessageSendI eapMessageSendI = new EAPMessageSendI();
+        EAPReqLotInfo0D eapReqLotInfo0D;
         eapMessageSendI.setTrxId("SynMessage");
         eapMessageSendI.setTrypeId("I");
         eapMessageSendI.setActionFlg("RLC");
         eapMessageSendI.setIspopUp(isPopUp);
         eapMessageSendI.setMessageType(messageType);
-        eapMessageSendI.setMessage(message);
-        rabbitmqHandler.send(evtNo, appName, clientExchange,clientQueue, eapMessageSendI);
+        if (message.contains("5000000") && message.contains("null")){
+            eapReqLotInfo0D = JacksonUtils.string2Object(message, EAPReqLotInfo0D.class);
+            eapMessageSendI.setMessage(eapReqLotInfo0D.getRtnMesg());
+            rabbitmqHandler.send(evtNo, appName, clientExchange,clientQueue, eapMessageSendI);
+        }else {
+            eapMessageSendI.setMessage(message);
+            rabbitmqHandler.send(evtNo, appName, clientExchange,clientQueue, eapMessageSendI);
+        }
+    }
+    // 权限校验MES接口
+    public static void sendUserHandk(String evtNo, EAPUserPermissionO eapUserPermissionO){
+        EAPMessageSentKO eapMessageSentKO = new EAPMessageSentKO();
+        eapMessageSentKO.setTrxId(eapUserPermissionO.getTrxId());
+        eapMessageSentKO.setActionFlg(eapUserPermissionO.getActionFlg());
+        eapMessageSentKO.setRtnCode(eapUserPermissionO.getRtnCode());
+        eapMessageSentKO.setRtnMessage(eapUserPermissionO.getRtnMesg());
+        rabbitmqHandler.send(evtNo, appName, clientExchange,clientQueue, eapMessageSentKO);
+    }
+    //上报WaferSlot信息给Client
+    public static void waferSlotReport(String evtNo,String rtnCode,String rtnMesg, String sampleValue){
+        EAPWaferLocationI eapWaferLocationI = new EAPWaferLocationI();
+        eapWaferLocationI.setTrxId("GETLOTINFO");
+        eapWaferLocationI.setActionFlg("SOLTMAP");
+        eapWaferLocationI.setSampleValue(sampleValue);
+        eapWaferLocationI.setRtnCode(rtnCode);
+        eapWaferLocationI.setRtnMesg(rtnMesg);
+        rabbitmqHandler.send (evtNo,appName,clientExchange, clientQueue, eapWaferLocationI);
+    }
+    // 给Client端上报GPIB状态
+    public static void sendGPIBState(String evtNo, EAPRepCurModelO eapRepCurModelO){
+        EAPRepCurModelI eapRepCurModelI = new EAPRepCurModelI();
+        eapRepCurModelI.setTrxId("PUSHGPIBSTATE");
+        eapRepCurModelI.setActionFlg("GPIBSTATE");
+        eapRepCurModelI.setRtnCode(eapRepCurModelO.getRtnCode());
+        eapRepCurModelI.setRtnMesg(eapRepCurModelO.getRtnMesg());
+        eapRepCurModelI.setState(eapRepCurModelO.getState());
+        rabbitmqHandler.send(evtNo, appName, clientExchange,clientQueue, eapRepCurModelI);
     }
 
-
+    // 切换GPIB为从机模式
+    public static void changeGPIBMode(String evtNo,EAPChangeGPIBModelO eapChangeGPIBModelO){
+        EAPChangeGPIBModelI eapChangeGPIBModelI   = new EAPChangeGPIBModelI();
+        eapChangeGPIBModelI.setTrxId("ChangeGPIBState");
+        eapChangeGPIBModelI.setActionFlg("GPIBSLAVEMODEL");
+        eapChangeGPIBModelI.setRtnCode(eapChangeGPIBModelO.getRtnCode());
+        eapChangeGPIBModelI.setRtnMesg(eapChangeGPIBModelO.getRtnCode());
+        rabbitmqHandler.send(evtNo, appName, clientExchange,clientQueue, eapChangeGPIBModelI);
+    }
 
     @Autowired
     public void setRabbitmqHandler(RabbitmqHandler rabbitmqHandler) {

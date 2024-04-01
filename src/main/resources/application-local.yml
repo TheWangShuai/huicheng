@@ -1,5 +1,6 @@
 equipment:
-  id: P-N4-018
+  id: P-N4-023
+  testerId: P-N4-023
   type: AP3000E
   tsId: ts
   testEqp: testEqp
@@ -89,8 +90,9 @@ tcp:
     retry:
       delay: 5    #TCP重连间隔时间，单位：秒
 ftp:
-  host: 10.8.10.36
+  host: 10.0.0.102
   port: 21
-  user: cpmap
-  password: cpmap123
+  user: root
+  password: 123
   path: /EDAMAP/MapBackup/CPMAP/XTR_EAP
+  waferIdPath: /D/FTP共享

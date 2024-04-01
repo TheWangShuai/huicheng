@@ -1,6 +1,8 @@
 package com.totainfo.eap.cp.dao;
 
 import com.totainfo.eap.cp.entity.LotInfo;
+import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
+import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOC;
 
 /**
  * @author xiaobin.Guo
@@ -12,4 +14,11 @@ public interface ILotDao {
     LotInfo getCurLotInfo();
 
     void removeLotInfo();
+
+    void addClientLotInfo(EAPReqLotInfoOB eapReqLotInfoOB);
+
+    EAPReqLotInfoOB getClientLotInfo();
+
+    void removeClientLotInfo();
+
 }

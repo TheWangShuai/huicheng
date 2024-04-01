@@ -59,6 +59,7 @@ spring:
     ems:
       queue: GS.TEST.EIB
       exchange: EAPTEST
+      checkFlag: false
     rcm:
       queue: RCM.SERVER
       exchange: RCM
@@ -70,6 +71,9 @@ logging:
 
 number:
   max: 5
+
+time:
+  max: 4
 
 
 GPIB:

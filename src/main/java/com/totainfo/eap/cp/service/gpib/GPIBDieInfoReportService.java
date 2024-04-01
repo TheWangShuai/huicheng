@@ -9,6 +9,7 @@ import com.totainfo.eap.cp.handler.MesHandler;
 import com.totainfo.eap.cp.trx.gpib.GPIBDieInfoReport.GPIBDieInfoReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBDieInfoReport.GPIBDieInfoReportO;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultO;
+import com.totainfo.eap.cp.util.LogUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -47,6 +48,7 @@ public class GPIBDieInfoReportService extends EapBaseService<GPIBDieInfoReportI,
         String siteNum = inTrx.getSiteNum();
         String result = inTrx.getResult();
         String coorDinate = inTrx.getStartCoorDinate();
+        LogUtils.info("从GPIB获取的数据为： + siteNum [" + siteNum + " ] ,result:[" + result + "]  ,coorDinate:[" + coorDinate + "]");
         DielInfo dielInfo = parserResult(result, Integer.parseInt(siteNum), coorDinate);
         dielInfos.add(dielInfo);
 
@@ -64,7 +66,7 @@ public class GPIBDieInfoReportService extends EapBaseService<GPIBDieInfoReportI,
             //上报后将已经上报的数据清空，重新累计
             dielInfos.clear();
         }
-        waferDieMap.put(waferId, dielInfos);
+        waferDieMap.put(waferId, dielInfos); //214124 214124
         lotInfo.setWaferDieMap(waferDieMap);
         lotDao.addLotInfo(lotInfo);
     }

@@ -4,7 +4,11 @@ package com.totainfo.eap.cp.tcp.server;
 
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
+import com.totainfo.eap.cp.dao.impl.StateDao;
+import com.totainfo.eap.cp.entity.StateInfo;
 import com.totainfo.eap.cp.handler.ClientHandler;
+import com.totainfo.eap.cp.handler.GPIBHandler;
+import com.totainfo.eap.cp.trx.gpib.GBIPWaferEndReport.GPIBWaferEndReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBDeviceNameReport.GPIBDeviceNameReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotEndReport.GPIBLotEndReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotStartReport.GPIBLotStartReportI;
@@ -17,6 +21,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.CharsetUtil;
+import org.aspectj.weaver.ast.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,10 +29,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
+import static io.netty.util.CharsetUtil.*;
 
 
 /***
@@ -66,6 +74,9 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
     @Resource
     private ApplicationContext context;
 
+    @Resource
+    private StateDao stateDao;
+
 
     private Map<String, String> waferInfoMap = new ConcurrentHashMap<>();
 
@@ -88,26 +99,29 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
             return;
         }
         ByteBuf in = (ByteBuf) msg;
-        String message = in.toString(CharsetUtil.UTF_8);
+        String message = in.toString(UTF_8);
         LogUtils.info("GPIB回复的原文:["+ message +"]");
+        LogUtils.gpib("GPIB回复的原文1:["+ msg +"]");
+        LogUtils.gpib("GPIB回复的原文2:["+ message +"]");
         if(StringUtils.isEmpty(message)){
             LogUtils.info("GPIB回复超时");
             LogUtils.gpib("GPIB回复超时");
             return;
         }
-        message = message.replaceAll("\\r","").replaceAll("\\n", "");
-        int index = message.indexOf("[");
-        if(index>= 0){
-            message = message.substring(index+1);
-        }
-        LogUtils.gpib("GPIB->EAP:["+ message +"]");
-        String[] strs = message.split("\"");
+            message = message.replaceAll("\\r","")
+                .replaceAll("\\n","")
+                .replaceAll(" ","")
+                .replaceAll("=","")
+                .replaceAll("RECEIVED","")
+                .replaceAll("MSTRCVED","")
+                .replaceAll("\"","")
+                .replaceAll("SPERCVED","");
+        LogUtils.info("EAP解析完成后的GPIB回复的数据为："+ message +"]");
+        String[] strs = message.split("\\[");
         String evtNo = GUIDGenerator.javaGUID();
         EapBaseService eapBaseService;
         for(String item:strs){
-            if(item.startsWith("RECEIVED")){
-                continue;
-            }
+
             if(item.startsWith("sl") && item.length() > 2){ //DeviceName
                 GPIBDeviceNameReportI gpibDeviceNameReportI = new GPIBDeviceNameReportI();
                 gpibDeviceNameReportI.setDeviceName(item.substring(3).trim());
@@ -122,6 +136,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 String key = String.format("EQPT:%s:ALARMMESG", equipmentNo);
                 AsyncUtils.setResponse(key, alarmMesg);
             } else if(item.startsWith("V") && item.length() > 2){
+                LogUtils.info("GPIB上报lotStart，进入此方法----------");
                 String logNo = item.substring(1).trim();
                 GPIBLotStartReportI gpibLotStartReportI = new GPIBLotStartReportI();
                 gpibLotStartReportI.setLotNo(logNo);
@@ -132,17 +147,29 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 String notchDirection = item.substring(15,18);
                 waferInfoMap.put("siteNum", siteNum);
                 waferInfoMap.put("notchDirection", notchDirection);
-            }else if(item.startsWith("b") && item.length() >2){
-                String prWaferId = waferInfoMap.get("waferId");
+            }else if(item.startsWith("b") && item.length() > 10){
+                //  GPIB上报带刻号的数据长度大于10
+                LogUtils.info("GPIB上报waferStart，进入此方法----------");
+                //上一片WaferID
+//                String prWaferId = waferInfoMap.get("waferId");
+                //当前WaferID
                 String curWaferId = item.substring(1).trim();
-                waferInfoMap.put("waferId", curWaferId);
+                waferInfoMap.put("waferId",curWaferId);
                 GPIBWaferStartReportI gpibWaferStartReportI = new GPIBWaferStartReportI();
                 gpibWaferStartReportI.setWaferId(curWaferId);
-                gpibWaferStartReportI.setPvWaferId(prWaferId);
+//                gpibWaferStartReportI.setPvWaferId(prWaferId);
+                String s = JacksonUtils.object2String(waferInfoMap);
+                LogUtils.info("解析后的数据1为：" + s);
                 eapBaseService = (EapBaseService) context.getBean("waferStartReport");
                 eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(gpibWaferStartReportI));
-
-            }else if(item.startsWith("O") && item.length() >=2){
+            } else if (item.startsWith("P") && item.length() == 1) {
+                LogUtils.info("GPIB上报waferEnd，进入此方法----------");
+                String curWaferId = waferInfoMap.get("waferId");
+                GPIBWaferEndReportI gpibWaferEndReportI = new GPIBWaferEndReportI();
+                gpibWaferEndReportI.setWaferId(curWaferId);
+                eapBaseService = (EapBaseService) context.getBean("waferEndReport");
+                eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(gpibWaferEndReportI));
+            } else if(item.startsWith("O") && item.length() >=2){
 
             }else if(item.startsWith("Q") && item.length() >=2){
                 String startCoordinate = item.substring(1).trim();
@@ -151,11 +178,22 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 String result = item.substring(1).trim();
                 waferInfoMap.put("result", result);
                 eapBaseService = (EapBaseService) context.getBean("dieInfoReport");
+                String s = JacksonUtils.object2String(waferInfoMap);
+                LogUtils.info("解析后的数据2为：" + s + result);
                 eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(waferInfoMap));
             }else if(item.startsWith("^") && item.length() ==1){
+                StateInfo stateInfo = stateDao.getStateInfo();
+                if ( Integer.parseInt(stateInfo.getStep()) < 8 ){
+                    ClientHandler.sendMessage(evtNo, true, 1, "GPIB回复数据格式失败，回复的数据为：" + message);
+                    GPIBHandler.changeMode("++device");
+                    return;
+                }
+                LogUtils.info("GPIB上报制程结束，进入此方法----------");
                 GPIBLotEndReportI endReportI = new GPIBLotEndReportI();
                 eapBaseService = (EapBaseService) context.getBean("lotEndReport");
                 eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(endReportI));
+            }else if(item.contains("++master")){
+                ClientHandler.sendMessage(evtNo, false, 2, "GPIB切换主机模式成功！" );
             }
         }
     }
@@ -199,18 +237,29 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
             LogUtils.error("设备:[" + eqptId + "]没有连接，请确认");
             return;
         }
+        String parseMessage =  message + System.lineSeparator();
         ByteBuf byteBuf = Unpooled.copiedBuffer((message+System.lineSeparator()).getBytes());
-        LogUtils.info("EAP->GPIB:["+ message + "]");
-        LogUtils.gpib("EAP->GPIB:["+ message + "]");
+        LogUtils.info("EAP->GPIB-send:["+ parseMessage + "]");
+        LogUtils.gpib("EAP->GPIB-send:["+ parseMessage + "]");
         ctrx.writeAndFlush(byteBuf);
     }
 
     public String sendForReply(String eqptId, String message) {
-        ChannelHandlerContext ctx = socketMap.get(eqptId);
-        if (ctx == null) {
-            logger.warn("设备:[" + eqptId +"] 尚未连接..");
-            return null;
+        try {
+            Thread.sleep(2000); // 暂停2秒
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        return null;
+        ChannelHandlerContext ctx = socketMap.get(eqptId);
+        if(ctx == null){
+            LogUtils.error("设备:[" + eqptId + "]没有连接，请确认");
+        }
+        String newMessage =  message + System.lineSeparator();
+        ByteBuf byteBuf = Unpooled.copiedBuffer((message + System.lineSeparator()).getBytes());
+        String reply = byteBuf.toString(StandardCharsets.UTF_8);
+        LogUtils.info("EAP->GPIB-sendForReplay:["+ newMessage + "]");
+        LogUtils.gpib("EAP->GPIB-sendForReplay:["+ newMessage + "]");
+        ctx.writeAndFlush(byteBuf);
+        return reply;
     }
 }

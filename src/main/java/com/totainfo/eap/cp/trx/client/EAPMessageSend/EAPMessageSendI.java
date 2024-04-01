@@ -10,6 +10,24 @@ public class EAPMessageSendI extends BaseTrxI {
     private boolean ispopUp;
     private int messageType;
     private String message;
+    private String rtnCode;
+    private String rtnMesg;
+
+    public String getRtnCode() {
+        return rtnCode;
+    }
+
+    public void setRtnCode(String rtnCode) {
+        this.rtnCode = rtnCode;
+    }
+
+    public String getRtnMesg() {
+        return rtnMesg;
+    }
+
+    public void setRtnMesg(String rtnMesg) {
+        this.rtnMesg = rtnMesg;
+    }
 
     public boolean isIspopUp() {
         return ispopUp;

@@ -1,27 +1,14 @@
-package com.totainfo.eap.cp.trx.gpib.GBIPWaferEndReport;
+package com.totainfo.eap.cp.trx.gpib.GPIBWaferEndReport.GPIBWaferStartReport;
 
 import com.totainfo.eap.cp.base.trx.BaseTrxI;
 
-/**
- * @author WangShuai
- * @date 2024/3/13
- */
-public class GPIBWaferEndReportI extends BaseTrxI {
-
+public class GPIBWaferStartReportI extends BaseTrxI {
     private String computerName;
     private String evtUsr;
     private String equipmentNo;
     private String lotNo;
     private String waferId;
     private String pvWaferId;
-
-    public String getPvWaferId() {
-        return pvWaferId;
-    }
-
-    public void setPvWaferId(String pvWaferId) {
-        this.pvWaferId = pvWaferId;
-    }
 
     public String getComputerName() {
         return computerName;
@@ -63,14 +50,11 @@ public class GPIBWaferEndReportI extends BaseTrxI {
         this.waferId = waferId;
     }
 
-    public GPIBWaferEndReportI() {
+    public String getPvWaferId() {
+        return pvWaferId;
     }
 
-    public GPIBWaferEndReportI(String computerName, String evtUsr, String equipmentNo, String lotNo, String waferId) {
-        this.computerName = computerName;
-        this.evtUsr = evtUsr;
-        this.equipmentNo = equipmentNo;
-        this.lotNo = lotNo;
-        this.waferId = waferId;
+    public void setPvWaferId(String pvWaferId) {
+        this.pvWaferId = pvWaferId;
     }
 }

@@ -58,7 +58,7 @@ public class GPIBLotStartReportService extends EapBaseService<GPIBLotStartReport
             outTrx.setRtnMesg(gpibLotStartReportO.getRtnMesg());
             ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
         }
-        ClientHandler.sendMessage(evtNo,false,2,"批次:[" + lotInfo.getLotId() +"] Start开始时间上报成功，制程开始");
+        ClientHandler.sendMessage(evtNo,false,2,"批次:[" + lotInfo.getLotId() +"] ： 制程开始");
 
     }
 }

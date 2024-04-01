@@ -22,6 +22,7 @@ import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultO;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.StringUtils;
+import org.apache.juli.logging.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -64,6 +65,7 @@ public class GPIBLotEndReportService extends EapBaseService<GPIBLotEndReportI, G
         // Lot End是判断是否还有Wafer的Die数据是否没有上报完成（如果逻辑正常，应该存有最后一片Wafer的数据），如果有，就将Wafer Die数据上报
         Map<String, List<DielInfo>> waferDieMap = lotInfo.getWaferDieMap();
         if(waferDieMap != null && !waferDieMap.isEmpty()){
+            LogUtils.info("执行LotEnd方法开始");
             String waferId;
             List<DielInfo> dielInfos;
             EAPUploadDieResultO eapUploadDieResultO;
@@ -77,6 +79,7 @@ public class GPIBLotEndReportService extends EapBaseService<GPIBLotEndReportI, G
                     ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                 }
             }
+            LogUtils.info("执行LotEnd方法结束");
         }
         // 上传生产相关信息给ems
         EMSLotInfoReportI emsLotInfoReportI = new EMSLotInfoReportI();
@@ -91,46 +94,16 @@ public class GPIBLotEndReportService extends EapBaseService<GPIBLotEndReportI, G
         ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上传结束生产相关信息指令成功");
         EmsHandler.emsLotInfoReporToEms(evtNo,emsLotInfoReportI);
 
-        //发送量测数据是否齐全的请求
-//        EAPReqMeasureResultO eapReqMeasureResultO = MesHandler.measureResultReq(evtNo, lotInfo.getLotId());
-//        String rtnCode = eapReqMeasureResultO.getRtnCode();
-//        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]向mes请求量测数据");
-//        int i = 0;
-//        while (!RETURN_CODE_OK.equals(rtnCode) && i < max) {
-//
-//            try {
-//                TimeUnit.SECONDS.sleep(10);
-//            } catch (InterruptedException e) {
-//                LogUtils.error("Sleep Exception", e);
-//            }
-//
-//            EAPReqMeasureResultO Msg = MesHandler.measureResultReq(evtNo, lotInfo.getLotId());
-//            rtnCode = Msg.getRtnCode();
-//            i++;
-//        }
-//
-//        if (!RETURN_CODE_OK.equals(rtnCode)) {
-//            ClientHandler.sendMessage(evtNo, false, 2, "在轮询时间结束后，mes的量测数据仍未全部生成");
-//            return;
-//        }
-//
-//        ClientHandler.sendMessage(evtNo, false, 2, "[MES-EAP]量测结果均以生成");
-//        EAPReqCheckOutO eapReqCheckOutO = MesHandler.checkOutReq(evtNo, lotInfo.getLotId());
-//        if (!RETURN_CODE_OK.equals(eapReqCheckOutO.getRtnCode())) {
-//            outTrx.setRtnCode(eapReqCheckOutO.getRtnCode());
-//            outTrx.setRtnMesg(eapReqCheckOutO.getRtnMesg());
-//            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
-//            return;
-//        }
-//        ClientHandler.sendMessage(evtNo, true, 2, "[MES-EAP]批次:[" + lotInfo.getLotId() + "] Check Out 成功");
+
         MesHandler.eqptStatReport(evtNo, GenergicStatDef.EqptStat.IDLE,"无",lotInfo.getUserId());
+        LogUtils.info("开始给MES上报LotEnd");
         GPIBLotEndReportO gpibLotEndReportO = MesHandler.lotEnd(evtNo, evtUsr, lotNo);
         if (!RETURN_CODE_OK.equals(gpibLotEndReportO.getRtnCode())) {
             outTrx.setRtnCode(gpibLotEndReportO.getRtnCode());
             outTrx.setRtnMesg(gpibLotEndReportO.getRtnMesg());
             ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
         }
-        ClientHandler.sendMessage(evtNo, false, 2, "批次:[" + lotInfo.getLotId() + "] End结束时间上报成功，作业结束");
+        ClientHandler.sendMessage(evtNo,false,2,"批次:[" + lotInfo.getLotId() +"] ： 制程结束");
         remove(evtNo);
 
     }

@@ -20,6 +20,7 @@ import com.totainfo.eap.cp.trx.kvm.KVMTimeReport.KVMTimeReportO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOA;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
+import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOC;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.StringUtils;
@@ -74,6 +75,8 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         String lotId = inTrx.getLotNo();
         stateInfo.setLotNo(lotId);
         stateDao.addStateInfo(stateInfo);
+        String datas = inTrx.getDatas();
+        int selectType = inTrx.getSelectType();
 
         if(StringUtils.isEmpty(lotId)){
             outTrx.setRtnCode(LOT_ID_EMPTY);
@@ -101,21 +104,37 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
             return;
         }
 
+
+        String sampleValue = null;
         EAPReqLotInfoO eapReqLotInfoO = MesHandler.lotInfoReq(evtNo, lotId, proberId, userId);
         if(!RETURN_CODE_OK.equals(eapReqLotInfoO.getRtnCode())){
             outTrx.setRtnCode(LOT_INFO_EXIST);
-            outTrx.setRtnMesg("EAP请求批次:[" + lotId + "], ProberCard:[" + proberId + "]验证，MES返回错误，原因:[" + eapReqLotInfoO.getRtnCode() + "]");
+            outTrx.setRtnMesg("[" + eapReqLotInfoO.getRtnMesg() + "]");
             return;
         }
+
+        EAPReqLotInfoOC eapReqLotInfoOC;
+        for (EAPReqLotInfoOB eapReqLotInfoOB : eapReqLotInfoO.getLotInfo().getParamList()){
+            if ("Sample".equals(eapReqLotInfoOB.getParamName())){
+                sampleValue = eapReqLotInfoOB.getParamValue();
+            }
+        }
+
+        eapReqLotInfoOC = JacksonUtils.string2Object(sampleValue, EAPReqLotInfoOC.class);
+        if (selectType != Integer.valueOf(eapReqLotInfoOC.getType())){
+            LogUtils.info("Client 下发的数据为：[" +inTrx.getUserId() + inTrx.getProberCardId() + inTrx.getLotNo() + inTrx.getSelectType() + inTrx.getDatas() + "]");
+            eapReqLotInfoOC.setDatas(datas);
+            eapReqLotInfoOC.setType(String.valueOf(inTrx.getSelectType()));
+            String sampleClientValue = JacksonUtils.object2String(eapReqLotInfoOC);
+            EAPReqLotInfoOB reqLotInfoOB = new EAPReqLotInfoOB();
+            reqLotInfoOB.setParamName("Sample");
+            reqLotInfoOB.setParamValue(sampleClientValue);
+            LogUtils.info("存入Redis中的数据为：[" + reqLotInfoOB.getParamName() + reqLotInfoOB.getParamValue() + "]");
+            lotDao.addClientLotInfo(reqLotInfoOB);
+        }
+
         //发送给前端，LOT 校验成功。
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]:批次号:[" + lotId + "]探针:["+ proberId +"] MES 验证成功。");
-
-
-        stateInfo.setStep(StepName.SECOND);
-        stateInfo.setState(StepStat.INPROCESS);
-        stateInfo.setLotNo(lotId);
-        stateDao.addStateInfo(stateInfo);
-
 
         EAPReqLotInfoOA eapReqLotInfoOA = eapReqLotInfoO.getLotInfo();
         lotInfo = new LotInfo();

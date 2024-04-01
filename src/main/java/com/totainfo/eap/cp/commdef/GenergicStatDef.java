@@ -48,6 +48,7 @@ public class GenergicStatDef {
         public static final String SIXTH = "6";
         public static final String SEVENTH = "7";
         public static final String EIGTH = "8";
+        public static final String NIGHT = "9";
     }
 
     public static class StepStat{

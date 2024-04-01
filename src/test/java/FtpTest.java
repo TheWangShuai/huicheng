@@ -1,7 +1,9 @@
 import com.totainfo.eap.cp.trx.ems.EMSDeviceParameterReport.EMSDeviceParameterReportIA;
 import com.totainfo.eap.cp.util.FtpUtils;
 import com.totainfo.eap.cp.util.LogUtils;
+import org.apache.commons.net.ftp.FTPClient;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,8 +19,14 @@ import java.util.List;
  */
 public class FtpTest {
 
+
+    @Value("${ftp.path}")
+    private String path;
+
+    @Test
     public void test(){
         Path dataPath = Paths.get(System.getProperty("user.dir")+ File.separator+"tmp", "data","MES_DATA" + ".TXT");
+        FTPClient ftpClient = new FTPClient();
         if (!Files.exists(dataPath.getParent())){
             try {
                 Files.createDirectories(dataPath.getParent());
@@ -26,6 +34,7 @@ public class FtpTest {
                 LogUtils.error("文件夹创建失败");
             }
         }
+        ftpClient.enterLocalPassiveMode();
         StringBuilder sb = new StringBuilder();
         sb.append("TP_NAME:").append("123").append("\n")
                 .append("TESTER_ID:").append("").append("\n")

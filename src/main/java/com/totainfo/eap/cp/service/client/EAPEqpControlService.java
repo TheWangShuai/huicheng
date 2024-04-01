@@ -76,7 +76,7 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
                 return;
             }
             String lotId = lotInfo.getLotId();
-            Stateset("7","1",lotId);
+            Stateset("9","1",lotId);
             EAPReqCheckInI eapReqCheckInI = new EAPReqCheckInI();
             eapReqCheckInI.setTrxId("checkIn");
             eapReqCheckInI.setEvtUsr(userId);
@@ -89,7 +89,7 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
             LogUtils.info("[{}]",eapReqCheckInI);
             EAPReqCheckInO eapReqCheckInO = MesHandler.checkInReq(evtNo, lotInfo.getLotId(), userId, eapReqCheckInI);
             if (!RETURN_CODE_OK.equals(eapReqCheckInO.getRtnCode())) {
-                Stateset("7","3",lotId);
+                Stateset("9","3",lotId);
                 outTrx.setRtnCode(eapReqCheckInO.getRtnCode());
                 outTrx.setRtnMesg(eapReqCheckInO.getRtnMesg());
                 EapEndCard(evtNo);
@@ -97,7 +97,7 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
                 return;
             }
             ClientHandler.sendMessage(evtNo, false, 2, "批次:[" + lotInfo.getLotId() + "] Check In 成功。");
-            Stateset("7","2",lotId);
+            Stateset("9","2",lotId);
             EAPOperationInstructionI eapOperationInstructionI = new EAPOperationInstructionI();
             eapOperationInstructionI.setTrxId("EAPACCEPT");
             eapOperationInstructionI.setTrypeId("I");
@@ -106,9 +106,8 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
             eapOperationInstructionI.setUserId(userId);
 
             String returnMesg = httpHandler.postHttpForEqpt(evtNo, testerUrl, eapOperationInstructionI);
-            Stateset("8","1",lotId);
             if (StringUtils.isEmpty(returnMesg)) {
-                Stateset("8","3",lotId);
+                Stateset("10","3",lotId);
                 outTrx.setRtnCode(KVM_TIME_OUT);
                 outTrx.setRtnMesg("EAP 下发测试程序清除， KVM 没有返回");
                 ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
@@ -116,7 +115,7 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
             }
             EAPOperationInstructionO eapOperationInstructionO = JacksonUtils.string2Object(returnMesg, EAPOperationInstructionO.class);
             if (!RETURN_CODE_OK.equals(eapOperationInstructionO.getRtnCode())) {
-                Stateset("8","3",lotId);
+                Stateset("10","3",lotId);
                 outTrx.setRtnCode(KVM_RETURN_ERROR);
                 outTrx.setRtnMesg("EAP 下发测试程序清除， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
                 EapEndCard(evtNo);

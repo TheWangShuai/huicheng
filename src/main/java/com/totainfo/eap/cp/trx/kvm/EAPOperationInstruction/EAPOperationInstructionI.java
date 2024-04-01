@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class EAPOperationInstructionI extends BaseTrxI {
     private String opeType;
-    private List<EAPOperationInstructionIA>  instructList;
+    private List<EAPReqLotInfoOB>  instructList;
 
     private String lotId;
 
@@ -25,11 +25,11 @@ public class EAPOperationInstructionI extends BaseTrxI {
         this.opeType = opeType;
     }
 
-    public List<EAPOperationInstructionIA> getInstructList() {
+    public List<EAPReqLotInfoOB> getInstructList() {
         return instructList;
     }
 
-    public void setInstructList(List<EAPOperationInstructionIA> instructList) {
+    public void setInstructList(List<EAPReqLotInfoOB> instructList) {
         this.instructList = instructList;
     }
 

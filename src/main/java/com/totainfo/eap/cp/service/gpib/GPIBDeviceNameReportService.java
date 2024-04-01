@@ -10,6 +10,7 @@ import com.totainfo.eap.cp.entity.EqptInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.entity.StateInfo;
 import com.totainfo.eap.cp.handler.*;
+import com.totainfo.eap.cp.trx.client.EAPRepCurModel.EAPRepCurModelO;
 import com.totainfo.eap.cp.trx.client.EAPSyncEqpInfo.EAPSyncEqpInfoI;
 import com.totainfo.eap.cp.trx.gpib.GPIBDeviceNameReport.GPIBDeviceNameReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBDeviceNameReport.GPIBDeviceNameReportO;
@@ -18,6 +19,7 @@ import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardO;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionI;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionIA;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionO;
+import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.StringUtils;
@@ -112,6 +114,13 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
         }
         //切换被动模式
         GPIBHandler.changeMode("++device");
+        EAPRepCurModelO eapRepCurModelO = new EAPRepCurModelO();
+        eapRepCurModelO.setRtnCode("0000000");
+        eapRepCurModelO.setRtnMesg("SUCCESS");
+        eapRepCurModelO.setState("0");
+        ClientHandler.sendGPIBState(evtNo,eapRepCurModelO);
+        ClientHandler.sendMessage(evtNo, false, 2, "GPIB切换从机模式成功！" );
+
 
         //第五步开始
         StateInfo stateInfo = stateDao.getStateInfo();
@@ -123,13 +132,27 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
         stateInfo.setState(StepStat.INPROCESS);
         stateDao.addStateInfo(stateInfo);
 
+        // kvm代操参数
         EAPOperationInstructionI eapOperationInstructionI = new EAPOperationInstructionI();
+        EAPReqLotInfoOB clientLotInfo = lotDao.getClientLotInfo();
         eapOperationInstructionI.setTrxId("EAPACCEPT");
         eapOperationInstructionI.setTrypeId("I");
         eapOperationInstructionI.setActionFlg("RJO");
         eapOperationInstructionI.setOpeType("C");
-        List<EAPOperationInstructionIA> eapOperationInstructionIAS = lotInfo.getParamList();
-        eapOperationInstructionI.setInstructList(eapOperationInstructionIAS);
+        List<EAPReqLotInfoOB> lotParamMap1;
+        lotParamMap1 = lotInfo.getParamList();
+        EAPReqLotInfoOB reqLotInfoOB = new EAPReqLotInfoOB();
+        if (clientLotInfo != null){
+            LogUtils.info("从Redis中取到的数据为：：[" + clientLotInfo.getParamName() + clientLotInfo.getParamValue() + "]");
+            for (int i = 0; i < lotParamMap1.size(); i++) {
+                if ("Sample".equals(lotParamMap1.get(i).getParamName())) {
+                    reqLotInfoOB.setParamValue(clientLotInfo.getParamValue());
+                    reqLotInfoOB.setParamName(clientLotInfo.getParamName());
+                    lotParamMap1.set(i, reqLotInfoOB);
+                }
+            }
+        }
+        eapOperationInstructionI.setInstructList(lotParamMap1);
         String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapOperationInstructionI);
         if (StringUtils.isEmpty(returnMesg)) {
             outTrx.setRtnCode(KVM_TIME_OUT);

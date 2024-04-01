@@ -1,15 +1,19 @@
-package com.totainfo.eap.cp.trx.client.EAPLotIdRead;
+package com.totainfo.eap.cp.trx.client.EAPWaferLocation;
 
 import com.totainfo.eap.cp.base.trx.BaseTrxI;
 
 /**
- * @author xiaobin.Guo
- * @date 2023年09月14日 14:34
+ * @author WangShuai
+ * @date 2024/3/22
  */
-public class EAPLotIdReadI extends BaseTrxI {
+public class EAPWaferLocationI extends BaseTrxI {
+
     private String userId;
     private String lotNo;
     private String proberCardId;
+    private String sampleValue;
+    private String rtnCode;
+    private String rtnMesg;
     private int selectType;
     private String datas;
 
@@ -27,6 +31,30 @@ public class EAPLotIdReadI extends BaseTrxI {
 
     public void setDatas(String datas) {
         this.datas = datas;
+    }
+
+    public String getRtnCode() {
+        return rtnCode;
+    }
+
+    public void setRtnCode(String rtnCode) {
+        this.rtnCode = rtnCode;
+    }
+
+    public String getRtnMesg() {
+        return rtnMesg;
+    }
+
+    public void setRtnMesg(String rtnMesg) {
+        this.rtnMesg = rtnMesg;
+    }
+
+    public String getSampleValue() {
+        return sampleValue;
+    }
+
+    public void setSampleValue(String sampleValue) {
+        this.sampleValue = sampleValue;
     }
 
     public String getUserId() {

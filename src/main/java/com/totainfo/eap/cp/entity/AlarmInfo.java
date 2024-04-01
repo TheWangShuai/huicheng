@@ -3,6 +3,24 @@ package com.totainfo.eap.cp.entity;
 public class AlarmInfo {
     private String alarmCode;
     private String time;
+    private String alarmStartTime;
+    private String alarmEndTime;
+
+    public String getAlarmStartTime() {
+        return alarmStartTime;
+    }
+
+    public void setAlarmStartTime(String alarmStartTime) {
+        this.alarmStartTime = alarmStartTime;
+    }
+
+    public String getAlarmEndTime() {
+        return alarmEndTime;
+    }
+
+    public void setAlarmEndTime(String alarmEndTime) {
+        this.alarmEndTime = alarmEndTime;
+    }
 
     private String id;
 
