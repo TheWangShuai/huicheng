@@ -2,6 +2,9 @@ package com.totainfo.eap.cp.handler;
 
 import com.rabbitmq.client.Channel;
 import com.totainfo.eap.cp.base.service.IEapBaseInterface;
+import com.totainfo.eap.cp.dao.IStateDao;
+import com.totainfo.eap.cp.dao.impl.StateDao;
+import com.totainfo.eap.cp.entity.StateInfo;
 import com.totainfo.eap.cp.trx.client.EAPChangeGPIBModel.EAPChangeGPIBModelI;
 import com.totainfo.eap.cp.trx.client.EAPChangeGPIBModel.EAPChangeGPIBModelO;
 import com.totainfo.eap.cp.trx.client.EAPMessageSend.EAPMessageSendI;
@@ -32,6 +35,7 @@ import com.totainfo.eap.cp.trx.mes.EAPUploadMarkResult.EAPUploadMarkResultI;
 import com.totainfo.eap.cp.trx.mes.EAPUploadMarkResult.EAPUploadMarkResultO;
 import com.totainfo.eap.cp.trx.rms.RmsQueryRecipeBody.RmsQueryRecipeBodyI;
 import com.totainfo.eap.cp.trx.rms.RmsQueryRecipeBody.RmsQueryRecipeBodyO;
+import com.totainfo.eap.cp.util.GUIDGenerator;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.MatrixAppContext;
@@ -50,9 +54,11 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.CLIENT_TIME_OUT;
@@ -74,7 +80,8 @@ public class ClientHandler {
     private static String clientQueue;
     private static  String clientExchange;
 
-
+    @Resource
+    private  StateDao stateDao;
 
     public static void sendEqpInfo(String evtNo, EAPSyncEqpInfoI eapSyncEqpInfoI){
         rabbitmqHandler.send(evtNo, appName, clientExchange,clientQueue, eapSyncEqpInfoI);
@@ -153,6 +160,21 @@ public class ClientHandler {
         eapChangeGPIBModelI.setRtnCode(eapChangeGPIBModelO.getRtnCode());
         eapChangeGPIBModelI.setRtnMesg(eapChangeGPIBModelO.getRtnCode());
         rabbitmqHandler.send(evtNo, appName, clientExchange,clientQueue, eapChangeGPIBModelI);
+    }
+
+    public void setFlowStep(String step, String stepSate){
+        String evtNo = UUID.randomUUID().toString();
+        StateInfo stateInfo = stateDao.getStateInfo();
+        LogUtils.info("Redis中存在的状态信息为: " + stateInfo);
+        if (stateInfo == null){
+            ClientHandler.sendMessage(evtNo,false,2,"设备的步骤信息在Redis中不存在!");
+            return;
+        }
+        if (Integer.parseInt(step) >= Integer.parseInt(stateInfo.getStep())){
+            stateInfo.setStep(step);
+            stateInfo.setState(stepSate);
+            stateDao.addStateInfo(stateInfo);
+        }
     }
 
     @Autowired

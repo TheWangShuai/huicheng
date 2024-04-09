@@ -16,10 +16,13 @@ import com.totainfo.eap.cp.trx.gpib.GPIBDeviceNameReport.GPIBDeviceNameReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBDeviceNameReport.GPIBDeviceNameReportO;
 import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardI;
 import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardO;
+import com.totainfo.eap.cp.trx.kvm.EAPLotInfoWriteIn.EAPLotInfoWriteInI;
+import com.totainfo.eap.cp.trx.kvm.EAPLotInfoWriteIn.EAPLotInfoWriteInO;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionI;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionIA;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
+import com.totainfo.eap.cp.trx.rms.RmsOnlineValidation.RmsOnlineValidationO;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.StringUtils;
@@ -49,6 +52,8 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
 
     @Resource
     private ILotDao lotDao;
+    @Resource
+    private ClientHandler clientHandler;
 
     @Resource
     private IStateDao stateDao;
@@ -61,6 +66,9 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
 
     @Value("${spring.rabbitmq.eap.checkName}")
     private boolean eapCheckName;
+
+    @Value("${spring.rabbitmq.rms.checkFlag}")
+    private boolean rmsCheckFlag;
 
     @Override
     public void mainProc(String evtNo, GPIBDeviceNameReportI inTrx, GPIBDeviceNameReportO outTrx) {
@@ -109,63 +117,109 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
             if(!recipeId.equals(deviceName)){
                 outTrx.setRtnCode(DEVICE_DISMATCH);
                 outTrx.setRtnMesg("批次:[" + lotInfo.getLotId() + "]Device校验失败, Device:[" + recipeId + "]，GPIB采集的Device:[" + deviceName + "]，请确认");
+                //切换被动模式
+                EAPRepCurModelO eapRepCurModelO = getCurModelO();
+                ClientHandler.sendGPIBState(evtNo,eapRepCurModelO);
+                ClientHandler.sendMessage(evtNo, false, 2, "GPIB切换从机模式成功！" );
                 return;
             }
         }
+
+        //切换被动模式
+        EAPRepCurModelO eapRepCurModelO = getCurModelO();
+        ClientHandler.sendGPIBState(evtNo,eapRepCurModelO);
+        ClientHandler.sendMessage(evtNo, false, 2, "GPIB切换从机模式成功！" );
+
+        // DEVICE参数校验
+        if (rmsCheckFlag) {
+            LogUtils.info("开始发给rms做校验请求");
+            RmsOnlineValidationO rmsOnlineValidationO = RMSHandler.toRmsOnlineValidation(evtNo, equipmentNo, lotInfo.getLotId(), lotInfo.getDevice(),"CP");
+            if (rmsOnlineValidationO == null) {
+                outTrx.setRtnCode(RMS_TIME_OUT);
+                outTrx.setRtnMesg("[EAP-RMS]:EAP 发送Device:[" + lotInfo.getDevice() + "]验证请求，RMS没有回复");;
+                return;
+            }
+            if (!RMSResult.TRUE.equals(rmsOnlineValidationO.getResult())) {
+                Stateset("5", "3", lotId);
+                outTrx.setRtnCode(RMS_FAILD);
+                outTrx.setRtnMesg("[EAP-RMS]:Device:[" + lotInfo.getDevice() + "]验证失败，原因:[" + rmsOnlineValidationO.getReason() + "]");
+                return;
+            }
+            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-RMS]:Device:[" + lotInfo.getDevice() + "] RMS验证成功。");
+        }
+        // 第四步Device参数验证完成
+        clientHandler.setFlowStep(StepName.FOURTH,StepStat.COMP);
+
+
+
+        //发送Lot Setting
+        //第五步下发LotSetting信息开始
+        StateInfo stateInfo = stateDao.getStateInfo();
+        clientHandler.setFlowStep(StepName.FITTH,StepStat.INPROCESS);
+        //将信息下发给KVM
+        EAPLotInfoWriteInI eapLotInfoWriteInI = getEapLotInfoWriteInI(lotInfo);
+        String returnMesg = httpHandler.postHttpForEqpt(evtNo, GenericDataDef.proberUrl, eapLotInfoWriteInI);
+        if (StringUtils.isEmpty(returnMesg)) {
+            stateInfo.setState(StepStat.FAIL);
+            stateDao.addStateInfo(stateInfo);
+            removeCache();
+            outTrx.setRtnCode(KVM_TIME_OUT);
+            outTrx.setRtnMesg("[EAP-KVM]:EAP下发批次信息，KVM没有回复");
+            return;
+        }
+        EAPLotInfoWriteInO eapLotInfoWriteInO = JacksonUtils.string2Object(returnMesg, EAPLotInfoWriteInO.class);
+        if (!RETURN_CODE_OK.equals(eapLotInfoWriteInO.getRtnCode())) {
+            stateInfo.setState(StepStat.FAIL);
+            stateDao.addStateInfo(stateInfo);
+            removeCache();
+            outTrx.setRtnCode(eapLotInfoWriteInO.getRtnCode());
+            outTrx.setRtnMesg("[EAP-KVM]:EAP下发批次信息，KVM返回失败，原因:[" + eapLotInfoWriteInO.getRtnMesg() + "]");
+            return;
+        }
+        //发送给前端，LOT信息发送KVM成功
+        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:批次:[" + lotInfo.getLotId() + "]信息下发KVM成功。");
+        MesHandler.eqptStatReport(evtNo, EqptStat.RUN, "无", lotInfo.getUserId());
+        RcmHandler.eqptInfoReport(evtNo, lotInfo.getLotId(), EqptStat.RUN, _SPACE, _SPACE,_SPACE, _SPACE);
+        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:KVM 批次信息写入成功.");
+        //第五步下发LotSetting信息开始
+        clientHandler.setFlowStep(StepName.FITTH,StepStat.COMP);
+    }
+
+    private static EAPLotInfoWriteInI getEapLotInfoWriteInI(LotInfo lotInfo) {
+        EAPLotInfoWriteInI eapLotInfoWriteInI = new EAPLotInfoWriteInI();
+        eapLotInfoWriteInI.setTrxId("EAPACCEPT");
+        eapLotInfoWriteInI.setActionFlg("RJI");
+        eapLotInfoWriteInI.setUserId(lotInfo.getUserId());
+        eapLotInfoWriteInI.setProberCardId(lotInfo.getProberCard());
+        eapLotInfoWriteInI.setLoadBoardId(lotInfo.getLoadBoardId());
+        eapLotInfoWriteInI.setWaferLot(lotInfo.getWaferLot());
+        eapLotInfoWriteInI.setDeviceId(lotInfo.getDeviceId());
+        eapLotInfoWriteInI.setTestProgram(lotInfo.getTestProgram());
+        return eapLotInfoWriteInI;
+    }
+
+    private static EAPRepCurModelO getCurModelO() {
         //切换被动模式
         GPIBHandler.changeMode("++device");
         EAPRepCurModelO eapRepCurModelO = new EAPRepCurModelO();
         eapRepCurModelO.setRtnCode("0000000");
         eapRepCurModelO.setRtnMesg("SUCCESS");
+
         eapRepCurModelO.setState("0");
-        ClientHandler.sendGPIBState(evtNo,eapRepCurModelO);
-        ClientHandler.sendMessage(evtNo, false, 2, "GPIB切换从机模式成功！" );
+        return eapRepCurModelO;
+    }
+
+    public void removeCache() {
+        lotDao.removeLotInfo();
+        stateDao.removeState();
+    }
 
 
-        //第五步开始
-        StateInfo stateInfo = stateDao.getStateInfo();
-        if(stateInfo == null){
-            stateInfo = new StateInfo();
-            stateInfo.setLotNo(lotId);
-        }
-        stateInfo.setStep(StepName.FITTH);
-        stateInfo.setState(StepStat.INPROCESS);
-        stateDao.addStateInfo(stateInfo);
-
-        // kvm代操参数
-        EAPOperationInstructionI eapOperationInstructionI = new EAPOperationInstructionI();
-        EAPReqLotInfoOB clientLotInfo = lotDao.getClientLotInfo();
-        eapOperationInstructionI.setTrxId("EAPACCEPT");
-        eapOperationInstructionI.setTrypeId("I");
-        eapOperationInstructionI.setActionFlg("RJO");
-        eapOperationInstructionI.setOpeType("C");
-        List<EAPReqLotInfoOB> lotParamMap1;
-        lotParamMap1 = lotInfo.getParamList();
-        EAPReqLotInfoOB reqLotInfoOB = new EAPReqLotInfoOB();
-        if (clientLotInfo != null){
-            LogUtils.info("从Redis中取到的数据为：：[" + clientLotInfo.getParamName() + clientLotInfo.getParamValue() + "]");
-            for (int i = 0; i < lotParamMap1.size(); i++) {
-                if ("Sample".equals(lotParamMap1.get(i).getParamName())) {
-                    reqLotInfoOB.setParamValue(clientLotInfo.getParamValue());
-                    reqLotInfoOB.setParamName(clientLotInfo.getParamName());
-                    lotParamMap1.set(i, reqLotInfoOB);
-                }
-            }
-        }
-        eapOperationInstructionI.setInstructList(lotParamMap1);
-        String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapOperationInstructionI);
-        if (StringUtils.isEmpty(returnMesg)) {
-            outTrx.setRtnCode(KVM_TIME_OUT);
-            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发代操指令， KVM 没有返回");
-            ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
-            return;
-        }
-        EAPOperationInstructionO eapOperationInstructionO = JacksonUtils.string2Object(returnMesg, EAPOperationInstructionO.class);
-        if (!RETURN_CODE_OK.equals(eapOperationInstructionO.getRtnCode())) {
-            outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发代操指令， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
-            return;
-        }
-        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:EAP发送代操采集指令成功。");
+    public void Stateset(String step, String state, String lotno) {
+        StateInfo stateInfo1 = new StateInfo();
+        stateInfo1.setStep(step);
+        stateInfo1.setState(state);
+        stateInfo1.setLotNo(lotno);
+        stateDao.addStateInfo(stateInfo1);
     }
 }

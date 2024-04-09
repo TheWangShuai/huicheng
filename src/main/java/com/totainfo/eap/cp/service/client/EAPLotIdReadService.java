@@ -28,12 +28,10 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.*;
-import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
-import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant._SPACE;
+import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.*;
 import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
 import static com.totainfo.eap.cp.commdef.GenericDataDef.proberUrl;
 
@@ -55,6 +53,9 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
 
     @Resource
     private HttpHandler httpHandler;
+
+    @Resource
+    private ClientHandler clientHandler;
 
     @Override
     public void mainProc(String evtNo, EAPLotIdReadI inTrx, EAPLotIdReadO outTrx){
@@ -180,7 +181,10 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         EmsHandler.emsDeviceParameterReportToEms(evtNo,lotId,emsDeviceParameterReportI);
         ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上报设备参数信息指令成功");
 
-       //时间校验功能接口
+        LogUtils.info("开始执行上报Lot数据结束方法");
+        //第一步Lot信息上报结束
+        clientHandler.setFlowStep(StepName.FIRST,StepStat.COMP);
+        // 时间校验功能接口
         KVMTimeReportI kvmTimeReportI = new KVMTimeReportI();
         kvmTimeReportI.setTrxId("EAPACCEPT");
         kvmTimeReportI.setActionFlg("TIME");

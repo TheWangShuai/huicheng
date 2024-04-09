@@ -1,6 +1,7 @@
 package com.totainfo.eap.cp.service.client;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
+import com.totainfo.eap.cp.commdef.GenergicStatDef;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.dao.IEqptDao;
 import com.totainfo.eap.cp.dao.ILotDao;
@@ -51,6 +52,10 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
 
     @Resource
     private IStateDao stateDao;
+
+    @Resource
+    private ClientHandler clientHandler;
+
     @Resource
     private HttpHandler httpHandler;
     @Resource
@@ -64,7 +69,8 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
         String userId = inTrx.getUserId();
         String model = inTrx.getModel();
         boolean isCheckIn = inTrx.getIsCheckIn();
-
+        //第九步开始CheckIn开始
+        clientHandler.setFlowStep(GenergicStatDef.StepName.NIGHT, GenergicStatDef.StepStat.INPROCESS);
         if (isCheckIn) {
             LogUtils.info("开始check in");
             LotInfo lotInfo = lotDao.getCurLotInfo();
@@ -76,7 +82,6 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
                 return;
             }
             String lotId = lotInfo.getLotId();
-            Stateset("9","1",lotId);
             EAPReqCheckInI eapReqCheckInI = new EAPReqCheckInI();
             eapReqCheckInI.setTrxId("checkIn");
             eapReqCheckInI.setEvtUsr(userId);
@@ -97,7 +102,8 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
                 return;
             }
             ClientHandler.sendMessage(evtNo, false, 2, "批次:[" + lotInfo.getLotId() + "] Check In 成功。");
-            Stateset("9","2",lotId);
+            //第九步开始CheckIn结束
+            clientHandler.setFlowStep(GenergicStatDef.StepName.NIGHT, GenergicStatDef.StepStat.COMP);
             EAPOperationInstructionI eapOperationInstructionI = new EAPOperationInstructionI();
             eapOperationInstructionI.setTrxId("EAPACCEPT");
             eapOperationInstructionI.setTrypeId("I");
