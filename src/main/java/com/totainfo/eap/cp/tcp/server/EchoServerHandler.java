@@ -4,15 +4,19 @@ package com.totainfo.eap.cp.tcp.server;
 
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
+import com.totainfo.eap.cp.dao.impl.LotDao;
 import com.totainfo.eap.cp.dao.impl.StateDao;
+import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.entity.StateInfo;
 import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.GPIBHandler;
+import com.totainfo.eap.cp.trx.client.EAPRepCurModel.EAPRepCurModelO;
 import com.totainfo.eap.cp.trx.gpib.GBIPWaferEndReport.GPIBWaferEndReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBDeviceNameReport.GPIBDeviceNameReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotEndReport.GPIBLotEndReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotStartReport.GPIBLotStartReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportI;
+import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
 import com.totainfo.eap.cp.util.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -31,7 +35,9 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
@@ -77,13 +83,22 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
     @Resource
     private StateDao stateDao;
 
+    @Resource
+    private LotDao lotDao;
+
 
     private Map<String, String> waferInfoMap = new ConcurrentHashMap<>();
 
     @Override
     public void channelActive(ChannelHandlerContext ctx){
+        String evtNo = UUID.randomUUID().toString();
         String remoteIp = ctx.channel().remoteAddress().toString().split(":")[0].substring(1);
         LogUtils.info("GPIB："+ remoteIp + " 连接成功。");
+        EAPRepCurModelO eapRepCurModelO = new EAPRepCurModelO();
+        eapRepCurModelO.setRtnCode("0000000");
+        eapRepCurModelO.setRtnMesg("SUCCESS");
+        eapRepCurModelO.setState("0");
+        ClientHandler.sendGPIBState(evtNo,eapRepCurModelO);
         LogUtils.gpib("GPIB："+ remoteIp + " 连接成功。");
         socketMap.put("GPIB", ctx);
     }
@@ -183,6 +198,15 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(waferInfoMap));
             }else if(item.startsWith("^") && item.length() ==1){
                 StateInfo stateInfo = stateDao.getStateInfo();
+                LogUtils.info("当前制程步骤为：" + stateInfo.getStep());
+                LotInfo curLotInfo = lotDao.getCurLotInfo();
+                String sampleValue = null;
+                List<EAPReqLotInfoOB> paramList = curLotInfo.getParamList();
+                for (EAPReqLotInfoOB eapReqLotInfoOB : paramList){
+                    if ("Sample".equals(eapReqLotInfoOB.getParamName())){
+                        sampleValue = eapReqLotInfoOB.getParamValue();
+                    }
+                }
                 if ( Integer.parseInt(stateInfo.getStep()) < 8 ){
                     ClientHandler.sendMessage(evtNo, true, 1, "GPIB回复数据格式失败，回复的数据为：" + message);
                     GPIBHandler.changeMode("++device");
@@ -220,8 +244,14 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        String evtNo = UUID.randomUUID().toString();
         super.channelInactive(ctx);
         socketMap.remove("GPIB");
+        EAPRepCurModelO eapRepCurModelO = new EAPRepCurModelO();
+        eapRepCurModelO.setRtnCode("0000000");
+        eapRepCurModelO.setRtnMesg("SUCCESS");
+        eapRepCurModelO.setState("2");
+        ClientHandler.sendGPIBState(evtNo,eapRepCurModelO);
         LogUtils.info("GPIB断开连接。");
         LogUtils.gpib("GPIB断开连接。");
     }

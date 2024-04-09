@@ -34,13 +34,14 @@ public class RMSHandler {
     private static int rmsTimeout;
 
 
-    public static RmsOnlineValidationO toRmsOnlineValidation(String evtNo, String eqptId, String lotId, String recipeId) {
+    public static RmsOnlineValidationO toRmsOnlineValidation(String evtNo, String eqptId, String lotId, String recipeId,String areaId) {
 
 
         RmsOnlineValidationIA rmsOnlineValidationIA = new RmsOnlineValidationIA();
         rmsOnlineValidationIA.setToolId(eqptId);
         rmsOnlineValidationIA.setLotId(lotId);
         rmsOnlineValidationIA.setRecipeId(recipeId);
+        rmsOnlineValidationIA.setAreaId(areaId);
 
         List<RmsOnlineValidationIA> rmsOnlineValidationIAList = new ArrayList<>(1);
         rmsOnlineValidationIAList.add(rmsOnlineValidationIA);

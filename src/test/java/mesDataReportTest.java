@@ -1,11 +1,8 @@
 import com.totainfo.eap.cp.TotainfoEapApplication;
-import com.totainfo.eap.cp.commdef.GenergicStatDef;
-import com.totainfo.eap.cp.dao.ILotDao;
-import com.totainfo.eap.cp.dao.impl.StateDao;
-import com.totainfo.eap.cp.entity.DieCountInfo;
 import com.totainfo.eap.cp.entity.DielInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
-import com.totainfo.eap.cp.entity.StateInfo;
+import com.totainfo.eap.cp.handler.KvmHandler;
+import com.totainfo.eap.cp.handler.RcmHandler;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOC;
@@ -17,71 +14,70 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.annotation.Resource;
+import javax.print.DocFlavor;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author WangShuai
- * @date 2024/3/29
+ * @date 2024/4/2
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TotainfoEapApplication.class)
 @NoArgsConstructor
-public class LotInfoAdd {
+public class mesDataReportTest {
 
-
-    @Resource
-    private ILotDao lotDao;
-
-    @Resource
-    private StateDao stateDao;
-
-    private static Queue<String> slotMapQueue = new LinkedList<String>();
 
     @Test
-    public void LotInfoAddToRedis(){
+    public void testMesData(){
 
-//        EAPReqLotInfoOB clientLotInfo = lotDao.getClientLotInfo();
-//        LotInfo lotInfo = lotDao.getCurLotInfo();
-//        //todo 上报mes
-//        String slotId = "";
-//        if (slotMapQueue.isEmpty()){
-//            if (clientLotInfo == null){
-//                String sampleValue = null;
-//                for (EAPReqLotInfoOB eapReqLotInfoOB : lotInfo.getParamList1()) {
-//                    if ("Sample".equals(eapReqLotInfoOB.getParamName())){
-//                        sampleValue = eapReqLotInfoOB.getParamValue();
-//                    }
-//                }
-//                EAPReqLotInfoOC eapReqLotInfoOC = JacksonUtils.string2Object(sampleValue, EAPReqLotInfoOC.class);
-//                String[] split = eapReqLotInfoOC.getDatas().split(",");
-//                slotMapQueue.addAll(Arrays.asList(split));
-//            }else{
-//                EAPReqLotInfoOC eapReqLotInfoOC = JacksonUtils.string2Object(clientLotInfo.getParamValue(), EAPReqLotInfoOC.class);
-//                String[] split = eapReqLotInfoOC.getDatas().split(",");
-//                slotMapQueue.addAll(Arrays.asList(split));
-//            }
-//        }else {
-//            slotId = slotMapQueue.poll();
-//            System.out.println(slotId);
-//        }
+        LotInfo lotInfo = mesDataReportTest.getLotInfo();
+        String evtNo = UUID.randomUUID().toString();
+        StringBuilder sb = new StringBuilder();
+        String sampleValue = null;
+        String custLotNo = null;
 
-
-
-
-        LotInfo lotInfo = getLotInfo();
-        lotDao.addLotInfo(lotInfo);
-        LotInfo curLotInfo = lotDao.getCurLotInfo();
-        StateInfo stateInfo = stateDao.getStateInfo();
-        if(stateInfo == null) {
-            stateInfo = new StateInfo();
+        String[] split = new String[0];
+        List<EAPReqLotInfoOB> paramList = lotInfo.getParamList();
+        for (EAPReqLotInfoOB eapReqLotInfoOB : paramList){
+            if ("Sample".equals(eapReqLotInfoOB.getParamName())){
+                sampleValue = eapReqLotInfoOB.getParamValue();
+            }
+            if ("CustLotNo".equals(eapReqLotInfoOB.getParamName())){
+                custLotNo = eapReqLotInfoOB.getParamValue();
+            }
         }
-        stateInfo.setStep(GenergicStatDef.StepName.EIGTH);
-        stateInfo.setState(GenergicStatDef.StepStat.COMP);
-        stateDao.addStateInfo(stateInfo);
+        EAPReqLotInfoOC eapReqLotInfoOC = JacksonUtils.string2Object(sampleValue, EAPReqLotInfoOC.class);
+        if (eapReqLotInfoOC !=null){
+            split = eapReqLotInfoOC.getDatas().split(",");
+        }
 
+        sb.append("TP_NAME:").append(lotInfo.getTestProgram()).append("\n")
+                .append("TESTER_ID:").append("P-N4-103").append("\n")
+                .append("PART_NO:").append("NA").append("\n")
+                .append("QTY:").append(split.length).append("\n")
+                .append("C_LOT:").append(custLotNo).append("\n")
+                .append("HANDLER:").append("NA").append("\n")
+                .append("PROBER:").append("1234123514351").append("\n")
+                .append("LOADBOARD:").append("NA").append("\n")
+                .append("PROBERCARD:").append(lotInfo.getProberCard()).append("\n")
+                .append("SOCKET:").append("NA").append("\n")
+                .append("PROCESS:").append("CP").append("\n")
+                .append("STEP:").append("CP1").append("\n")
+                .append("RETEST:").append("NA").append("\n")
+                .append("RT_BIN:").append("NA").append("\n")
+                .append("SUBCON_NAME:").append("NA").append("\n")
+                .append("SUBCON_LOT:").append("NA").append("\n")
+                .append("DATE_CODE:").append("NA").append("\n")
+                .append("OPID:").append(lotInfo.getUserId()).append("\n")
+                .append("PASS_BIN:").append("NA").append("\n")
+                .append("WORK_MODE:").append("TEST").append("\n")
+                .append("EXTENSION:").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddhhmmss"))).append("\n");
+        LogUtils.info("CheckIn生成的数据为：" + sb);
+        KvmHandler.reportMESData(evtNo,sb.toString());
     }
+
 
     private static LotInfo getLotInfo() {
         LotInfo lotInfo = new LotInfo();
@@ -152,7 +148,7 @@ public class LotInfoAdd {
                 "            },\n" +
                 "            {\n" +
                 "                \"paramName\": \"Sample\",\n" +
-                "                \"paramValue\": \"{\\\"type\\\":\\\"1\\\",\\\"datas\\\":\\\"03,04,05,09,10,11,12,15\\\"}\"\n" +
+                "                \"paramValue\": \"{\\\"type\\\":\\\"1\\\",\\\"datas\\\":\\\"03\\\"}\"\n" +
                 "            },\n" +
                 "            {\n" +
                 "                \"paramName\": \"AlarmNum\",\n" +
@@ -178,27 +174,27 @@ public class LotInfoAdd {
                 "    }\n" +
                 "}";
 
-//        DielInfo dielInfo = new DielInfo();
-//        dielInfo.setResult("false");
-//        dielInfo.setCoordinate("Y004X004");
-//        dielInfo.setSiteNum("1");
-//        List<DielInfo> infos = new ArrayList<>();
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        Map<String, List<DielInfo>> waferDieMap ;
-//
-//        waferDieMap = new HashMap<>();
-//        waferDieMap.put("waferDieMap",infos);
+        DielInfo dielInfo = new DielInfo();
+        dielInfo.setResult("false");
+        dielInfo.setCoordinate("Y004X004");
+        dielInfo.setSiteNum("1");
+        List<DielInfo> infos = new ArrayList<>();
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        Map<String, List<DielInfo>> waferDieMap ;
+
+        waferDieMap = new HashMap<>();
+        waferDieMap.put("waferDieMap",infos);
         EAPReqLotInfoO eapReqLotInfoO = JacksonUtils.string2Object(lotInfo1, EAPReqLotInfoO.class);
-//        HashMap<String, String > stringMap  = new HashMap<String, String>(){{
-//            put("WaferLot",eapReqLotInfoO.getLotInfo().getWaferLot());
-//        }};
+        HashMap<String, String > stringMap  = new HashMap<String, String>(){{
+            put("WaferLot",eapReqLotInfoO.getLotInfo().getWaferLot());
+        }};
         lotInfo.setLotId("123214");
         lotInfo.setWaferLot(eapReqLotInfoO.getLotInfo().getWaferLot());
         lotInfo.setDevice(eapReqLotInfoO.getLotInfo().getDevice());
@@ -210,7 +206,8 @@ public class LotInfoAdd {
         lotInfo.setDieCount(eapReqLotInfoO.getLotInfo().getDieCount());
         lotInfo.setParamList(eapReqLotInfoO.getLotInfo().getParamList());
         lotInfo.setTemperatureRange(eapReqLotInfoO.getLotInfo().getTemperatureRange());
-//AZ
+        lotInfo.setParamMap(stringMap);
+        lotInfo.setWaferDieMap(waferDieMap);
         return lotInfo;
     }
 }

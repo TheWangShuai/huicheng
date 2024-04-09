@@ -48,12 +48,13 @@ public class EAPConnectService  extends EapBaseService<EAPConnectI, EAPConnectO>
         eapSyncEqpInfoI.setActionFlg("RLC");
         eapSyncEqpInfoI.setModel(eqptInfo.getEqptMode());
         eapSyncEqpInfoI.setState(eqptInfo.getEqptStat());
-
+        eapSyncEqpInfoI.setGpibState("0");
         LotInfo lotInfo = lotDao.getCurLotInfo();
         if(lotInfo != null){
             eapSyncEqpInfoI.setUserId(lotInfo.getUserId());
             eapSyncEqpInfoI.setLotNo(lotInfo.getLotId());
             eapSyncEqpInfoI.setProberCardId(lotInfo.getProberCard());
+            eapSyncEqpInfoI.setFoupLotNo(lotInfo.getLotId());
         }
         ClientHandler.sendEqpInfo(evtNo, eapSyncEqpInfoI);
     }

@@ -10,6 +10,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
+import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.SERVICE_EXCEPTION;
 
 
 @Aspect
@@ -41,7 +42,7 @@ public class LogAcpect {
         ObjectNode objectNode = JacksonUtils.getJson2(outTrxMsg);
         String rtnCode = objectNode.get("rtnCode").textValue();
         String rtnMesg = objectNode.get("rtnMesg").textValue();
-        if(!RETURN_CODE_OK.equals(rtnCode)){
+        if(!RETURN_CODE_OK.equals(rtnCode) && !SERVICE_EXCEPTION.equals(rtnCode)){
             ClientHandler.sendMessage(objects[0].toString(),false,2,rtnMesg);
         }
     }

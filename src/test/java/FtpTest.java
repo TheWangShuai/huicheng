@@ -1,9 +1,14 @@
+import com.totainfo.eap.cp.TotainfoEapApplication;
 import com.totainfo.eap.cp.trx.ems.EMSDeviceParameterReport.EMSDeviceParameterReportIA;
 import com.totainfo.eap.cp.util.FtpUtils;
 import com.totainfo.eap.cp.util.LogUtils;
+import lombok.NoArgsConstructor;
 import org.apache.commons.net.ftp.FTPClient;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +22,9 @@ import java.util.List;
  * @author xiaobin.Guo
  * @date 2024年01月30日 9:12
  */
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = TotainfoEapApplication.class)
+@NoArgsConstructor
 public class FtpTest {
 
 
@@ -59,8 +67,7 @@ public class FtpTest {
                 .append("EXTENSION:").append("").append("\n");
         try {
             Files.write(dataPath, sb.toString().getBytes());
-            FtpUtils.uploadFile("127.0.0.1", "root", "123", 21, "C:\\",dataPath.toString());
-            Files.delete(dataPath);
+            FtpUtils.uploadFile("localhost", "administrator", "123", 21, path,dataPath.toString());
         } catch (IOException e) {
             LogUtils.error("xtr文件写入失败");
         }

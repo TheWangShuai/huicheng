@@ -2,21 +2,26 @@ package com.totainfo.eap.cp.service.gpib;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.dao.ILotDao;
+import com.totainfo.eap.cp.entity.DieCountInfo;
 import com.totainfo.eap.cp.entity.DielInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.EmsHandler;
 import com.totainfo.eap.cp.handler.KvmHandler;
 import com.totainfo.eap.cp.handler.MesHandler;
+import com.totainfo.eap.cp.trx.client.EAPReportDieInfo.DieInfoOA;
 import com.totainfo.eap.cp.trx.ems.EMSWaferReport.EMSWaferReportO;
 import com.totainfo.eap.cp.trx.gpib.GBIPWaferEndReport.GPIBWaferEndReportO;
 import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportO;
 import com.totainfo.eap.cp.trx.kvm.cleanFuncKey.CleanFuncKeyO;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultO;
+import com.totainfo.eap.cp.util.DateUtils;
 import com.totainfo.eap.cp.util.FtpUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.StringUtils;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +30,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -57,17 +63,28 @@ public class GPIBWaferEndReportService extends EapBaseService<GPIBWaferStartRepo
     public void mainProc(String evtNo, GPIBWaferStartReportI inTrx, GPIBWaferStartReportO outTrx) {
 
         LotInfo lotInfo = lotDao.getCurLotInfo();
+
+        String waferEndTime = DateUtils.getcurrentTimestampStr("yyyy-MM-dd HH:mm:ss");
+        int dieCount = 0;
         if(lotInfo == null){
             return;
         }
         String lotNo =  lotInfo.getLotId();
         String evtUsr = lotInfo.getUserId();
         // 当前片WaferID
-        String waferId = inTrx.getWaferId(); //214124
+        String waferId = inTrx.getWaferId();
         // 上一片的WaferID
-        String pvWaferId = inTrx.getPvWaferId(); //214123
-
-
+        String pvWaferId = inTrx.getPvWaferId();
+        DieCountInfo dieCountInfo = lotDao.getDieCount();
+        List<DieInfoOA> dieInfoOAS = dieCountInfo.getDieInfoOAS();
+        DieInfoOA dieInfoOAOld = new DieInfoOA();
+        for (DieInfoOA dieInfoOA : dieInfoOAS) {
+            if (waferId.equals(dieInfoOA.getWorkId())){
+                dieInfoOAOld = dieInfoOA;
+            }
+        }
+        dieInfoOAOld.setWaferEndTime(waferEndTime);
+        lotDao.addDieCount(dieCountInfo);
         //Wafer Start时判断，上一片Wafer Die数据是否上报完成，如果没有，将上一片Wafer的Die数据上报完成
 //        if(StringUtils.isNotEmpty(pvWaferId)){
             Map<String, List<DielInfo>> waferDieMap = lotInfo.getWaferDieMap();
@@ -91,11 +108,11 @@ public class GPIBWaferEndReportService extends EapBaseService<GPIBWaferStartRepo
                         ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                     }
 
-                    LogUtils.info("给MES上报waferEnd-----");
-                    GPIBWaferEndReportO gpibWaferEndReportO = MesHandler.waferEnd(evtNo, evtUsr, lotNo, waferId);
-                    if (RETURN_CODE_OK.equals(gpibWaferEndReportO.getRtnCode())) {
-                        ClientHandler.sendMessage(evtNo, false, 2, "EAP给MES上报WaferEnd成功！");
-                    }
+//                    LogUtils.info("给MES上报waferEnd-----");
+//                    GPIBWaferEndReportO gpibWaferEndReportO = MesHandler.waferEnd(evtNo, evtUsr, lotNo, waferId);
+//                    if (RETURN_CODE_OK.equals(gpibWaferEndReportO.getRtnCode())) {
+//                        ClientHandler.sendMessage(evtNo, false, 2, "EAP给MES上报WaferEnd成功！");
+//                    }
 
                     CleanFuncKeyO cleanFuncKeyO = KvmHandler.cleanFuncKey(evtNo, "N");
                     if ("0000000".equals(cleanFuncKeyO.getRtnCode())) {
@@ -114,13 +131,19 @@ public class GPIBWaferEndReportService extends EapBaseService<GPIBWaferStartRepo
                     LogUtils.error("文件夹创建失败");
                 }
             }
-            // 换片结束，生成对于你的文件
+        for (DieInfoOA dieInfoOA : dieCountInfo.getDieInfoOAS()) {
+            if (waferId.equals(dieInfoOA.getWorkId())){
+                dieCount = dieInfoOA.getDieCount();
+            }
+
+        }
+            // 换片结束，生成换片的文件
             LogUtils.info("换片结束，开始生成换片文件!");
             StringBuilder sb = new StringBuilder();
             sb.append("LotID=").append(lotInfo.getLotId()).append("\n")
                     .append("TestProgram=").append(lotInfo.getTestProgram()).append("\n")
                     .append("P/C=").append(lotInfo.getProberCard()).append("\n")
-                    .append("touchdown=").append(lotInfo.getDieCount()).append("\n")
+                    .append("touchdown=").append(dieCount).append("\n")
                     .append("OPID=").append(lotInfo.getUserId()).append("\n")
                     .append("ChuckTemp=").append(lotInfo.getTemperature()).append("\n")
                     .append("ProberName=").append(proberName).append("\n")

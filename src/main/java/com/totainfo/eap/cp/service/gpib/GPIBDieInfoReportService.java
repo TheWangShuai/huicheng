@@ -2,14 +2,18 @@ package com.totainfo.eap.cp.service.gpib;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.dao.ILotDao;
+import com.totainfo.eap.cp.entity.DieCountInfo;
 import com.totainfo.eap.cp.entity.DielInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.MesHandler;
+import com.totainfo.eap.cp.trx.client.EAPReportDieInfo.DieInfoOA;
 import com.totainfo.eap.cp.trx.gpib.GPIBDieInfoReport.GPIBDieInfoReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBDieInfoReport.GPIBDieInfoReportO;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultO;
 import com.totainfo.eap.cp.util.LogUtils;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -33,8 +37,13 @@ public class GPIBDieInfoReportService extends EapBaseService<GPIBDieInfoReportI,
     @Override
     public void mainProc(String evtNo, GPIBDieInfoReportI inTrx, GPIBDieInfoReportO outTrx) {
         LotInfo lotInfo = lotDao.getCurLotInfo();
+        DieCountInfo dieCountInfo = lotDao.getDieCount();
+        DieInfoOA dieInfoOAOld = new DieInfoOA();
         if(lotInfo == null){
             return;
+        }
+        if (dieCountInfo == null){
+            dieCountInfo = new DieCountInfo();
         }
         String waferId = inTrx.getWaferId();
         Map<String, List<DielInfo>> waferDieMap = lotInfo.getWaferDieMap();
@@ -53,20 +62,31 @@ public class GPIBDieInfoReportService extends EapBaseService<GPIBDieInfoReportI,
         dielInfos.add(dielInfo);
 
         int dieCount = lotInfo.getDieCount() == 0 ? 30: lotInfo.getDieCount();
-        if(dielInfos.size() >= dieCount){
+        int reportCount = 0;
+        if(dielInfos.size() == dieCount){
             String lotNo = lotInfo.getLotId();
             String userId = lotInfo.getUserId();
             EAPUploadDieResultO eapUploadDieResultO = MesHandler.uploadDieResult(evtNo, lotNo, waferId, dielInfos, userId);
+            reportCount ++;
             if (!RETURN_CODE_OK.equals(eapUploadDieResultO.getRtnCode())) {
                 outTrx.setRtnCode(eapUploadDieResultO.getRtnCode());
                 outTrx.setRtnMesg(eapUploadDieResultO.getRtnMesg());
-//                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                 return;
             }
             //上报后将已经上报的数据清空，重新累计
             dielInfos.clear();
         }
-        waferDieMap.put(waferId, dielInfos); //214124 214124
+        // 将wafer测试的dieCount存入Redis
+        List<DieInfoOA> dieInfoOAS = dieCountInfo.getDieInfoOAS();
+        for (DieInfoOA dieInfoOA : dieInfoOAS) {
+            if (waferId.equals(dieInfoOA.getWorkId())){
+                dieInfoOAOld = dieInfoOA;
+            }
+        }
+        dieInfoOAOld.setDieCount(dieCount * reportCount + dielInfos.size());
+        dieInfoOAOld.setDeviceName(lotInfo.getDeviceId());
+        lotDao.addDieCount(dieCountInfo);
+        waferDieMap.put(waferId, dielInfos);
         lotInfo.setWaferDieMap(waferDieMap);
         lotDao.addLotInfo(lotInfo);
     }

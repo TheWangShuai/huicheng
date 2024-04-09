@@ -5,9 +5,11 @@ import com.totainfo.eap.cp.commdef.GenergicStatDef;
 import com.totainfo.eap.cp.commdef.GenergicStatDef.MessageType;
 import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.dao.IStateDao;
+import com.totainfo.eap.cp.entity.DieCountInfo;
 import com.totainfo.eap.cp.entity.DielInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.handler.*;
+import com.totainfo.eap.cp.trx.client.EAPReportDieInfo.DieInfoOA;
 import com.totainfo.eap.cp.trx.ems.EMSWaferReport.EMSWaferReportI;
 import com.totainfo.eap.cp.trx.ems.EMSWaferReport.EMSWaferReportO;
 import com.totainfo.eap.cp.trx.gpib.GBIPWaferEndReport.GPIBWaferEndReportO;
@@ -15,23 +17,22 @@ import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportO;
 import com.totainfo.eap.cp.trx.kvm.cleanFuncKey.CleanFuncKeyO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoO;
+import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
+import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOC;
 import com.totainfo.eap.cp.trx.mes.EAPUploadDieResult.EAPUploadDieResultO;
 import com.totainfo.eap.cp.trx.rcm.EapReportInfoI;
 import com.totainfo.eap.cp.trx.rcm.EapReportInfoO;
-import com.totainfo.eap.cp.util.FtpUtils;
-import com.totainfo.eap.cp.util.JacksonUtils;
-import com.totainfo.eap.cp.util.LogUtils;
-import com.totainfo.eap.cp.util.StringUtils;
+import com.totainfo.eap.cp.util.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
 
@@ -57,23 +58,61 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
     private String password;
     @Value("${ftp.path}")
     private String path;
+    private static Queue<String> slotMapQueue = new LinkedList<String>();
+
+    private List<DieInfoOA> dieInfoOAS = new ArrayList<>();
 
     @Override
     public void mainProc(String evtNo, GPIBWaferStartReportI inTrx, GPIBWaferStartReportO outTrx) {
+        EAPReqLotInfoOB clientLotInfo = lotDao.getClientLotInfo();
+
         LotInfo lotInfo = lotDao.getCurLotInfo();
+        //todo 上报mes
+        String slotId = "";
+        if (slotMapQueue.isEmpty()){
+            if (clientLotInfo == null){
+                String sampleValue = null;
+                for (EAPReqLotInfoOB eapReqLotInfoOB : lotInfo.getParamList1()) {
+                    if ("Sample".equals(eapReqLotInfoOB.getParamName())){
+                        sampleValue = eapReqLotInfoOB.getParamValue();
+                    }
+                }
+                EAPReqLotInfoOC eapReqLotInfoOC = JacksonUtils.string2Object(sampleValue, EAPReqLotInfoOC.class);
+                String[] split = eapReqLotInfoOC.getDatas().split(",");
+                slotMapQueue.addAll(Arrays.asList(split));
+                slotId = slotMapQueue.poll();
+            }else{
+                EAPReqLotInfoOC eapReqLotInfoOC = JacksonUtils.string2Object(clientLotInfo.getParamValue(), EAPReqLotInfoOC.class);
+                String[] split = eapReqLotInfoOC.getDatas().split(",");
+                slotMapQueue.addAll(Arrays.asList(split));
+                slotId = slotMapQueue.poll();
+            }
+        }else {
+            slotId = slotMapQueue.poll();
+        }
+        DieCountInfo dieCountInfo = new DieCountInfo();
+        DieInfoOA dieInfoOA = new  DieInfoOA();
         if(lotInfo == null){
             return;
         }
         String lotNo =  lotInfo.getLotId();
         String evtUsr = lotInfo.getUserId();
         String waferId = inTrx.getWaferId();
+        String currentDate = DateUtils.getcurrentTimestampStr("yyyy-MM-dd HH:mm:ss");
+        dieInfoOA.setWaferStartTime(currentDate);
+        dieInfoOA.setWorkId(waferId);
+        dieInfoOA.setDeviceName(lotInfo.getDeviceId());
+        dieInfoOAS.add(dieInfoOA);
+        dieCountInfo.setDieInfoOAS(dieInfoOAS);
+        lotDao.addDieCount(dieCountInfo);
+
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-EMS]:EAP给EMS上传生产Wafer信息指令成功");
         EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,lotNo, waferId, "Start");
         if (!RETURN_CODE_OK.equals(emsWaferReportO.getRtnCode())){
             ClientHandler.sendMessage(evtNo, false, 2, emsWaferReportO.getRtnMesg());
         }
 
-        GPIBWaferStartReportO gpibWaferStartReportO = MesHandler.waferStart(evtNo, evtUsr, lotNo, waferId);
+        GPIBWaferStartReportO gpibWaferStartReportO = MesHandler.waferStart(evtNo, evtUsr, lotNo, slotId);
         if (!RETURN_CODE_OK.equals(gpibWaferStartReportO.getRtnCode())) {
             ClientHandler.sendMessage(evtNo, false, 1 , gpibWaferStartReportO.getRtnMesg());
             return;

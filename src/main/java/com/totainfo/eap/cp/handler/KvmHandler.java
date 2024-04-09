@@ -4,6 +4,7 @@ import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardI;
 import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardO;
 import com.totainfo.eap.cp.trx.kvm.cleanFuncKey.CleanFuncKeyI;
 import com.totainfo.eap.cp.trx.kvm.cleanFuncKey.CleanFuncKeyO;
+import com.totainfo.eap.cp.trx.rcm.EapReportMESDataInfoI;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.StringUtils;
 import org.springframework.stereotype.Component;
@@ -57,6 +58,15 @@ public class KvmHandler {
         }
 
         return cleanFuncKeyO;
+    }
+
+    // 给tester机台下发mesData数据
+    public static void reportMESData(String evtNo, String mesData){
+        EapReportMESDataInfoI eapReportMESDataInfoI = new EapReportMESDataInfoI();
+        eapReportMESDataInfoI.setTrxId("EAPACCEPT");
+        eapReportMESDataInfoI.setActionFlg("MESDATA");
+        eapReportMESDataInfoI.setMesData(mesData);
+        httpHandler.postHttpForEqpt(evtNo, testerUrl, eapReportMESDataInfoI);
     }
 
     @Resource

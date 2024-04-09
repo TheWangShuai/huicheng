@@ -8,6 +8,15 @@ public class RmsOnlineValidationIA {
     private String lotId;
     private String recipeId;
     private String toolId;
+    private String areaId;
+
+    public String getAreaId() {
+        return areaId;
+    }
+
+    public void setAreaId(String areaId) {
+        this.areaId = areaId;
+    }
 
     public String getLotId() {
         return lotId;

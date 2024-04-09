@@ -11,19 +11,23 @@ import org.springframework.stereotype.Service;
  * @author WangShuai
  * @date 2024/3/30
  */
-@Service("GPIBSLAVEMODE")
+@Service("ChangeGPIBState")
 public class EAPReqChangeGPIBModel  extends EapBaseService<EAPChangeGPIBModelI, EAPChangeGPIBModelO> {
 
 
     @Override
     public void mainProc(String evtNo, EAPChangeGPIBModelI inTrx, EAPChangeGPIBModelO outTrx) {
 
-        String reply = GPIBHandler.changeModeNew( "++device");
-        if (reply.contains("++device")){
-            outTrx.setRtnCode("0000000");
-            outTrx.setRtnCode("SUCCESS");
-            ClientHandler.changeGPIBMode(evtNo,outTrx);
+        String actionFlg = inTrx.getActionFlg();
+        switch (actionFlg) {
+            case "GPIBSLAVEMODEL":
+                clientReportChangeGPIBState(evtNo, outTrx);
+                break;
         }
-        ClientHandler.sendMessage(evtNo,false,1,"EAP下发切换从机模式成功！");
+    }
+
+    private void clientReportChangeGPIBState(String evtNo,EAPChangeGPIBModelO outTrx) {
+        GPIBHandler.changeModeNew("++device");
+        ClientHandler.sendMessage(evtNo, false, 1, "EAP下发切换从机模式成功！");
     }
 }

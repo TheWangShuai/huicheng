@@ -7,7 +7,7 @@ import com.totainfo.eap.cp.base.trx.BaseTrxO;
  * @date 2024/3/30
  */
 public class EAPRepCurModelO extends BaseTrxO {
-    private String state; // 0 从机 1 主机
+    private String state; // 0 从机 1 主机 2 断连
 
     public String getState() {
         return state;

@@ -50,6 +50,8 @@ public class KVMSyncConnectionModeService extends EapBaseService<KVMSyncConnecti
         eapSyncEqpInfoI.setModel(eqptInfo.getEqptMode());
         eapSyncEqpInfoI.setLotNo(curLotInfo.getLotId());
         eapSyncEqpInfoI.setProberCardId(curLotInfo.getProberCard());
+        eapSyncEqpInfoI.setGpibState("0");
+        eapSyncEqpInfoI.setFoupLotNo(curLotInfo.getLotId());
 
         ClientHandler.sendEqpInfo(evtNo, eapSyncEqpInfoI);
 

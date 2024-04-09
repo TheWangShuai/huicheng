@@ -1,4 +1,7 @@
+import com.totainfo.eap.cp.TotainfoEapApplication;
 import com.totainfo.eap.cp.base.service.EapBaseService;
+import com.totainfo.eap.cp.commdef.GenergicStatDef;
+import com.totainfo.eap.cp.dao.impl.LotDao;
 import com.totainfo.eap.cp.tcp.server.EchoServerHandler;
 import com.totainfo.eap.cp.trx.gpib.GPIBDeviceNameReport.GPIBDeviceNameReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotEndReport.GPIBLotEndReportI;
@@ -11,12 +14,19 @@ import com.totainfo.eap.cp.util.LogUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,20 +36,21 @@ import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
  * @author WangShuai
  * @date 2024/3/25
  */
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = TotainfoEapApplication.class)
+@NoArgsConstructor
 public class TestGPIB {
 
     @Resource
-    private ApplicationContext context;
-    @Resource
-    private  static EchoServerHandler echoServerHandler;
+    private LotDao lotDao;
 
-    private Map<String, ChannelHandlerContext> socketMap = new ConcurrentHashMap<>();
+    private static EchoServerHandler echoServerHandler;
 
     @Test
     public void TestGBIP(){
 
-
-          String message = "++device";
+        Map<String, String> waferTime = lotDao.getWaferTime();
+        String message = "++device";
 
           String message1 = "= \"b\n" +
                   "\"\n" +

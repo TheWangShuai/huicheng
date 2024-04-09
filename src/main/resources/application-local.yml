@@ -1,7 +1,7 @@
 equipment:
-  id: P-N4-023
-  testerId: P-N4-023
-  type: AP3000E
+  id: P-N2-136
+  testerId: P-N2-136
+  type: P-N4
   tsId: ts
   testEqp: testEqp
   proberUrl: http://10.8.23.224:8088/matrix/sendMsg
@@ -35,10 +35,10 @@ spring:
         max-idle: 50
         max-active: 100
   rabbitmq:
-    host: 127.0.0.1
+    host: 10.7.9.100
     port: 5672
-    username: guest
-    password: guest
+    username: cluster_admin
+    password: Usc.0123
     virtualHost: /
     timeout: 60000
     simple:
@@ -51,11 +51,11 @@ spring:
       exchange: CLIENT
     eap:
       checkName: false
-      queue: TOTA.EAP.${equipment.id}
+      queue: TOTA1.EAP.${equipment.id}
       exchange: EAP
     rms:
-      checkFlag: false
-      queue: TOTA.RMS
+      checkFlag: true
+      queue: TOTA.RMS1
       exchange: RMS
     ems:
       checkFlag: false
@@ -90,9 +90,9 @@ tcp:
     retry:
       delay: 5    #TCP重连间隔时间，单位：秒
 ftp:
-  host: 10.0.0.102
+  host: localhost
   port: 21
-  user: root
+  user: administrator
   password: 123
-  path: /EDAMAP/MapBackup/CPMAP/XTR_EAP
+  path: /D/ftp文件共享
   waferIdPath: /D/FTP共享
