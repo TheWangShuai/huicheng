@@ -3,6 +3,8 @@ package com.totainfo.eap.cp.handler;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.dao.IEqptDao;
 import com.totainfo.eap.cp.entity.EqptInfo;
+import com.totainfo.eap.cp.trx.ems.EAPRepRunWorkInfo.EAPRepRunWorkInfoI;
+import com.totainfo.eap.cp.trx.ems.EAPRepRunWorkInfo.EAPRepRunWorkInfoO;
 import com.totainfo.eap.cp.trx.ems.EMSAlarmReport.EMSAlarmReportI;
 import com.totainfo.eap.cp.trx.ems.EMSAlarmReport.EMSAlarmReportO;
 import com.totainfo.eap.cp.trx.ems.EMSDeviceParameterReport.EMSDeviceParameterReportI;
@@ -172,6 +174,28 @@ public class EmsHandler {
              emsGetTestResultO = JacksonUtils.string2Object(outTrxStr,EMSGetTestResultO.class);
         }
         return emsGetTestResultO;
+    }
+    //上报自动作业信息到EMS
+    public static EAPRepRunWorkInfoO reportRunWorkInfo(String evtNo,String title, String lotNo,String alarmImg,String returnState,String message,String methodName){
+        EAPRepRunWorkInfoI eapRepRunWorkInfoI = new EAPRepRunWorkInfoI();
+        EAPRepRunWorkInfoO eapRepRunWorkInfoO = new EAPRepRunWorkInfoO();
+        eapRepRunWorkInfoI.setTrxId("getEqpRunWorkLotLog");
+        eapRepRunWorkInfoI.setEquipmentNo(GenericDataDef.equipmentNo);
+        eapRepRunWorkInfoI.setLotNo(lotNo);
+        eapRepRunWorkInfoI.setTitle(title);
+        eapRepRunWorkInfoI.setReturnState(returnState);
+        eapRepRunWorkInfoI.setMethod_name(methodName);
+        eapRepRunWorkInfoI.setAlarmImg(alarmImg);
+        eapRepRunWorkInfoI.setMessage(message);
+        String outTrxStr = rabbitmqHandler.sendForReply(evtNo, appName, emsQueue, emsExchange, eapRepRunWorkInfoI);
+        if(!StringUtils.hasText(outTrxStr)){
+            eapRepRunWorkInfoO.setRtnCode("00000001");
+            eapRepRunWorkInfoO.setRtnMesg("[EAP-MES]:EAP上报自动化步骤详细信息，EMS没有回复");
+            ClientHandler.sendMessage(evtNo,false,1,eapRepRunWorkInfoO.getRtnMesg());
+        }else{
+            eapRepRunWorkInfoO = JacksonUtils.string2Object(outTrxStr,EAPRepRunWorkInfoO.class);
+        }
+        return eapRepRunWorkInfoO;
     }
     @Autowired
     public  void setRabbitmqHandler(RabbitmqHandler rabbitmqHandler) {
