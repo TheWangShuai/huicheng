@@ -493,7 +493,12 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             }
         }
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-EMS]:EAP给EMS上报设备状态信息指令成功");
-        EmsHandler.emsStatusReportToEms(evtNo, eqptInfo.getEqptMode(), lastState, eqptStat);
+        EMSStatusReportO emsStatusReportO = EmsHandler.emsStatusReportToEms(evtNo, eqptInfo.getEqptMode(), lastState, eqptStat);
+        if (!RETURN_CODE_OK.equals(emsStatusReportO.getRtnCode())) {
+            outTrx.setRtnCode(emsStatusReportO.getRtnCode());
+            outTrx.setRtnMesg(emsStatusReportO.getRtnMesg());
+            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+        }
         eqptInfo.setEqptStat(eqptStat);
         eqptDao.addEqpt(eqptInfo);
 
