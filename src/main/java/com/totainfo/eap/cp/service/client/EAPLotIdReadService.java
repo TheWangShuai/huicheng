@@ -180,7 +180,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
 
         EmsHandler.emsDeviceParameterReportToEms(evtNo,lotId,emsDeviceParameterReportI);
         ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上报设备参数信息指令成功");
-
+        EmsHandler.reportRunWorkInfo(evtNo,"上报Lot信息",lotId,"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
         LogUtils.info("开始执行上报Lot数据结束方法");
         //第一步Lot信息上报结束
         clientHandler.setFlowStep(StepName.FIRST,StepStat.COMP);

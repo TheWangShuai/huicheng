@@ -177,17 +177,19 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             return;
         }
         String testProgram = inTrx.getOpeContent();
+
         if (StringUtils.isEmpty(testProgram)) {
             outTrx.setRtnCode(TESTER_PROGRAM_ERROR);
             outTrx.setRtnMesg("[EAP-Client]: KVM返回的程式为空！！！");
             return;
         }
-
-        if (!testProgram.contains(lotInfo.getTestProgram())){
+        // KVM下发程式格式为X:\XXX\XXXXXXX\XXXXXXX.tdl
+        String[] split = testProgram.split("\\\\");
+        String probeProgram = split[2];
+        if (!probeProgram.contains(lotInfo.getTestProgram())){
             outTrx.setRtnCode(TESTER_PROGRAM_ERROR);
-            outTrx.setRtnMesg("[EAP-Client]: KVM返回的程式为：[" + testProgram + "], MES中返回的程式为：[" + lotInfo.getTestProgram() + "], 请确认！");
+            outTrx.setRtnMesg("[EAP-Client]: KVM返回的程式为：[" + inTrx.getOpeContent() + "], MES中返回的程式为：[" + lotInfo.getTestProgram() + "], 请确认！");
             ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
-            return;
         }
     }
 
@@ -217,7 +219,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         EAPReqLotInfoOB eapReqLotInfoOB = optional.get();
         ObjectNode objectNode = JacksonUtils.getJson2(eapReqLotInfoOB.getParamValue());
         String sampleSlot = objectNode.get("datas").asText();
-        LogUtils.info("mes下发的wafer信息[" + datas + "]");
+        LogUtils.info("mes下发的wafer信息[" + sampleSlot + "]");
         String[] slots = sampleSlot.split(",");
         int index;
         String flag;
@@ -231,22 +233,17 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             }
         }
         ClientHandler.sendMessage(evtNo, false, 2, "EAP  slotMap校验成功。");
-        StateInfo stateInfo = stateDao.getStateInfo();
-        if(stateInfo == null) {
-            stateInfo = new StateInfo();
-        }
         //第八步SlotMap校验结束
         clientHandler.setFlowStep(StepName.EIGTH,StepStat.COMP);
-        stateInfo.setStep(StepName.EIGTH);
-        stateInfo.setState(StepStat.COMP);
-        stateDao.addStateInfo(stateInfo);
         //PROBER机台做完操作后先进行check in，在给test机台下指令
         ClientHandler.sendMessage(evtNo, true, 2, "产前校验完成，请点击client端check in按钮开始check in");
+        EmsHandler.reportRunWorkInfo(evtNo,"SlotMap校验完成",lotInfo.getLotId(),"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
+        LogUtils.info("Operation Complete");
     }
-
     private void comperTime(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx) {
         int counnt = 0;
         LotInfo lotInfo = lotDao.getCurLotInfo();
+        LocalDateTime eqpTime = null;
         if(lotInfo == null){
             outTrx.setRtnCode(LOT_INFO_NOT_EXIST);
             outTrx.setRtnMesg("[EAP-Client]:没有找需要制程的批次信息，请确认");
@@ -259,7 +256,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
             LogUtils.info("机台上报时间[{}]", eqpTimeNow);
-            LocalDateTime eqpTime = LocalDateTime.parse(eqpTimeNow, formatter);
+            eqpTime = LocalDateTime.parse(eqpTimeNow, formatter);
             // 得到当前的北京时间
             ZoneId beijingZone = ZoneId.of("Asia/Shanghai");
             LocalDateTime localDateTime = LocalDateTime.now(beijingZone);
@@ -275,18 +272,12 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
                 return;
             }
         } catch (Exception e) {
-            KVMTimeReportI kvmTimeReportI = new KVMTimeReportI();
-            kvmTimeReportI.setTrxId("EAPACCEPT");
-            kvmTimeReportI.setActionFlg("TIME");
-            kvmTimeReportI.setEqpId(equipmentNo);
-            String returnMsg = httpHandler.postHttpForEqpt(evtNo, proberUrl, kvmTimeReportI);
-            if(StringUtils.isEmpty(returnMsg)){
-                outTrx.setRtnCode(KVM_TIME_OUT);
-                outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报指令，KVM没有回复");
-                return;
-            }
+            ClientHandler.sendMessage(evtNo, false, 2, "EAP机台校验时间失败。机台时间为: " + eqpTime + "],北京时间为: [" + eqpTimeNow);
+            return;
         }
         ClientHandler.sendMessage(evtNo, false, 2, "EAP机台校验时间通过。");
+        EmsHandler.reportRunWorkInfo(evtNo,"时间校验结束",lotInfo.getLotId(),"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
+
         //第二步时间检验结束
         clientHandler.setFlowStep(StepName.SECOND,StepStat.COMP);
         // EAP下发采集Device Name指令
@@ -310,6 +301,14 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             eqptInfo.setEqptStat(EqptStat.IDLE);
             eqptInfo.setEqptMode(EqptMode.Online);
         }
+        EAPSyncEqpInfoI eapSyncEqpInfoI = getEapSyncEqpInfoI(curLotInfo, eqptInfo);
+        ClientHandler.sendEqpInfo(evtNo, eapSyncEqpInfoI);
+        outTrx.setTrxId("KVMSyncConnectionMode");
+        outTrx.setModel(eqptInfo.getEqptMode());
+        outTrx.setRtnMesg(RETURN_MESG_OK);
+    }
+
+    private static EAPSyncEqpInfoI getEapSyncEqpInfoI(LotInfo curLotInfo, EqptInfo eqptInfo) {
         EAPSyncEqpInfoI eapSyncEqpInfoI = new EAPSyncEqpInfoI();
         eapSyncEqpInfoI.setTrxId("RtnConnectInfo");
         eapSyncEqpInfoI.setActionFlg("RLC");
@@ -317,15 +316,10 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         eapSyncEqpInfoI.setState(eqptInfo.getEqptStat());
         eapSyncEqpInfoI.setModel(eqptInfo.getEqptMode());
         eapSyncEqpInfoI.setLotNo(curLotInfo.getLotId());
-        eapSyncEqpInfoI.setProberCardId(curLotInfo.getProberCard());
+        eapSyncEqpInfoI.setProbeCardId(curLotInfo.getProberCard());
         eapSyncEqpInfoI.setFoupLotNo(curLotInfo.getLotId());
         eapSyncEqpInfoI.setGpibState("0");
-
-        ClientHandler.sendEqpInfo(evtNo, eapSyncEqpInfoI);
-
-        outTrx.setTrxId("KVMSyncConnectionMode");
-        outTrx.setModel(eqptInfo.getEqptMode());
-        outTrx.setRtnMesg(RETURN_MESG_OK);
+        return eapSyncEqpInfoI;
     }
 
     private void alarmReport(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx) {
@@ -469,7 +463,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         EqptInfo eqptInfo = eqptDao.getEqptWithLock();
         if (eqptInfo == null) {
             eqptInfo = new EqptInfo();
-            eqptInfo.setEqptId(GenericDataDef.equipmentNo);
+            eqptInfo.setEqptId(equipmentNo);
             eqptInfo.setEqptMode(EqptMode.Online);
         }
         //状态没变不做处理
@@ -479,7 +473,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         }
 
         LotInfo lotInfo = lotDao.getCurLotInfo();
-        if (eqptStat.equals(GenergicStatDef.EqptStat.RUN)) {
+        if (eqptStat.equals(EqptStat.RUN)) {
             if (lotInfo != null) {
                 ClientHandler.sendMessage(evtNo, false, 2, "[Client-Eap]KVM上报设备状态切换为Run");
                 lastState = "1";
@@ -489,22 +483,17 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             }
         } else {
             if (lotInfo != null) {
-                eqptStat = GenergicStatDef.EqptStat.DOWN;
+                eqptStat = EqptStat.DOWN;
                 lastState = "3";
                 ClientHandler.sendMessage(evtNo, false, 2, "[Client-Eap]KVM上报设备状态切换为Down");
             } else {
-                eqptStat = GenergicStatDef.EqptStat.IDLE;
+                eqptStat = EqptStat.IDLE;
                 lastState = "2";
                 ClientHandler.sendMessage(evtNo, false, 1, "[Client-Eap]KVM上报设备状态切换为Idle");
             }
         }
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-EMS]:EAP给EMS上报设备状态信息指令成功");
-        EMSStatusReportO emsStatusReportO = EmsHandler.emsStatusReportToEms(evtNo, eqptInfo.getEqptMode(), lastState, eqptStat);
-        if (!RETURN_CODE_OK.equals(emsStatusReportO.getRtnCode())) {
-            outTrx.setRtnCode(emsStatusReportO.getRtnCode());
-            outTrx.setRtnMesg(emsStatusReportO.getRtnMesg());
-            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
-        }
+        EmsHandler.emsStatusReportToEms(evtNo, eqptInfo.getEqptMode(), lastState, eqptStat);
         eqptInfo.setEqptStat(eqptStat);
         eqptDao.addEqpt(eqptInfo);
 
@@ -519,7 +508,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         if (lotInfo != null) {
             eapSyncEqpInfoI.setUserId(lotInfo.getUserId());
             eapSyncEqpInfoI.setLotNo(lotInfo.getLotId());
-            eapSyncEqpInfoI.setProberCardId(lotInfo.getProberCard());
+            eapSyncEqpInfoI.setProbeCardId(lotInfo.getProberCard());
         }
         ClientHandler.sendEqpInfo(evtNo, eapSyncEqpInfoI);
     }
@@ -527,7 +516,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
     private void operateEnd(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx) {
         String opeType = inTrx.getOpeType();
         switch (opeType) {
-            case "A":  //Prober LOT信息写入后，代操完成
+            case "A":  //Prober LOT信息写入后，自动化完成
                 sendDeviceCollection(evtNo, inTrx, outTrx);
                 break;
             case "B":  //Device Name 采集完成
@@ -587,9 +576,9 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         String state = inTrx.getState();
         if (KVMOperateState.Fail.equals(state)) {
             outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("KVM采集Device 实时温度完成， 状态Error.");
+            outTrx.setRtnMesg(inTrx.getOpeContent());
             eapEndCard(evtNo);
-            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+            ClientHandler.sendMessage(evtNo, false, 2,"[EAP-KVM]: " + outTrx.getRtnMesg());
             return;
         }
         String eqptDeviceTemperature = inTrx.getOpeContent();
@@ -622,6 +611,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
      */
     private void sendDeviceCollection(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx) {
         LotInfo lotInfo = lotDao.getCurLotInfo();
+        EAPReqLotInfoOB clientLotInfo = lotDao.getClientLotInfo();
         String lotId = lotInfo.getLotId();
 
         // 第六步DEVICENAME参数写入开始
@@ -635,15 +625,26 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         eapOperationInstructionI.setTrypeId("I");
         eapOperationInstructionI.setActionFlg("RJO");
         eapOperationInstructionI.setOpeType("C");
-        Map<String, String> lotParamMap = lotInfo.getParamMap();
-        List<EAPReqLotInfoOB> lotParamMap1 = lotInfo.getParamList();
+        List<EAPReqLotInfoOB> lotParamMap1;
+        lotParamMap1 = lotInfo.getParamList();
+        EAPReqLotInfoOB reqLotInfoOB = new EAPReqLotInfoOB();
+        if (clientLotInfo != null){
+            LogUtils.info("从Redis中取到的数据为：：[" + clientLotInfo.getParamName() + clientLotInfo.getParamValue() + "]");
+            for (int i = 0; i < lotParamMap1.size(); i++) {
+                if ("Sample".equals(lotParamMap1.get(i).getParamName())) {
+                    reqLotInfoOB.setParamValue(clientLotInfo.getParamValue());
+                    reqLotInfoOB.setParamName(clientLotInfo.getParamName());
+                    lotParamMap1.set(i, reqLotInfoOB);
+                }
+            }
+        }
         eapOperationInstructionI.setInstructList(lotParamMap1);
         String returnMesg2 = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapOperationInstructionI);
         Stateset("5", "1", lotId);
         if (StringUtils.isEmpty(returnMesg2)) {
             Stateset("5", "3", lotId);
             outTrx.setRtnCode(KVM_TIME_OUT);
-            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发代操指令， KVM 没有返回");
+            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发指令， KVM 没有返回");
             ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
             return;
         }
@@ -651,13 +652,13 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         if (!RETURN_CODE_OK.equals(eapOperationInstructionO.getRtnCode())) {
             Stateset("5", "3", lotId);
             outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发代操指令， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
+            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发指令， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
             eapEndCard(evtNo);
             removeCache();
             ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
             return;
         }
-        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:EAP发送代操采集指令成功。");
+        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:EAP发送自动化采集指令成功。");
     }
 
 
@@ -673,10 +674,10 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         String state = inTrx.getState();
         if (KVMOperateState.Fail.equals(state)) {
             outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("[EAP-KVM]:KVM采集Device Name完成， 状态Error.");
+            outTrx.setRtnMesg(inTrx.getOpeContent());
             eapEndCard(evtNo);
             removeCache();
-            ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
+            ClientHandler.sendMessage(evtNo, false, 1,"[EAP-KVM]: " + outTrx.getRtnMesg());
             return;
         }
         if(stateInfo == null){
@@ -704,6 +705,8 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
                     return;
                 }
                 ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:KVM Device Name采集校验成功，设备Device Name:[" + eqptDeviceName + "], 批次Device:[" + lotDeviceName + "]");
+                EmsHandler.reportRunWorkInfo(evtNo,"DeviceName校验完成",lotId,"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
+
                 //第三步DeviceName校验完成
                 clientHandler.setFlowStep(StepName.THIRD,StepStat.COMP);
             }
@@ -713,7 +716,7 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
     /**
      * @param evtNo
      * @param inTrx
-     * @param outTrx 模式设置，Fail报警，模式选择等代操完成
+     * @param outTrx 模式设置，Fail报警，模式选择等操作完成
      */
     private void deviceParamCollection(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx) {
         LotInfo lotInfo = lotDao.getCurLotInfo();
@@ -730,11 +733,13 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         String state = inTrx.getState();
         if (KVMOperateState.Fail.equals(state)) {
             outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("[EAP-KVM]:KVM代操完成， 状态Error.");
+            outTrx.setRtnMesg(inTrx.getOpeContent());
+            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]: " + outTrx.getRtnMesg());
             return;
         }
 
-        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:KVM 代操完成。");
+        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:自动化作业完成。");
+        EmsHandler.reportRunWorkInfo(evtNo,"KVM自动化完成",lotId,"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
         //第六步DEVICENAME参数写入结束
         clientHandler.setFlowStep(StepName.SIXTH,StepStat.INPROCESS);
         EAPSingleParamCollectionI eapSingleParamCollectionI = new EAPSingleParamCollectionI();
@@ -775,8 +780,8 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             String state = inTrx.getState();
             if (KVMOperateState.Fail.equals(state)) {
                 outTrx.setRtnCode(KVM_RETURN_ERROR);
-                outTrx.setRtnMesg("KVM采集Device param完成， 状态Error.");
-                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+                outTrx.setRtnMesg(inTrx.getOpeContent());
+                ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]: " + outTrx.getRtnMesg());
                 return;
             }
 
@@ -846,7 +851,8 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         String state = inTrx.getState();
         if (KVMOperateState.Fail.equals(state)) {
             outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("KVM采集Device 温度完成， 状态Error.");
+            outTrx.setRtnMesg(inTrx.getOpeContent());
+            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:" + outTrx.getRtnMesg());
             return;
         }
         String eqptDeviceTemperature = inTrx.getOpeContent();
@@ -866,12 +872,13 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             return;
         }
         ClientHandler.sendMessage(evtNo, false, 2, "温度采验成功，设备Device 温度:[" + numericPart + "], 批次Device的温度:[" + temperature + "],在该温度范围内");
+        EmsHandler.reportRunWorkInfo(evtNo,"温度校验成功",lotId,"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
         //第七步温度校验结束
         clientHandler.setFlowStep(StepName.SEVENTH,StepStat.COMP);
 
         //第八步SlotMap开始
         clientHandler.setFlowStep(StepName.EIGTH,StepStat.INPROCESS);
-        //eap给kvm下发指令执行slotmap代操
+        //eap给kvm下发指令执行slotmap
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -884,13 +891,13 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, kvmSlotmapModeI);
         if (StringUtils.isEmpty(returnMesg)) {
             outTrx.setRtnCode(KVM_TIME_OUT);
-            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发slotmap代操指令， KVM 没有返回");
+            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发slotmap指令， KVM 没有返回");
             return;
         }
         KVMSlotmapModeO kvmSlotmapModeO = JacksonUtils.string2Object(returnMesg, KVMSlotmapModeO.class);
         if (!RETURN_CODE_OK.equals(kvmSlotmapModeO.getRtnCode())) {
             outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发slotmap代操指令， KVM 返回错误:[" + kvmSlotmapModeO.getRtnMesg() + "]");
+            outTrx.setRtnMesg("[EAP-KVM]:EAP 下发slotmap指令， KVM 返回错误:[" + kvmSlotmapModeO.getRtnMesg() + "]");
             return;
         }
         ClientHandler.sendMessage(evtNo, false, 2, "EAP发送slotMap采集指令成功。");
@@ -910,10 +917,10 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         if (KVMOperateState.Fail.equals(state)) {
             Stateset("10", "3", lotId);
             outTrx.setRtnCode(KVM_RETURN_ERROR);
-            outTrx.setRtnMesg("KVM 清除测试程式完成， 状态Error.");
+            outTrx.setRtnMesg(inTrx.getOpeContent());
             eapEndCard(evtNo);
             removeCache();
-            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]: " + outTrx.getRtnMesg());
             return;
         }
         String eqpTestProgram = inTrx.getOpeContent();

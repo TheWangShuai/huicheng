@@ -9,10 +9,7 @@ import com.totainfo.eap.cp.dao.IStateDao;
 import com.totainfo.eap.cp.entity.EqptInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.entity.StateInfo;
-import com.totainfo.eap.cp.handler.ClientHandler;
-import com.totainfo.eap.cp.handler.HttpHandler;
-import com.totainfo.eap.cp.handler.MesHandler;
-import com.totainfo.eap.cp.handler.RedisHandler;
+import com.totainfo.eap.cp.handler.*;
 import com.totainfo.eap.cp.service.kvm.KVMOperateEndService;
 import com.totainfo.eap.cp.trx.client.EAPEqpControl.EAPEqpControlI;
 import com.totainfo.eap.cp.trx.client.EAPEqpControl.EAPEqpControlO;
@@ -102,14 +99,18 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
                 return;
             }
             ClientHandler.sendMessage(evtNo, false, 2, "批次:[" + lotInfo.getLotId() + "] Check In 成功。");
+            EmsHandler.reportRunWorkInfo(evtNo,"CheckIn成功",lotId,"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
             //第九步开始CheckIn结束
             clientHandler.setFlowStep(GenergicStatDef.StepName.NIGHT, GenergicStatDef.StepStat.COMP);
+
+            //EAP向KVM下发load程式指令
             EAPOperationInstructionI eapOperationInstructionI = new EAPOperationInstructionI();
             eapOperationInstructionI.setTrxId("EAPACCEPT");
             eapOperationInstructionI.setTrypeId("I");
             eapOperationInstructionI.setActionFlg("RTT");
             eapOperationInstructionI.setLotId(lotInfo.getLotId());
             eapOperationInstructionI.setUserId(userId);
+            eapOperationInstructionI.setIsFirst("0");
 
             String returnMesg = httpHandler.postHttpForEqpt(evtNo, testerUrl, eapOperationInstructionI);
             if (StringUtils.isEmpty(returnMesg)) {

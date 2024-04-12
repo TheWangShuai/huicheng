@@ -4,19 +4,23 @@ package com.totainfo.eap.cp.tcp.server;
 
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
+import com.totainfo.eap.cp.commdef.GenergicStatDef;
 import com.totainfo.eap.cp.dao.impl.LotDao;
 import com.totainfo.eap.cp.dao.impl.StateDao;
+import com.totainfo.eap.cp.entity.DieCountInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.entity.StateInfo;
 import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.GPIBHandler;
 import com.totainfo.eap.cp.trx.client.EAPRepCurModel.EAPRepCurModelO;
+import com.totainfo.eap.cp.trx.client.EAPReportDieInfo.DieInfoOA;
 import com.totainfo.eap.cp.trx.gpib.GBIPWaferEndReport.GPIBWaferEndReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBDeviceNameReport.GPIBDeviceNameReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotEndReport.GPIBLotEndReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBLotStartReport.GPIBLotStartReportI;
 import com.totainfo.eap.cp.trx.gpib.GPIBWaferStartReport.GPIBWaferStartReportI;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOB;
+import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoOC;
 import com.totainfo.eap.cp.util.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -34,10 +38,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
@@ -89,6 +92,8 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
 
     private Map<String, String> waferInfoMap = new ConcurrentHashMap<>();
 
+    private static Queue<String> slotMapQueue = new LinkedList<String>();
+
     @Override
     public void channelActive(ChannelHandlerContext ctx){
         String evtNo = UUID.randomUUID().toString();
@@ -110,6 +115,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        StateInfo stateInfo;
         if(msg == null){
             return;
         }
@@ -142,72 +148,112 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 gpibDeviceNameReportI.setDeviceName(item.substring(3).trim());
                 eapBaseService = (EapBaseService) context.getBean("deviceNameReport");
                 eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(gpibDeviceNameReportI));
-            }else if(item.startsWith("E") && item.length() > 2){  //AlarmCode
+            }else if(item.startsWith("E") && item.length() == 1){  //AlarmCode
                 String alarmCode = item.substring(1).trim();
                 String key = String.format("EQPT:%s:ALARMCODE", equipmentNo);
                 AsyncUtils.setResponse(key, alarmCode);
-            }else if(item.startsWith("e") && item.length() > 2){  //AlarmMessage
+            }else if(item.startsWith("e") && item.length() == 1){  //AlarmMessage
                 String alarmMesg = item.substring(1).trim();
                 String key = String.format("EQPT:%s:ALARMMESG", equipmentNo);
                 AsyncUtils.setResponse(key, alarmMesg);
-            } else if(item.startsWith("V") && item.length() > 2){
-                LogUtils.info("GPIB上报lotStart，进入此方法----------");
-                String logNo = item.substring(1).trim();
-                GPIBLotStartReportI gpibLotStartReportI = new GPIBLotStartReportI();
-                gpibLotStartReportI.setLotNo(logNo);
-                eapBaseService = (EapBaseService) context.getBean("lotStartReport");
-                eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(gpibLotStartReportI));
+            } else if(item.startsWith("V") && item.length() == 1){
+                stateInfo = stateDao.getStateInfo();
+                if (Integer.parseInt(stateInfo.getStep()) >= 9 ) {
+                    EAPReqLotInfoOB clientLotInfo = lotDao.getClientLotInfo();
+                    LotInfo lotInfo = lotDao.getCurLotInfo();
+                    String sampleValue = "";
+                    for (EAPReqLotInfoOB eapReqLotInfoOB : lotInfo.getParamList1()) {
+                        if ("Sample".equals(eapReqLotInfoOB.getParamName())){
+                            sampleValue = eapReqLotInfoOB.getParamValue();
+                        }
+                    }
+                    EAPReqLotInfoOC eapReqLotInfoOC;
+                    EAPReqLotInfoOC eapReqLotInfoOCClient;
+                    if (slotMapQueue.isEmpty()){
+                        if (clientLotInfo == null){
+                            eapReqLotInfoOC = JacksonUtils.string2Object(sampleValue, EAPReqLotInfoOC.class);
+                            String[] split = eapReqLotInfoOC.getDatas().split(",");
+                            slotMapQueue.addAll(Arrays.asList(split));
+                        }else{
+                            eapReqLotInfoOCClient = JacksonUtils.string2Object(clientLotInfo.getParamValue(), EAPReqLotInfoOC.class);
+                            if ("2".equals(eapReqLotInfoOCClient.getType())){
+                                String[] split = eapReqLotInfoOCClient.getDatas().split(",");
+                                slotMapQueue.addAll(Arrays.asList(split));
+                            }else{
+                                eapReqLotInfoOC = JacksonUtils.string2Object(sampleValue, EAPReqLotInfoOC.class);
+                                String datas = eapReqLotInfoOC.getDatas();
+                                String[] split = datas.split(",");
+                                int index = 0;
+                                for (int i = 0; i < split.length; i++) {
+                                    if (eapReqLotInfoOCClient.getDatas().equals(split[i])){
+                                        index = i;
+                                        break;
+                                    }
+                                }
+                                String [] splitsNew = new String[split.length - index];
+                                System.arraycopy(split,index,splitsNew,0,split.length - index);
+                                slotMapQueue.addAll(Arrays.asList(splitsNew));
+                            }
+                        }
+                    }
+                    LogUtils.info("GPIB上报lotStart，进入此方法----------");
+                    String logNo = item.substring(1).trim();
+                    GPIBLotStartReportI gpibLotStartReportI = new GPIBLotStartReportI();
+                    gpibLotStartReportI.setLotNo(logNo);
+                    eapBaseService = (EapBaseService) context.getBean("lotStartReport");
+                    eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(gpibLotStartReportI));
+                }
             }else if(item.startsWith("ku") && item.length() >2){
                 String siteNum = item.substring(11,12);
                 String notchDirection = item.substring(15,18);
                 waferInfoMap.put("siteNum", siteNum);
                 waferInfoMap.put("notchDirection", notchDirection);
             }else if(item.startsWith("b") && item.length() > 10){
-                //  GPIB上报带刻号的数据长度大于10
-                LogUtils.info("GPIB上报waferStart，进入此方法----------");
-                //上一片WaferID
-//                String prWaferId = waferInfoMap.get("waferId");
-                //当前WaferID
-                String curWaferId = item.substring(1).trim();
-                waferInfoMap.put("waferId",curWaferId);
-                GPIBWaferStartReportI gpibWaferStartReportI = new GPIBWaferStartReportI();
-                gpibWaferStartReportI.setWaferId(curWaferId);
-//                gpibWaferStartReportI.setPvWaferId(prWaferId);
-                String s = JacksonUtils.object2String(waferInfoMap);
-                LogUtils.info("解析后的数据1为：" + s);
-                eapBaseService = (EapBaseService) context.getBean("waferStartReport");
-                eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(gpibWaferStartReportI));
+                stateInfo = stateDao.getStateInfo();
+                if (Integer.parseInt(stateInfo.getStep()) >= 9 ) {
+                    //  GPIB上报带刻号的数据长度大于10
+                    LogUtils.info("GPIB上报waferStart，进入此方法----------");
+                    //当前WaferID
+                    String curWaferId = item.substring(1).trim();
+                    waferInfoMap.put("waferId",curWaferId);
+                    GPIBWaferStartReportI gpibWaferStartReportI = new GPIBWaferStartReportI();
+                    gpibWaferStartReportI.setWaferId(curWaferId);
+                    eapBaseService = (EapBaseService) context.getBean("waferStartReport");
+                    eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(gpibWaferStartReportI));
+                }
             } else if (item.startsWith("P") && item.length() == 1) {
-                LogUtils.info("GPIB上报waferEnd，进入此方法----------");
-                String curWaferId = waferInfoMap.get("waferId");
-                GPIBWaferEndReportI gpibWaferEndReportI = new GPIBWaferEndReportI();
-                gpibWaferEndReportI.setWaferId(curWaferId);
-                eapBaseService = (EapBaseService) context.getBean("waferEndReport");
-                eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(gpibWaferEndReportI));
-            } else if(item.startsWith("O") && item.length() >=2){
+                stateInfo = stateDao.getStateInfo();
+                if (Integer.parseInt(stateInfo.getStep()) >= 9 ) {
+                    LogUtils.info("GPIB上报waferEnd，进入此方法----------");
+                    String curWaferId = waferInfoMap.get("waferId");
+                    GPIBWaferEndReportI gpibWaferEndReportI = new GPIBWaferEndReportI();
+                    gpibWaferEndReportI.setWaferId(curWaferId);
+                    eapBaseService = (EapBaseService) context.getBean("waferEndReport");
+                    eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(gpibWaferEndReportI));
+                }
+            } else if(item.startsWith("O") && item.length() == 1){
 
-            }else if(item.startsWith("Q") && item.length() >=2){
+            }else if(item.startsWith("Q") && item.length() == 1){
                 String startCoordinate = item.substring(1).trim();
                 waferInfoMap.put("startCoorDinate", startCoordinate);
-            }else if(item.startsWith("M") && item.length() >=2){
-                String result = item.substring(1).trim();
-                waferInfoMap.put("result", result);
-                eapBaseService = (EapBaseService) context.getBean("dieInfoReport");
-                String s = JacksonUtils.object2String(waferInfoMap);
-                LogUtils.info("解析后的数据2为：" + s + result);
-                eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(waferInfoMap));
-            }else if(item.startsWith("^") && item.length() ==1){
-                StateInfo stateInfo = stateDao.getStateInfo();
-                LogUtils.info("当前制程步骤为：" + stateInfo.getStep());
-                LotInfo curLotInfo = lotDao.getCurLotInfo();
-                String sampleValue = null;
-                List<EAPReqLotInfoOB> paramList = curLotInfo.getParamList();
-                for (EAPReqLotInfoOB eapReqLotInfoOB : paramList){
-                    if ("Sample".equals(eapReqLotInfoOB.getParamName())){
-                        sampleValue = eapReqLotInfoOB.getParamValue();
-                    }
+            }else if(item.startsWith("M") && item.length() == 1){
+                stateInfo = stateDao.getStateInfo();
+                if (Integer.parseInt(stateInfo.getStep()) >= 9 ) {
+                    String result = item.substring(1).trim();
+                    waferInfoMap.put("result", result);
+                    eapBaseService = (EapBaseService) context.getBean("dieInfoReport");
+                    String s = JacksonUtils.object2String(waferInfoMap);
+                    eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(waferInfoMap));
                 }
-                if ( Integer.parseInt(stateInfo.getStep()) < 8 ){
+            }else if(item.startsWith("^") && item.length() == 1){
+                stateInfo = stateDao.getStateInfo();
+                DieCountInfo dieCountInfo = lotDao.getDieCount();
+                List<DieInfoOA> dieInfoOAS = dieCountInfo.getDieInfoOAS();
+                LogUtils.info("当前制程步骤为：" + stateInfo.getStep());
+                if (!dieInfoOAS.isEmpty() && slotMapQueue.size() != dieInfoOAS.size()) {
+                    ClientHandler.sendMessage(evtNo, false, 2, "LotEnd异常结束！" );
+                }
+                if (Integer.parseInt(stateInfo.getStep()) < 9 ){
                     ClientHandler.sendMessage(evtNo, true, 1, "GPIB回复数据格式失败，回复的数据为：" + message);
                     GPIBHandler.changeMode("++device");
                     return;

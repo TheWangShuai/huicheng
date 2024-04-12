@@ -17,6 +17,8 @@ public class EAPOperationInstructionI extends BaseTrxI {
 
     private String userId;
 
+    private String isFirst;
+
     public String getOpeType() {
         return opeType;
     }
@@ -39,6 +41,14 @@ public class EAPOperationInstructionI extends BaseTrxI {
 
     public void setLotId(String lotId) {
         this.lotId = lotId;
+    }
+
+    public String getIsFirst() {
+        return isFirst;
+    }
+
+    public void setIsFirst(String isFirst) {
+        this.isFirst = isFirst;
     }
 
     public String getUserId() {

@@ -62,7 +62,7 @@ public class KVMStatusReportService extends EapBaseService<KVMStatusReportI, KVM
         if(lotInfo != null){
             eapSyncEqpInfoI.setUserId(lotInfo.getUserId());
             eapSyncEqpInfoI.setLotNo(lotInfo.getLotId());
-            eapSyncEqpInfoI.setProberCardId(lotInfo.getProberCard());
+            eapSyncEqpInfoI.setProbeCardId(lotInfo.getProberCard());
         }
         MesHandler.eqptStatReport(evtNo, eqptStat, "",lotInfo.getUserId());
         ClientHandler.sendEqpInfo(evtNo, eapSyncEqpInfoI);

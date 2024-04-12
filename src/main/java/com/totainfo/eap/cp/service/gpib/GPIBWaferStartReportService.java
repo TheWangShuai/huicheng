@@ -58,38 +58,13 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
     private String password;
     @Value("${ftp.path}")
     private String path;
-    private static Queue<String> slotMapQueue = new LinkedList<String>();
+
 
     private List<DieInfoOA> dieInfoOAS = new ArrayList<>();
 
     @Override
     public void mainProc(String evtNo, GPIBWaferStartReportI inTrx, GPIBWaferStartReportO outTrx) {
-        EAPReqLotInfoOB clientLotInfo = lotDao.getClientLotInfo();
-
         LotInfo lotInfo = lotDao.getCurLotInfo();
-        //todo 上报mes
-        String slotId = "";
-        if (slotMapQueue.isEmpty()){
-            if (clientLotInfo == null){
-                String sampleValue = null;
-                for (EAPReqLotInfoOB eapReqLotInfoOB : lotInfo.getParamList1()) {
-                    if ("Sample".equals(eapReqLotInfoOB.getParamName())){
-                        sampleValue = eapReqLotInfoOB.getParamValue();
-                    }
-                }
-                EAPReqLotInfoOC eapReqLotInfoOC = JacksonUtils.string2Object(sampleValue, EAPReqLotInfoOC.class);
-                String[] split = eapReqLotInfoOC.getDatas().split(",");
-                slotMapQueue.addAll(Arrays.asList(split));
-                slotId = slotMapQueue.poll();
-            }else{
-                EAPReqLotInfoOC eapReqLotInfoOC = JacksonUtils.string2Object(clientLotInfo.getParamValue(), EAPReqLotInfoOC.class);
-                String[] split = eapReqLotInfoOC.getDatas().split(",");
-                slotMapQueue.addAll(Arrays.asList(split));
-                slotId = slotMapQueue.poll();
-            }
-        }else {
-            slotId = slotMapQueue.poll();
-        }
         DieCountInfo dieCountInfo = new DieCountInfo();
         DieInfoOA dieInfoOA = new  DieInfoOA();
         if(lotInfo == null){
@@ -107,12 +82,8 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
         lotDao.addDieCount(dieCountInfo);
 
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-EMS]:EAP给EMS上传生产Wafer信息指令成功");
-        EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,lotNo, waferId, "Start");
-        if (!RETURN_CODE_OK.equals(emsWaferReportO.getRtnCode())){
-            ClientHandler.sendMessage(evtNo, false, 2, emsWaferReportO.getRtnMesg());
-        }
-
-        GPIBWaferStartReportO gpibWaferStartReportO = MesHandler.waferStart(evtNo, evtUsr, lotNo, slotId);
+        EmsHandler.waferInfotoEms(evtNo,lotNo, waferId, "Start");
+        GPIBWaferStartReportO gpibWaferStartReportO = MesHandler.waferStart(evtNo, evtUsr, lotNo, waferId);
         if (!RETURN_CODE_OK.equals(gpibWaferStartReportO.getRtnCode())) {
             ClientHandler.sendMessage(evtNo, false, 1 , gpibWaferStartReportO.getRtnMesg());
             return;

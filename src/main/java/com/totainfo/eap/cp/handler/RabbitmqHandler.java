@@ -53,7 +53,7 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         Message message = new Message(inObjStr.getBytes(), properties);
 
         rabbitTemplate.convertAndSend(exchange, queue, message);
-        LogUtils.info("[{}][{}][{}]:[{}]", evtNo,"EAP->"+appName,inObj.getTrxId(),  inObjStr);
+        LogUtils.info("[{}][{}][{}][{}][{}]:[{}]", evtNo,"EAP->"+appName,"Exchange:"+exchange,"Queue:"+queue,inObj.getTrxId(),  inObjStr);
     }
 
     public String sendForReply(String evtNo, String appName, String queue, String exchange, I inObj) {
@@ -69,10 +69,10 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         String inObjStr = JacksonUtils.object2String(inObj);
         Message message = new Message(inObjStr.getBytes(), properties);
         LogUtils.info("[{}][{}][{}]:[{}]", evtNo, "EAP->"+appName, trxId,  inObjStr);
-        AsyncRabbitTemplate.RabbitMessageFuture future = asyncRabbitTemplate.sendAndReceive(exchange, queue, message);
         String reply = _SPACE;
         Message rtnMessage = null;
         try {
+        AsyncRabbitTemplate.RabbitMessageFuture future = asyncRabbitTemplate.sendAndReceive(exchange, queue, message);
             rtnMessage = future.get(timeout, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             LogUtils.error("RabbitMQ Receive Exception", e);
