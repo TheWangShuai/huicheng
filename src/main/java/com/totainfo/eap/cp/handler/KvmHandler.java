@@ -2,6 +2,8 @@ package com.totainfo.eap.cp.handler;
 
 import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardI;
 import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardO;
+import com.totainfo.eap.cp.trx.kvm.KVMReqHalt.KVMReqHaltI;
+import com.totainfo.eap.cp.trx.kvm.KVMReqHalt.KVMReqHaltO;
 import com.totainfo.eap.cp.trx.kvm.cleanFuncKey.CleanFuncKeyI;
 import com.totainfo.eap.cp.trx.kvm.cleanFuncKey.CleanFuncKeyO;
 import com.totainfo.eap.cp.trx.rcm.EapReportMESDataInfoI;
@@ -67,6 +69,22 @@ public class KvmHandler {
         eapReportMESDataInfoI.setActionFlg("MESDATA");
         eapReportMESDataInfoI.setMesData(mesData);
         httpHandler.postHttpForEqpt(evtNo, testerUrl, eapReportMESDataInfoI);
+    }
+
+    public static KVMReqHaltO haltStop(String evtNo){
+        KVMReqHaltI kvmReqHaltI = new KVMReqHaltI();
+        KVMReqHaltO kvmReqHaltO;
+        kvmReqHaltI.setTrxId("HALTSTOP");
+        kvmReqHaltI.setActionFlg("STOP");
+        String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, kvmReqHaltI);
+        if(StringUtils.isEmpty(returnMesg)){
+            kvmReqHaltO = new KVMReqHaltO();
+            kvmReqHaltO.setRtnCode(KVM_TIME_OUT);
+            kvmReqHaltO.setRtnMesg("EAP发送停机指令，KVM没有返回");
+            return kvmReqHaltO;
+        }
+        kvmReqHaltO = JacksonUtils.string2Object(returnMesg, KVMReqHaltO.class);
+        return kvmReqHaltO;
     }
 
     @Resource
