@@ -64,32 +64,7 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
 
     @Override
     public void mainProc(String evtNo, GPIBWaferStartReportI inTrx, GPIBWaferStartReportO outTrx) {
-        EAPReqLotInfoOB clientLotInfo = lotDao.getClientLotInfo();
-
         LotInfo lotInfo = lotDao.getCurLotInfo();
-        //todo 上报mes
-        String slotId = "";
-        if (slotMapQueue.isEmpty()){
-            if (clientLotInfo == null){
-                String sampleValue = null;
-                for (EAPReqLotInfoOB eapReqLotInfoOB : lotInfo.getParamList1()) {
-                    if ("Sample".equals(eapReqLotInfoOB.getParamName())){
-                        sampleValue = eapReqLotInfoOB.getParamValue();
-                    }
-                }
-                EAPReqLotInfoOC eapReqLotInfoOC = JacksonUtils.string2Object(sampleValue, EAPReqLotInfoOC.class);
-                String[] split = eapReqLotInfoOC.getDatas().split(",");
-                slotMapQueue.addAll(Arrays.asList(split));
-                slotId = slotMapQueue.poll();
-            }else{
-                EAPReqLotInfoOC eapReqLotInfoOC = JacksonUtils.string2Object(clientLotInfo.getParamValue(), EAPReqLotInfoOC.class);
-                String[] split = eapReqLotInfoOC.getDatas().split(",");
-                slotMapQueue.addAll(Arrays.asList(split));
-                slotId = slotMapQueue.poll();
-            }
-        }else {
-            slotId = slotMapQueue.poll();
-        }
         DieCountInfo dieCountInfo = new DieCountInfo();
         DieInfoOA dieInfoOA = new  DieInfoOA();
         if(lotInfo == null){
@@ -112,7 +87,7 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
             ClientHandler.sendMessage(evtNo, false, 2, emsWaferReportO.getRtnMesg());
         }
 
-        GPIBWaferStartReportO gpibWaferStartReportO = MesHandler.waferStart(evtNo, evtUsr, lotNo, slotId);
+        GPIBWaferStartReportO gpibWaferStartReportO = MesHandler.waferStart(evtNo, evtUsr, lotNo, waferId);
         if (!RETURN_CODE_OK.equals(gpibWaferStartReportO.getRtnCode())) {
             ClientHandler.sendMessage(evtNo, false, 1 , gpibWaferStartReportO.getRtnMesg());
             return;
