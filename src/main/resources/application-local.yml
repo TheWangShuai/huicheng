@@ -1,6 +1,6 @@
 equipment:
-  id: P-N4-135
-  testerId: P-N4-135
+  id: P-N2-136
+  testerId: P-N2-136
   type: P-N4
   tsId: ts
   testEqp: testEqp
@@ -51,11 +51,11 @@ spring:
       exchange: CLIENT
     eap:
       checkName: false
-      queue: TOTA.EAP.${equipment.id}
+      queue: TOTA1.EAP.${equipment.id}
       exchange: EAP
     rms:
       checkFlag: true
-      queue: TOTA.RMS
+      queue: TOTA.RMS1
       exchange: RMS
     ems:
       checkFlag: false
@@ -83,7 +83,7 @@ GPIB:
 tcp:
   timeout: 30  # 同步通信等待时间，单位：秒
   server:
-    ip: 127.0.0.1
+    ip: 10.8.61.210
     port: 7000
   client:
     separator: \n  #分隔符
