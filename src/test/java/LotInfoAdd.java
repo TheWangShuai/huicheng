@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.core.SerializableString;
 import com.totainfo.eap.cp.TotainfoEapApplication;
 import com.totainfo.eap.cp.commdef.GenergicStatDef;
 import com.totainfo.eap.cp.dao.ILotDao;
@@ -178,23 +179,23 @@ public class LotInfoAdd {
                 "    }\n" +
                 "}";
 
-//        DielInfo dielInfo = new DielInfo();
-//        dielInfo.setResult("false");
-//        dielInfo.setCoordinate("Y004X004");
-//        dielInfo.setSiteNum("1");
-//        List<DielInfo> infos = new ArrayList<>();
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        infos.add(dielInfo);
-//        Map<String, List<DielInfo>> waferDieMap ;
-//
-//        waferDieMap = new HashMap<>();
-//        waferDieMap.put("waferDieMap",infos);
+        DielInfo dielInfo = new DielInfo();
+        dielInfo.setResult("false");
+        dielInfo.setCoordinate("Y004X004");
+        dielInfo.setSiteNum("1");
+        List<DielInfo> infos = new ArrayList<>();
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        infos.add(dielInfo);
+        Map<String, List<DielInfo>> waferDieMap ;
+
+        waferDieMap = new HashMap<>();
+        waferDieMap.put("waferDieMap",infos);
         EAPReqLotInfoO eapReqLotInfoO = JacksonUtils.string2Object(lotInfo1, EAPReqLotInfoO.class);
 //        HashMap<String, String > stringMap  = new HashMap<String, String>(){{
 //            put("WaferLot",eapReqLotInfoO.getLotInfo().getWaferLot());
@@ -210,7 +211,30 @@ public class LotInfoAdd {
         lotInfo.setDieCount(eapReqLotInfoO.getLotInfo().getDieCount());
         lotInfo.setParamList(eapReqLotInfoO.getLotInfo().getParamList());
         lotInfo.setTemperatureRange(eapReqLotInfoO.getLotInfo().getTemperatureRange());
-//AZ
         return lotInfo;
+    }
+
+    @Test
+    public void addClientLotInfo(){
+        String type = "2";
+        String datas = "12,14,16,18,20,22,24";
+        EAPReqLotInfoOC eapReqLotInfoOC = new EAPReqLotInfoOC();
+        eapReqLotInfoOC.setDatas(datas);
+        eapReqLotInfoOC.setType(type);
+        String sampleClientValue = JacksonUtils.object2String(eapReqLotInfoOC);
+        EAPReqLotInfoOB reqLotInfoOB = new EAPReqLotInfoOB();
+        reqLotInfoOB.setParamName("Sample");
+        reqLotInfoOB.setParamValue(sampleClientValue);
+        lotDao.addClientLotInfo(reqLotInfoOB);
+    }
+
+
+    @Test
+    public void programTest(){
+
+        String proGram = "D:\\PGM\\9951BB_BAC_CP1SN4_240315\\9951BB_BAC_CP1SN4_240315.tdl";
+        String[] split = proGram.split("\\\\");
+        String probeProgram = split[2];
+        System.out.println(split);
     }
 }

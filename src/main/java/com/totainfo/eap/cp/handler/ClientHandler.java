@@ -165,7 +165,7 @@ public class ClientHandler {
     public void setFlowStep(String step, String stepSate){
         String evtNo = UUID.randomUUID().toString();
         StateInfo stateInfo = stateDao.getStateInfo();
-        LogUtils.info("Redis中存在的状态信息为: " + stateInfo);
+        LogUtils.info("Redis中存在的步骤为: " + stateInfo.getStep() + ", 步骤状态为: " + stateInfo.getState() );
         if (stateInfo == null){
             ClientHandler.sendMessage(evtNo,false,2,"设备的步骤信息在Redis中不存在!");
             return;

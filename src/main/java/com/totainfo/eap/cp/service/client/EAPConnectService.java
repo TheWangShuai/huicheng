@@ -53,7 +53,7 @@ public class EAPConnectService  extends EapBaseService<EAPConnectI, EAPConnectO>
         if(lotInfo != null){
             eapSyncEqpInfoI.setUserId(lotInfo.getUserId());
             eapSyncEqpInfoI.setLotNo(lotInfo.getLotId());
-            eapSyncEqpInfoI.setProberCardId(lotInfo.getProberCard());
+            eapSyncEqpInfoI.setProbeCardId(lotInfo.getProberCard());
             eapSyncEqpInfoI.setFoupLotNo(lotInfo.getLotId());
         }
         ClientHandler.sendEqpInfo(evtNo, eapSyncEqpInfoI);

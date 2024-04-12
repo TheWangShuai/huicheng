@@ -95,18 +95,17 @@ public class GPIBWaferEndReportService extends EapBaseService<GPIBWaferStartRepo
                     LogUtils.info("给MES上报waferDieMap数据-----");
                     EAPUploadDieResultO eapUploadDieResultO = MesHandler.uploadDieResult(evtNo, lotNo, waferId, dielInfos, evtUsr);
                     if (!RETURN_CODE_OK.equals(eapUploadDieResultO.getRtnCode())) {
+
+
+
                         outTrx.setRtnCode(eapUploadDieResultO.getRtnCode());
                         outTrx.setRtnMesg(eapUploadDieResultO.getRtnMesg());
                         ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                     }
 
                     LogUtils.info("给EMS上报waferEnd-----");
-                    EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,lotNo,waferId, "End");
-                    if (!RETURN_CODE_OK.equals(emsWaferReportO.getRtnCode())){
-                        outTrx.setRtnCode(emsWaferReportO.getRtnCode());
-                        outTrx.setRtnMesg(emsWaferReportO.getRtnMesg());
-                        ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
-                    }
+                    EmsHandler.waferInfotoEms(evtNo,lotNo,waferId, "End");
+
 
 //                    LogUtils.info("给MES上报waferEnd-----");
 //                    GPIBWaferEndReportO gpibWaferEndReportO = MesHandler.waferEnd(evtNo, evtUsr, lotNo, waferId);

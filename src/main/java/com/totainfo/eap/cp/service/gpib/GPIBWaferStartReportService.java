@@ -86,8 +86,6 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
         if (!RETURN_CODE_OK.equals(emsWaferReportO.getRtnCode())){
             ClientHandler.sendMessage(evtNo, false, 2, emsWaferReportO.getRtnMesg());
         }
-
-        GPIBWaferStartReportO gpibWaferStartReportO = MesHandler.waferStart(evtNo, evtUsr, lotNo, waferId);
         if (!RETURN_CODE_OK.equals(gpibWaferStartReportO.getRtnCode())) {
             ClientHandler.sendMessage(evtNo, false, 1 , gpibWaferStartReportO.getRtnMesg());
             return;

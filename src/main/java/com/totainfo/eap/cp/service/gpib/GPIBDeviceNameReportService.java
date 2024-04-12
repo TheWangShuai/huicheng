@@ -147,6 +147,9 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
             }
             ClientHandler.sendMessage(evtNo, false, 2, "[EAP-RMS]:Device:[" + lotInfo.getDevice() + "] RMS验证成功。");
         }
+
+        EmsHandler.reportRunWorkInfo(evtNo,"DeviceName参数校验完成",lotId,"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
+
         // 第四步Device参数验证完成
         clientHandler.setFlowStep(StepName.FOURTH,StepStat.COMP);
 
@@ -181,7 +184,8 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
         MesHandler.eqptStatReport(evtNo, EqptStat.RUN, "无", lotInfo.getUserId());
         RcmHandler.eqptInfoReport(evtNo, lotInfo.getLotId(), EqptStat.RUN, _SPACE, _SPACE,_SPACE, _SPACE);
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:KVM 批次信息写入成功.");
-        //第五步下发LotSetting信息开始
+        EmsHandler.reportRunWorkInfo(evtNo,"批次信息写入成功",lotId,"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
+        //第五步下发LotSetting信息结束
         clientHandler.setFlowStep(StepName.FITTH,StepStat.COMP);
     }
 

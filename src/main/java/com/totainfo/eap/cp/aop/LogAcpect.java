@@ -43,7 +43,7 @@ public class LogAcpect {
         String rtnCode = objectNode.get("rtnCode").textValue();
         String rtnMesg = objectNode.get("rtnMesg").textValue();
         if(!RETURN_CODE_OK.equals(rtnCode) && !SERVICE_EXCEPTION.equals(rtnCode)){
-            ClientHandler.sendMessage(objects[0].toString(),false,2,rtnMesg);
+            ClientHandler.sendMessage(objects[0].toString(),false,1,rtnMesg);
         }
     }
 }

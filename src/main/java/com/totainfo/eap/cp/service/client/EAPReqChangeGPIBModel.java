@@ -28,6 +28,6 @@ public class EAPReqChangeGPIBModel  extends EapBaseService<EAPChangeGPIBModelI, 
 
     private void clientReportChangeGPIBState(String evtNo,EAPChangeGPIBModelO outTrx) {
         GPIBHandler.changeModeNew("++device");
-        ClientHandler.sendMessage(evtNo, false, 1, "EAP下发切换从机模式成功！");
+        ClientHandler.sendMessage(evtNo, false, 2, "EAP下发切换从机模式成功！");
     }
 }
