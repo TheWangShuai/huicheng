@@ -15,6 +15,7 @@ import com.totainfo.eap.cp.trx.client.EAPLotIdRead.EAPLotIdReadI;
 import com.totainfo.eap.cp.trx.client.EAPLotIdRead.EAPLotIdReadO;
 import com.totainfo.eap.cp.trx.ems.EMSDeviceParameterReport.EMSDeviceParameterReportI;
 import com.totainfo.eap.cp.trx.ems.EMSDeviceParameterReport.EMSDeviceParameterReportIA;
+import com.totainfo.eap.cp.trx.ems.EMSDeviceParameterReport.EMSDeviceParameterReportO;
 import com.totainfo.eap.cp.trx.kvm.KVMTimeReport.KVMTimeReportI;
 import com.totainfo.eap.cp.trx.kvm.KVMTimeReport.KVMTimeReportO;
 import com.totainfo.eap.cp.trx.mes.EAPReqLotInfo.EAPReqLotInfoO;
@@ -67,7 +68,6 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         if(!RETURN_CODE_OK.equals(outTrx.getRtnCode())){
             stateInfo.setState(StepStat.FAIL);
             stateDao.addStateInfo(stateInfo);
-            removeCacheInfo();
         }
     }
 
@@ -191,12 +191,18 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         kvmTimeReportI.setEqpId(equipmentNo);
         String returnMsg = httpHandler.postHttpForEqpt(evtNo, proberUrl, kvmTimeReportI);
         if(StringUtils.isEmpty(returnMsg)){
+            //给EMS上报制程结束信号
+            EmsHandler.waferInfotoEms(evtNo,lotInfo.getLotId(),lotInfo.getWaferLot(), "End");
+            removeCache();
             outTrx.setRtnCode(KVM_TIME_OUT);
             outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报指令，KVM没有回复");
             return;
         }
         KVMTimeReportO kvmTimeReportO = JacksonUtils.string2Object(returnMsg, KVMTimeReportO.class);
         if(!RETURN_CODE_OK.equals(kvmTimeReportO.getRtnCode())){
+            //给EMS上报制程结束信号
+            EmsHandler.waferInfotoEms(evtNo,lotInfo.getLotId(),lotInfo.getWaferLot(), "End");
+            removeCache();
             outTrx.setRtnCode(kvmTimeReportO.getRtnCode());
             outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报信息，KVM返回失败，原因:[" + kvmTimeReportO.getRtnMesg() + "]");
             return;
@@ -205,9 +211,8 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
     }
 
 
-    public void removeCacheInfo(){
+    public void removeCache(){
         lotDao.removeLotInfo();
         stateDao.removeState();
-
     }
 }

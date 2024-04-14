@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<bean id="ValidationConfig" name="ValidationInfo">
+    <Item name="validationItem">
+        <Item paramNo = "1" paramId="01081" paramName="param1" paramType="String" defaultValue="yyy" remark="pressure"/>
+    </Item>
+</bean>

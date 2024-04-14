@@ -95,8 +95,8 @@ public class EAPReqManualLoadProgram extends EapBaseService<EAPReqLoadProgramI, 
                 StateSet("10","3",lotId);
                 outTrx.setRtnCode(KVM_RETURN_ERROR);
                 outTrx.setRtnMesg("EAP 下发测试程序清除， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
-                EapEndCard(evtNo);
-                Remove(evtNo);
+//                EapEndCard(evtNo);
+//                Remove(evtNo);
                 ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                 return;
             }

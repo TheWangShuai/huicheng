@@ -95,9 +95,6 @@ public class GPIBWaferEndReportService extends EapBaseService<GPIBWaferStartRepo
                     LogUtils.info("给MES上报waferDieMap数据-----");
                     EAPUploadDieResultO eapUploadDieResultO = MesHandler.uploadDieResult(evtNo, lotNo, waferId, dielInfos, evtUsr);
                     if (!RETURN_CODE_OK.equals(eapUploadDieResultO.getRtnCode())) {
-
-
-
                         outTrx.setRtnCode(eapUploadDieResultO.getRtnCode());
                         outTrx.setRtnMesg(eapUploadDieResultO.getRtnMesg());
                         ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
@@ -105,14 +102,6 @@ public class GPIBWaferEndReportService extends EapBaseService<GPIBWaferStartRepo
 
                     LogUtils.info("给EMS上报waferEnd-----");
                     EmsHandler.waferInfotoEms(evtNo,lotNo,waferId, "End");
-
-
-//                    LogUtils.info("给MES上报waferEnd-----");
-//                    GPIBWaferEndReportO gpibWaferEndReportO = MesHandler.waferEnd(evtNo, evtUsr, lotNo, waferId);
-//                    if (RETURN_CODE_OK.equals(gpibWaferEndReportO.getRtnCode())) {
-//                        ClientHandler.sendMessage(evtNo, false, 2, "EAP给MES上报WaferEnd成功！");
-//                    }
-
                     CleanFuncKeyO cleanFuncKeyO = KvmHandler.cleanFuncKey(evtNo, "N");
                     if ("0000000".equals(cleanFuncKeyO.getRtnCode())) {
                         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]: EAP 下发获取程式成功！ ");

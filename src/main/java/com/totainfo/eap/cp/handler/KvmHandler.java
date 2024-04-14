@@ -71,10 +71,11 @@ public class KvmHandler {
         httpHandler.postHttpForEqpt(evtNo, testerUrl, eapReportMESDataInfoI);
     }
 
+    // 给KVM下发Stop指令
     public static KVMReqHaltO haltStop(String evtNo){
         KVMReqHaltI kvmReqHaltI = new KVMReqHaltI();
         KVMReqHaltO kvmReqHaltO;
-        kvmReqHaltI.setTrxId("HALTSTOP");
+        kvmReqHaltI.setTrxId("EAPACCEPT");
         kvmReqHaltI.setActionFlg("STOP");
         String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, kvmReqHaltI);
         if(StringUtils.isEmpty(returnMesg)){

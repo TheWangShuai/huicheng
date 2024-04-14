@@ -5,6 +5,7 @@ import com.totainfo.eap.cp.commdef.GenergicStatDef;
 import com.totainfo.eap.cp.commdef.GenergicStatDef.MessageType;
 import com.totainfo.eap.cp.dao.ILotDao;
 import com.totainfo.eap.cp.dao.IStateDao;
+import com.totainfo.eap.cp.dao.impl.StateDao;
 import com.totainfo.eap.cp.entity.DieCountInfo;
 import com.totainfo.eap.cp.entity.DielInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
@@ -41,6 +42,8 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
 
     @Resource
     private ILotDao lotDao;
+    @Resource
+    private StateDao stateDao;
 
     @Value("${equipment.id}")
     private String proberName;
@@ -84,14 +87,23 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-EMS]:EAP给EMS上传生产Wafer信息指令成功");
         EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,lotNo, waferId, "Start");
         if (!RETURN_CODE_OK.equals(emsWaferReportO.getRtnCode())){
+            //给EMS上报制程结束信号
+            EmsHandler.waferInfotoEms(evtNo,lotInfo.getLotId(),lotInfo.getWaferLot(), "End");
+            removeCache();
             ClientHandler.sendMessage(evtNo, false, 2, emsWaferReportO.getRtnMesg());
         }
         GPIBWaferStartReportO gpibWaferStartReportO = MesHandler.waferStart(evtNo, evtUsr, lotNo, waferId);
         if (!RETURN_CODE_OK.equals(gpibWaferStartReportO.getRtnCode())) {
+            KvmHandler.haltStop(evtNo);
             ClientHandler.sendMessage(evtNo, false, 1 , gpibWaferStartReportO.getRtnMesg());
             return;
         }
         ClientHandler.sendMessage(evtNo, false, 2, "[" + waferId + "] : 测试开始 ");
+    }
+
+    public void removeCache(){
+        lotDao.removeLotInfo();
+        stateDao.removeState();
     }
 }
 
