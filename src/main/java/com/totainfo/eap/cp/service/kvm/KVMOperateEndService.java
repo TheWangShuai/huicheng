@@ -198,7 +198,9 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
             outTrx.setRtnMesg("[EAP-Client]: KVM返回的程式为：[" + inTrx.getOpeContent() + "], MES中返回的程式为：[" + lotInfo.getTestProgram() + "], 请确认！");
             KvmHandler.haltStop(evtNo);
             ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
+            return;
         }
+        ClientHandler.sendMessage(evtNo, false, 1, "程式比对通过");
     }
 
     private void comperSlotMap(String evtNo, KVMOperateEndI inTrx, KVMOperateEndO outTrx) {
@@ -240,54 +242,54 @@ public class KVMOperateEndService extends EapBaseService<KVMOperateEndI, KVMOper
         }
         ClientHandler.sendMessage(evtNo, false, 2, "EAP  slotMap校验成功。");
 
-        // 发送校验给client
-//        List<EAPValidationIA> eapValidationIAList = new ArrayList<>();
-//        List<ValidationItem> validationItemList = ValidationInfo.getValidationItemList();
-//        if (!CollectionUtils.isEmpty(validationItemList)){
-//            for (ValidationItem validationItem : validationItemList) {
-//                String paramName = validationItem.getParamName();
-//                List<EAPReqLotInfoOB> paramList4Mes = lotInfo.getParamList1();
-//                Map<String, String> paramMap4Mes = paramList4Mes.stream().collect(Collectors.toMap(EAPReqLotInfoOB::getParamName, EAPReqLotInfoOB::getParamValue, (k1, k2) -> k1));
-//                boolean mesParamFlag = paramMap4Mes.containsKey(paramName);
-//                if (mesParamFlag){
-//                    String paramValue4Mes = paramMap4Mes.get(paramName);
-//                    validationItem.setDefaultValue(paramValue4Mes);
-//                }
-//                String defaultValue = validationItem.getDefaultValue();
-//                String actualValue = validationItem.getActualValue();
-//                String paramId = validationItem.getParamId();
-//                String remark = validationItem.getRemark();
-//
-//                EAPValidationIA eapValidationIA = new EAPValidationIA();
-//                String content;
-//                if (defaultValue.equals(actualValue)){
-//                    eapValidationIA.setIsUpdates(false);
-//                    if (!mesParamFlag){
-//                        content = String.format("重要参数[%s]机台设置的值为[%s],默认设置为[%s],已调整为[%s]",paramName,actualValue,defaultValue,defaultValue);
-//                    }else {
-//                        content = String.format("重要参数[%s]机台设置的值为[%s],MES设置为[%s],已调整为[%s]",paramName,actualValue,defaultValue,defaultValue);
-//                    }
-//                }else {
-//                    eapValidationIA.setIsUpdates(true);
-//                    if (!mesParamFlag){
-//                        content = String.format("重要参数[%s]机台设置的值为[%s],默认设置为[%s],参数校验一致",paramName,actualValue,defaultValue);
-//                    }else {
-//                        content = String.format("重要参数[%s]机台设置的值为[%s],MES设置为[%s],参数校验一致",paramName,actualValue,defaultValue);
-//                    }
-//                }
-//                eapValidationIA.setId(validationItem.getParamNo());
-//                eapValidationIA.setContent(content);
-//                eapValidationIAList.add(eapValidationIA);
-//            }
-//        }else {
-//            //todo abnormal flow
-//
-//        }
-//        //todo send to client
-//        EAPValidationI eapValidationI = new EAPValidationI();
-//        eapValidationI.setInfos(eapValidationIAList);
-//        eapValidationI.setActionFlg("");
-//        eapValidationI.setTrxId("");
+//         发送校验给client
+        List<EAPValidationIA> eapValidationIAList = new ArrayList<>();
+        List<ValidationItem> validationItemList = ValidationInfo.getValidationItemList();
+        if (!CollectionUtils.isEmpty(validationItemList)){
+            for (ValidationItem validationItem : validationItemList) {
+                String paramName = validationItem.getParamName();
+                List<EAPReqLotInfoOB> paramList4Mes = lotInfo.getParamList1();
+                Map<String, String> paramMap4Mes = paramList4Mes.stream().collect(Collectors.toMap(EAPReqLotInfoOB::getParamName, EAPReqLotInfoOB::getParamValue, (k1, k2) -> k1));
+                boolean mesParamFlag = paramMap4Mes.containsKey(paramName);
+                if (mesParamFlag){
+                    String paramValue4Mes = paramMap4Mes.get(paramName);
+                    validationItem.setDefaultValue(paramValue4Mes);
+                }
+                String defaultValue = validationItem.getDefaultValue();
+                String actualValue = validationItem.getActualValue();
+                String paramId = validationItem.getParamId();
+                String remark = validationItem.getRemark();
+
+                EAPValidationIA eapValidationIA = new EAPValidationIA();
+                String content;
+                if (defaultValue.equals(actualValue)){
+                    eapValidationIA.setIsUpdates(false);
+                    if (!mesParamFlag){
+                        content = String.format("重要参数[%s]机台设置的值为[%s],默认设置为[%s],已调整为[%s]",paramName,actualValue,defaultValue,defaultValue);
+                    }else {
+                        content = String.format("重要参数[%s]机台设置的值为[%s],MES设置为[%s],已调整为[%s]",paramName,actualValue,defaultValue,defaultValue);
+                    }
+                }else {
+                    eapValidationIA.setIsUpdates(true);
+                    if (!mesParamFlag){
+                        content = String.format("重要参数[%s]机台设置的值为[%s],默认设置为[%s],参数校验一致",paramName,actualValue,defaultValue);
+                    }else {
+                        content = String.format("重要参数[%s]机台设置的值为[%s],MES设置为[%s],参数校验一致",paramName,actualValue,defaultValue);
+                    }
+                }
+                eapValidationIA.setId(validationItem.getParamNo());
+                eapValidationIA.setContent(content);
+                eapValidationIAList.add(eapValidationIA);
+            }
+        }else {
+            //todo abnormal flow
+
+        }
+        //todo send to client
+        EAPValidationI eapValidationI = new EAPValidationI();
+        eapValidationI.setInfos(eapValidationIAList);
+        eapValidationI.setActionFlg("");
+        eapValidationI.setTrxId("");
 
 
         //第八步SlotMap校验结束

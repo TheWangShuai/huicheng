@@ -5,6 +5,9 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author WangShuai
@@ -12,8 +15,6 @@ import java.util.List;
  */
 @Data
 public class ValidationInfo {
-    //初始值为true,进行第一次查询
-    public static Boolean replyFlag = true;
     private static List<ValidationItem> validationItemList;
     public static List<ValidationItem> getValidationItemList(){
         return validationItemList;
@@ -21,4 +22,5 @@ public class ValidationInfo {
     public static void setValidationItemList(List<ValidationItem> validationItemList){
         ValidationInfo.validationItemList =validationItemList;
     }
+    public static Map<String,Boolean> paramMap = new ConcurrentHashMap<>();
 }

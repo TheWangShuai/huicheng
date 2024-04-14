@@ -5,13 +5,13 @@ package com.totainfo.eap.cp.tcp.server;
 
 import com.totainfo.eap.cp.base.service.EapBaseService;
 import com.totainfo.eap.cp.commdef.GenergicStatDef;
+import com.totainfo.eap.cp.dao.IQueryParamDao;
 import com.totainfo.eap.cp.dao.impl.LotDao;
 import com.totainfo.eap.cp.dao.impl.StateDao;
-import com.totainfo.eap.cp.entity.DieCountInfo;
-import com.totainfo.eap.cp.entity.LotInfo;
-import com.totainfo.eap.cp.entity.StateInfo;
+import com.totainfo.eap.cp.entity.*;
 import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.GPIBHandler;
+import com.totainfo.eap.cp.mode.ValidationItem;
 import com.totainfo.eap.cp.trx.client.EAPRepCurModel.EAPRepCurModelO;
 import com.totainfo.eap.cp.trx.client.EAPReportDieInfo.DieInfoOA;
 import com.totainfo.eap.cp.trx.gpib.GBIPWaferEndReport.GPIBWaferEndReportI;
@@ -42,6 +42,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
 import static io.netty.util.CharsetUtil.*;
@@ -88,6 +89,8 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
 
     @Resource
     private LotDao lotDao;
+    @Resource
+    private IQueryParamDao queryParamDao;
 
 
     private Map<String, String> waferInfoMap = new ConcurrentHashMap<>();
@@ -158,7 +161,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 AsyncUtils.setResponse(key, alarmMesg);
             } else if(item.startsWith("V") && item.length() == 1){
                 stateInfo = stateDao.getStateInfo();
-                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) == 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
+                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) > 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
                     EAPReqLotInfoOB clientLotInfo = lotDao.getClientLotInfo();
                     LotInfo lotInfo = lotDao.getCurLotInfo();
                     String sampleValue = "";
@@ -210,7 +213,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 waferInfoMap.put("notchDirection", notchDirection);
             }else if(item.startsWith("b") && item.length() > 10){
                 stateInfo = stateDao.getStateInfo();
-                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) == 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
+                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) > 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
                     //  GPIB上报带刻号的数据长度大于10
                     LogUtils.info("GPIB上报waferStart，进入此方法----------");
                     //当前WaferID
@@ -223,7 +226,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 }
             } else if (item.startsWith("P") && item.length() == 1) {
                 stateInfo = stateDao.getStateInfo();
-                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) == 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
+                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) > 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
                     LogUtils.info("GPIB上报waferEnd，进入此方法----------");
                     String curWaferId = waferInfoMap.get("waferId");
                     GPIBWaferEndReportI gpibWaferEndReportI = new GPIBWaferEndReportI();
@@ -266,7 +269,25 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
             }else if(item.contains("++master")){
                 ClientHandler.sendMessage(evtNo, false, 2, "GPIB切换主机模式成功！" );
             }else if (item.startsWith("ur") && item.length() == 1){
-                //todo 收到后把回复放到queue中,然后把replyFlag置回true等待下一次发送
+                String result = item.substring(2).trim();
+                Map<String, QueryParamInfo> allQueryParamInfo = queryParamDao.getAllQueryParamInfo();
+                QueryParamInfo queryParamInfo = allQueryParamInfo.values().stream().filter(e -> e.getParamValue() == null).collect(Collectors.toList()).get(0);
+                String paramType = queryParamInfo.getParamType();
+                if ("Boolean".equals(paramType)){
+                    queryParamInfo.setParamValue("0".equals(result)?"false":"true");
+                }else {
+                    queryParamInfo.setParamValue(result);
+                }
+                queryParamDao.addQueryParamInfo(queryParamInfo);
+
+                String paramId = queryParamInfo.getParamId();
+
+                ValidationItem validationItem = ValidationInfo.getValidationItemList().stream().filter(e -> !paramId.equals(e.getParamId())).collect(Collectors.toList()).get(0);
+                QueryParamInfo queryParamInfoNext = new QueryParamInfo();
+                queryParamInfoNext.setParamId(validationItem.getParamId());
+                queryParamInfoNext.setParamType(validationItem.getParamType());
+                queryParamDao.addQueryParamInfo(queryParamInfoNext);
+                GPIBHandler.getParamValue(validationItem.getParamId());
             }
         }
     }

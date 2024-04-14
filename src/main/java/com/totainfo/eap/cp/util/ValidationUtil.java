@@ -9,6 +9,7 @@ import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -44,8 +45,20 @@ public class ValidationUtil {
         return validationItemList;
     }
 
-    public static void main(String[] args) throws DocumentException {
-//        List<ValidationItem> validationItemList = ValidationUtil.getValidationItemList();
-//        System.out.println(validationItemList.toString());
+    public static void main(String[] args) {
+        List<String> strings = new ArrayList<>();
+        strings.add("1");
+        strings.add("2");
+        strings.add("3");
+        strings.add("4");
+        strings.add("5");
+        strings.add("6");
+        Iterator<String> iterator = strings.iterator();
+        if (iterator.hasNext()){
+            String next = iterator.next();
+            String next1 = iterator.next();
+            String next2 = iterator.next();
+            System.out.println(next2);
+        }
     }
 }

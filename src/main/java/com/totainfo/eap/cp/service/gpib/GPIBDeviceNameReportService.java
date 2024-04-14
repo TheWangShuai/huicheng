@@ -5,13 +5,12 @@ import com.totainfo.eap.cp.commdef.GenergicStatDef.*;
 import com.totainfo.eap.cp.commdef.GenericDataDef;
 import com.totainfo.eap.cp.dao.IEqptDao;
 import com.totainfo.eap.cp.dao.ILotDao;
+import com.totainfo.eap.cp.dao.IQueryParamDao;
 import com.totainfo.eap.cp.dao.IStateDao;
-import com.totainfo.eap.cp.entity.EqptInfo;
-import com.totainfo.eap.cp.entity.LotInfo;
-import com.totainfo.eap.cp.entity.StateInfo;
-import com.totainfo.eap.cp.entity.ValidationInfo;
+import com.totainfo.eap.cp.entity.*;
 import com.totainfo.eap.cp.handler.*;
 import com.totainfo.eap.cp.mode.ValidationItem;
+import com.totainfo.eap.cp.tcp.server.EchoServerHandler;
 import com.totainfo.eap.cp.trx.client.EAPRepCurModel.EAPRepCurModelO;
 import com.totainfo.eap.cp.trx.client.EAPSyncEqpInfo.EAPSyncEqpInfoI;
 import com.totainfo.eap.cp.trx.gpib.GPIBDeviceNameReport.GPIBDeviceNameReportI;
@@ -35,10 +34,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
@@ -66,6 +62,8 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
 
     @Resource
     private IEqptDao eqptDao;
+    @Resource
+    private IQueryParamDao queryParamDao;
 
     @Resource
     private HttpHandler httpHandler;
@@ -160,23 +158,16 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
         // 第四步Device参数验证完成
         clientHandler.setFlowStep(StepName.FOURTH,StepStat.COMP);
 
-        // step5 查询需要校验的参数的当前值,并放到info里
-//        List<ValidationItem> validationItemList = ValidationUtil.getValidationItemList();
-//
-//        List<String> paramIdList = validationItemList.stream().map(ValidationItem::getParamId).collect(Collectors.toList());
-//        for (String paramId : paramIdList) {
-//            while (ValidationInfo.replyFlag){
-//                GPIBHandler.getParamValue(paramId);
-//                ValidationInfo.replyFlag=false;
-//            }
-//        }
-//        for (ValidationItem validationItem : validationItemList) {
-//            // todo 循环 查询gpib参数
-//            String paramValue = "";
-//
-//            validationItem.setActualValue(paramValue);
-//        }
-//        ValidationInfo.setValidationItemList(validationItemList);
+//         step5 查询需要校验的参数的当前值,并放到info里
+        List<ValidationItem> validationItemList = ValidationUtil.getValidationItemList();
+        ValidationItem validationItem = validationItemList.get(0);
+        String paramId = validationItem.getParamId();
+        String paramType = validationItem.getParamType();
+        QueryParamInfo queryParamInfo = new QueryParamInfo();
+        queryParamInfo.setParamId(paramId);
+        queryParamInfo.setParamType(paramType);
+        queryParamDao.addQueryParamInfo(queryParamInfo);
+        GPIBHandler.getParamValue(paramId);
 
         //发送Lot Setting
         //第五步下发LotSetting信息开始
