@@ -51,11 +51,11 @@ spring:
       exchange: CLIENT
     eap:
       checkName: false
-      queue: TOTA.EAP.${equipment.id}
+      queue: TOTA1.EAP.${equipment.id}
       exchange: EAP
     rms:
       checkFlag: true
-      queue: TOTA.RMS
+      queue: TOTA1.RMS
       exchange: RMS
     ems:
       checkFlag: false

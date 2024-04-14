@@ -9,7 +9,9 @@ import com.totainfo.eap.cp.dao.IStateDao;
 import com.totainfo.eap.cp.entity.EqptInfo;
 import com.totainfo.eap.cp.entity.LotInfo;
 import com.totainfo.eap.cp.entity.StateInfo;
+import com.totainfo.eap.cp.entity.ValidationInfo;
 import com.totainfo.eap.cp.handler.*;
+import com.totainfo.eap.cp.mode.ValidationItem;
 import com.totainfo.eap.cp.trx.client.EAPRepCurModel.EAPRepCurModelO;
 import com.totainfo.eap.cp.trx.client.EAPSyncEqpInfo.EAPSyncEqpInfoI;
 import com.totainfo.eap.cp.trx.gpib.GPIBDeviceNameReport.GPIBDeviceNameReportI;
@@ -26,6 +28,8 @@ import com.totainfo.eap.cp.trx.rms.RmsOnlineValidation.RmsOnlineValidationO;
 import com.totainfo.eap.cp.util.JacksonUtils;
 import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.StringUtils;
+import com.totainfo.eap.cp.util.ValidationUtil;
+import org.dom4j.DocumentException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +39,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.*;
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.RETURN_CODE_OK;
@@ -70,6 +76,8 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
     @Value("${spring.rabbitmq.rms.checkFlag}")
     private boolean rmsCheckFlag;
 
+    private Lock lock;
+
     @Override
     public void mainProc(String evtNo, GPIBDeviceNameReportI inTrx, GPIBDeviceNameReportO outTrx) {
 
@@ -87,13 +95,12 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
            LogUtils.error("[{}] 异常", this.getClass().getSimpleName(), e);
         }finally {
            if(!RETURN_CODE_OK.equals(outTrx.getRtnCode())){
-               EAPEndCardO eapEndCardO = KvmHandler.eapEndCard(evtNo);
-               if(!RETURN_CODE_OK.equals(eapEndCardO.getRtnCode())){
-                   ClientHandler.sendMessage(evtNo, false, MessageType.ERROR, eapEndCardO.getRtnMesg());
-               }
-               lotDao.removeLotInfo();
-               stateDao.removeState();
-
+//               EAPEndCardO eapEndCardO = KvmHandler.eapEndCard(evtNo);
+//               if(!RETURN_CODE_OK.equals(eapEndCardO.getRtnCode())){
+//                   ClientHandler.sendMessage(evtNo, false, MessageType.ERROR, eapEndCardO.getRtnMesg());
+//               }
+//               lotDao.removeLotInfo();
+//               stateDao.removeState();
                EqptInfo eqptInfo =  eqptDao.getEqpt();
                if(eqptInfo == null){
                    eqptInfo = new EqptInfo();
@@ -108,7 +115,7 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
         }
     }
 
-    public void mainProc2(String evtNo, LotInfo lotInfo, GPIBDeviceNameReportI inTrx, GPIBDeviceNameReportO outTrx) {
+    public void mainProc2(String evtNo, LotInfo lotInfo, GPIBDeviceNameReportI inTrx, GPIBDeviceNameReportO outTrx) throws DocumentException {
 
         String lotId = lotInfo.getLotId();
         String deviceName = inTrx.getDeviceName();
@@ -153,7 +160,23 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
         // 第四步Device参数验证完成
         clientHandler.setFlowStep(StepName.FOURTH,StepStat.COMP);
 
-
+        // step5 查询需要校验的参数的当前值,并放到info里
+//        List<ValidationItem> validationItemList = ValidationUtil.getValidationItemList();
+//
+//        List<String> paramIdList = validationItemList.stream().map(ValidationItem::getParamId).collect(Collectors.toList());
+//        for (String paramId : paramIdList) {
+//            while (ValidationInfo.replyFlag){
+//                GPIBHandler.getParamValue(paramId);
+//                ValidationInfo.replyFlag=false;
+//            }
+//        }
+//        for (ValidationItem validationItem : validationItemList) {
+//            // todo 循环 查询gpib参数
+//            String paramValue = "";
+//
+//            validationItem.setActualValue(paramValue);
+//        }
+//        ValidationInfo.setValidationItemList(validationItemList);
 
         //发送Lot Setting
         //第五步下发LotSetting信息开始
@@ -165,6 +188,8 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
         if (StringUtils.isEmpty(returnMesg)) {
             stateInfo.setState(StepStat.FAIL);
             stateDao.addStateInfo(stateInfo);
+            //给EMS上报制程结束信号
+            EmsHandler.waferInfotoEms(evtNo,lotInfo.getLotId(),lotInfo.getWaferLot(), "End");
             removeCache();
             outTrx.setRtnCode(KVM_TIME_OUT);
             outTrx.setRtnMesg("[EAP-KVM]:EAP下发批次信息，KVM没有回复");
@@ -174,6 +199,8 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
         if (!RETURN_CODE_OK.equals(eapLotInfoWriteInO.getRtnCode())) {
             stateInfo.setState(StepStat.FAIL);
             stateDao.addStateInfo(stateInfo);
+            //给EMS上报制程结束信号
+            EmsHandler.waferInfotoEms(evtNo,lotInfo.getLotId(),lotInfo.getWaferLot(), "End");
             removeCache();
             outTrx.setRtnCode(eapLotInfoWriteInO.getRtnCode());
             outTrx.setRtnMesg("[EAP-KVM]:EAP下发批次信息，KVM返回失败，原因:[" + eapLotInfoWriteInO.getRtnMesg() + "]");

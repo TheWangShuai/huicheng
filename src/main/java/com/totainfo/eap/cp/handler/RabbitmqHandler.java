@@ -68,7 +68,8 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         properties.getHeaders().put("actionFlag", inObj.getActionFlg());
         String inObjStr = JacksonUtils.object2String(inObj);
         Message message = new Message(inObjStr.getBytes(), properties);
-        LogUtils.info("[{}][{}][{}][{}][{}]:[{}]", evtNo,"EAP->"+appName,"Exchange:"+exchange,"Queue:"+queue,inObj.getTrxId(),  inObjStr);
+        LogUtils.info("向EMS的Rabbitmq中发送的消息为: " + message);
+        LogUtils.info("[{}][{}][{}][{}][{}]:[{}]", evtNo,"EAP->"+appName,"Exchange:"+exchange,"Queue:"+queue,inObj.getTrxId(),  message);
         String reply = _SPACE;
         Message rtnMessage = null;
         try {

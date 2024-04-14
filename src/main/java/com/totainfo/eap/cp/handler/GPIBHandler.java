@@ -85,6 +85,11 @@ public class GPIBHandler {
         echoServerHandler.send("GPIB", "sl");
     }
 
+    public static void getParamValue(String paramId) {
+        String command = String.format("ur%05d", Integer.parseInt(paramId));
+        echoServerHandler.send("GPIB",command);
+    }
+
     public static String getAlarmCode() {
         changeMode("++master");
         String key = String.format("EQPT:%s:ALARMCODE", equipmentNo);
