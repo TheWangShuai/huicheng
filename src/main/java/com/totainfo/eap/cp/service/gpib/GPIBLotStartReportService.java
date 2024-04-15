@@ -55,15 +55,8 @@ public class GPIBLotStartReportService extends EapBaseService<GPIBLotStartReport
         emsLotInfoReportI.setProcessState("1");
         emsLotInfoReportI.setOperator(lotInfo.getUserId());
         emsLotInfoReportI.setTemperature(lotInfo.getTemperature());
-        ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上传开始生产相关信息指令成功");
-        EMSLotInfoReportO emsLotInfoReportO = EmsHandler.emsLotInfoReporToEms(evtNo, emsLotInfoReportI);
-        if (!RETURN_CODE_OK.equals(emsLotInfoReportO.getRtnCode())){
-            //给EMS上报制程结束信号
-            EmsHandler.waferInfotoEms(evtNo,lotInfo.getLotId(),lotInfo.getWaferLot(), "End");
-            removeCache();
-            ClientHandler.sendMessage(evtNo,false,1,"[EAP-Client]: " + emsLotInfoReportO.getRtnMesg());
-            return;
-        }
+        ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]: 批次号[" + lotNo + "]上报EMS批次开始生产信息成功");
+        EmsHandler.emsLotInfoReporToEms(evtNo, emsLotInfoReportI);
 
         GPIBLotStartReportO gpibLotStartReportO = MesHandler.lotStart(evtNo, evtUsr, lotNo);
         if(!RETURN_CODE_OK.equals(gpibLotStartReportO.getRtnCode())){
@@ -72,11 +65,6 @@ public class GPIBLotStartReportService extends EapBaseService<GPIBLotStartReport
             ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
-        ClientHandler.sendMessage(evtNo,false,2,"批次:[" + lotInfo.getLotId() +"] ： 制程开始");
-    }
-    public void removeCache(){
-        lotDao.removeLotInfo();
-        stateDao.removeState();
-
+        ClientHandler.sendMessage(evtNo,false,2,"[Prober-EAP]：批次:[" + lotInfo.getLotId() +"] ： 制程开始");
     }
 }

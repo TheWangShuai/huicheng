@@ -78,6 +78,7 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
                 ClientHandler.sendMessage(evtNo, true, 1, outTrx.getRtnMesg());
                 return;
             }
+            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]:批次号:["+ lotInfo.getLotId()+ "]正在Check In, 等待MES返回结果");
             String lotId = lotInfo.getLotId();
             EAPReqCheckInI eapReqCheckInI = new EAPReqCheckInI();
             eapReqCheckInI.setTrxId("checkIn");
@@ -94,11 +95,9 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
                 Stateset("9","3",lotId);
                 outTrx.setRtnCode(eapReqCheckInO.getRtnCode());
                 outTrx.setRtnMesg(eapReqCheckInO.getRtnMesg());
-                EapEndCard(evtNo);
-                Remove(evtNo);
                 return;
             }
-            ClientHandler.sendMessage(evtNo, false, 2, "批次:[" + lotInfo.getLotId() + "] Check In 成功。");
+            ClientHandler.sendMessage(evtNo, false, 2, "[MES-EAP]: 批次号:[" + lotInfo.getLotId() + "] Check In 成功");
             EmsHandler.reportRunWorkInfo(evtNo,"CheckIn成功",lotId,"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
             //第九步开始CheckIn结束
             clientHandler.setFlowStep(GenergicStatDef.StepName.NIGHT, GenergicStatDef.StepStat.COMP);
@@ -125,12 +124,10 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
                 Stateset("10","3",lotId);
                 outTrx.setRtnCode(KVM_RETURN_ERROR);
                 outTrx.setRtnMesg("EAP 下发测试程序清除， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
-//                EapEndCard(evtNo);
-//                Remove(evtNo);
-                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+//                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                 return;
             }
-            ClientHandler.sendMessage(evtNo, false, 2, "EAP成功下发load程式指令");
+            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-Tester]: EAP下发load程式指令, 程式Loading……");
         } else {
             EAPControlCommandI eapControlCommandI = new EAPControlCommandI();
             eapControlCommandI.setTrxId("EAPACCEPT");
@@ -168,10 +165,10 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
         EAPEndCardI eapEndCardI = new EAPEndCardI();
         eapEndCardI.setTrxId("EAPACCEPT");
         eapEndCardI.setActionFlg("RTL");
-        String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapEndCardI);
-        EAPEndCardO eapEndCardO1 = JacksonUtils.string2Object(returnMesg, EAPEndCardO.class);
-        EAPEndCardO eapEndCardO = new EAPEndCardO();
-        eapEndCardO.setRtnMesg(eapEndCardO1.getRtnMesg());
+//        String returnMesg = httpHandler.postHttpForEqpt(evtNo, proberUrl, eapEndCardI);
+//        EAPEndCardO eapEndCardO1 = JacksonUtils.string2Object(returnMesg, EAPEndCardO.class);
+//        EAPEndCardO eapEndCardO = new EAPEndCardO();
+//        eapEndCardO.setRtnMesg(eapEndCardO1.getRtnMesg());
     }
     public void Remove(String evtNo){
         RedisHandler.remove("EQPT:state", "EQPT:%s:LOTINFO".replace("%s", equipmentNo));

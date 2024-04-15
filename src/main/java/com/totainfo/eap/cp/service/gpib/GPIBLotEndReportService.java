@@ -103,7 +103,7 @@ public class GPIBLotEndReportService extends EapBaseService<GPIBLotEndReportI, G
             outTrx.setRtnMesg(gpibLotEndReportO.getRtnMesg());
             ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
         }
-        ClientHandler.sendMessage(evtNo,false,2,"批次:[" + lotInfo.getLotId() +"] ： 制程结束");
+        ClientHandler.sendMessage(evtNo, false, 2, "[Prober-EAP]: 批次号:[" + lotNo + "]制程结束");
         remove(evtNo);
 
     }

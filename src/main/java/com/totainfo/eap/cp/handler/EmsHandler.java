@@ -154,7 +154,7 @@ public class EmsHandler {
         if(!StringUtils.hasText(outTrxStr)){
            emsWaferReportO.setRtnCode("00000001");
            emsWaferReportO.setRtnMesg("[EAP-MES]:EAP上传生产wafer信息，EMS没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,emsWaferReportO.getRtnMesg());
+           ClientHandler.sendMessage(evtNo,false,1,emsWaferReportO.getRtnMesg());
         }else{
             emsWaferReportO = JacksonUtils.string2Object(outTrxStr,EMSWaferReportO.class);
         }

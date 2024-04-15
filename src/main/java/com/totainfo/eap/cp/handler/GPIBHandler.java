@@ -66,7 +66,7 @@ public class GPIBHandler {
         String evtNo = UUID.randomUUID().toString();
         String replay = changeModeNew("++master");
         if (!replay.contains("++master")){
-            ClientHandler.sendMessage(evtNo, false, 1, "GPIB切换主模式失败！" );
+            ClientHandler.sendMessage(evtNo, false, 1, "GPIB切换主机模式失败！" );
             replay = changeModeNew("++device");
             if (!replay.contains("++device")){
                 ClientHandler.sendMessage(evtNo, false, 1, "GPIB切换主从模式失败，请按照SOP进行操作！" );

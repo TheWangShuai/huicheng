@@ -158,7 +158,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 AsyncUtils.setResponse(key, alarmMesg);
             } else if(item.startsWith("V") && item.length() == 1){
                 stateInfo = stateDao.getStateInfo();
-                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) == 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
+                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) > 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
                     EAPReqLotInfoOB clientLotInfo = lotDao.getClientLotInfo();
                     LotInfo lotInfo = lotDao.getCurLotInfo();
                     String sampleValue = "";
@@ -210,7 +210,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 waferInfoMap.put("notchDirection", notchDirection);
             }else if(item.startsWith("b") && item.length() > 10){
                 stateInfo = stateDao.getStateInfo();
-                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) == 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
+                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) > 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
                     //  GPIB上报带刻号的数据长度大于10
                     LogUtils.info("GPIB上报waferStart，进入此方法----------");
                     //当前WaferID
@@ -223,7 +223,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 }
             } else if (item.startsWith("P") && item.length() == 1) {
                 stateInfo = stateDao.getStateInfo();
-                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) == 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
+                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) > 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
                     LogUtils.info("GPIB上报waferEnd，进入此方法----------");
                     String curWaferId = waferInfoMap.get("waferId");
                     GPIBWaferEndReportI gpibWaferEndReportI = new GPIBWaferEndReportI();
@@ -238,7 +238,7 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 waferInfoMap.put("startCoorDinate", startCoordinate);
             }else if(item.startsWith("M") && item.length() == 1){
                 stateInfo = stateDao.getStateInfo();
-                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) == 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
+                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) > 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
                     String result = item.substring(1).trim();
                     waferInfoMap.put("result", result);
                     eapBaseService = (EapBaseService) context.getBean("dieInfoReport");
@@ -249,8 +249,9 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 stateInfo = stateDao.getStateInfo();
                 DieCountInfo dieCountInfo = lotDao.getDieCount();
                 List<DieInfoOA> dieInfoOAS = dieCountInfo.getDieInfoOAS();
-                LogUtils.info("当前制程步骤为：" + stateInfo.getStep());
-                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) == 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
+                LogUtils.info("当前制程步骤为：" + stateInfo.getStep() + ", 步骤状态为: " + stateInfo.getState());
+                LogUtils.info("当前批次实际Wafer为: [" + slotMapQueue + "], 实际测试完成的数据为: " + dieInfoOAS.toString());
+                if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) > 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
                     if (!dieInfoOAS.isEmpty() && slotMapQueue.size() != dieInfoOAS.size()) {
                         ClientHandler.sendMessage(evtNo, false, 2, "LotEnd异常结束！" );
                     }
@@ -264,7 +265,8 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 eapBaseService = (EapBaseService) context.getBean("lotEndReport");
                 eapBaseService.subMainProc(evtNo, JacksonUtils.object2String(endReportI));
             }else if(item.contains("++master")){
-                ClientHandler.sendMessage(evtNo, false, 2, "GPIB切换主机模式成功！" );
+                //todo
+//                ClientHandler.sendMessage(evtNo, false, 2, "GPIB切换主机模式成功！" );
             }else if (item.startsWith("ur") && item.length() == 1){
                 //todo 收到后把回复放到queue中,然后把replyFlag置回true等待下一次发送
             }

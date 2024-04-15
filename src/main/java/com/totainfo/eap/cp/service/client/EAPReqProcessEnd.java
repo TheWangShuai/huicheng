@@ -8,6 +8,7 @@ import com.totainfo.eap.cp.handler.ClientHandler;
 import com.totainfo.eap.cp.handler.EmsHandler;
 import com.totainfo.eap.cp.trx.client.EAPReqProcess.EAPReqProcessI;
 import com.totainfo.eap.cp.trx.client.EAPReqProcess.EAPReqProcessO;
+import com.totainfo.eap.cp.util.LogUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -28,13 +29,9 @@ public class EAPReqProcessEnd extends EapBaseService<EAPReqProcessI, EAPReqProce
 
         String actionFlg = inTrx.getActionFlg();
         LotInfo curLotInfo = lotDao.getCurLotInfo();
-        if (curLotInfo == null){
-            ClientHandler.sendMessage(evtNo,false,1,"清除缓存失败,原因是: Lot信息在Redis中不存在!");
-            return;
-        }
         if ("ManualStopJob".equals(actionFlg)){
-            EmsHandler.waferInfotoEms(evtNo,curLotInfo.getLotId(),curLotInfo.getWaferLot(),"END");
-            ClientHandler.sendMessage(evtNo,false,2,"清除缓存成功!");
+            EmsHandler.waferInfotoEms(evtNo,curLotInfo.getLotId(),curLotInfo.getWaferLot(),"End");
+            ClientHandler.sendMessage(evtNo,false,2,"批次：[" + curLotInfo.getLotId() + "],用户 [" + curLotInfo.getUserId() + "]手动制程结束。" );
             removeCache();
         }
     }

@@ -83,8 +83,28 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
         dieInfoOAS.add(dieInfoOA);
         dieCountInfo.setDieInfoOAS(dieInfoOAS);
         lotDao.addDieCount(dieCountInfo);
+        ClientHandler.sendMessage(evtNo, false, 2, "[Prober-EAP]：WaferId: [" + waferId + "]测试开始 ");
 
-        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-EMS]:EAP给EMS上传生产Wafer信息指令成功");
+        if (!dieCountInfo.getDieInfoOAS().isEmpty()){
+            if (StringUtils.isNotEmpty(stateDao.getStateInfo().getStep()) && Integer.parseInt(stateDao.getStateInfo().getStep()) > 9 ){
+                LogUtils.info("流程当前步骤为：：[" + stateDao.getStateInfo().getStep()  + "]");
+                String cleanFlg = "N";
+                CleanFuncKeyO cleanFuncKeyO = KvmHandler.cleanFuncKey(evtNo, cleanFlg);
+                if ("0000000".equals(cleanFuncKeyO.getRtnCode())) {
+                    ClientHandler.sendMessage(evtNo, false, 2, "[EAP-Tester]: EAP给测试机下发清除FunctionKey成功！");
+                }
+            }
+        }
+
+//        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]：上报 WaferId: [" + waferId + "]进行刻号比对,  等待结果");
+//        GPIBWaferStartReportO gpibWaferStartReportO = MesHandler.waferStart(evtNo, evtUsr, lotNo, waferId);
+//        if (!RETURN_CODE_OK.equals(gpibWaferStartReportO.getRtnCode())) {
+//            ClientHandler.sendMessage(evtNo, false, 1 , gpibWaferStartReportO.getRtnMesg());
+//            KvmHandler.haltStop(evtNo);
+//            return;
+//        }
+//        ClientHandler.sendMessage(evtNo, false, 2, "[MES-EAP]: WaferId: [" + waferId + "]刻号比对成功   ");
+        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-EMS]: 批次号:[" + lotNo + "], 上报EMS批次信息");
         EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,lotNo, waferId, "Start");
         if (!RETURN_CODE_OK.equals(emsWaferReportO.getRtnCode())){
             //给EMS上报制程结束信号
@@ -92,13 +112,6 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
             removeCache();
             ClientHandler.sendMessage(evtNo, false, 2, emsWaferReportO.getRtnMesg());
         }
-        GPIBWaferStartReportO gpibWaferStartReportO = MesHandler.waferStart(evtNo, evtUsr, lotNo, waferId);
-        if (!RETURN_CODE_OK.equals(gpibWaferStartReportO.getRtnCode())) {
-            KvmHandler.haltStop(evtNo);
-            ClientHandler.sendMessage(evtNo, false, 1 , gpibWaferStartReportO.getRtnMesg());
-            return;
-        }
-        ClientHandler.sendMessage(evtNo, false, 2, "[" + waferId + "] : 测试开始 ");
     }
 
     public void removeCache(){

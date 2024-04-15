@@ -42,7 +42,7 @@ public class KVMAlarmReportService extends EapBaseService<KVMAlarmReportI, KVMAl
         MesHandler.alarmReport(evtNo, alarmCode, alarmText, time,null);
 
         //报警需要推送给Client端展示
-        ClientHandler.sendMessage(evtNo, false, 2, "设备发送报警:[" + alarmCode + "]["+ alarmText +"]");
+        ClientHandler.sendMessage(evtNo, false, 2, "设备发送报警:[" + alarmCode + "]");
 
         //判断是不是制程结束的报警，如果是，发给MES Check Out
         if(!"00405".equals(alarmCode)){

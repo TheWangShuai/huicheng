@@ -18,6 +18,7 @@ import com.totainfo.eap.cp.trx.kvm.EAPEndCard.EAPEndCardO;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionI;
 import com.totainfo.eap.cp.trx.kvm.EAPOperationInstruction.EAPOperationInstructionO;
 import com.totainfo.eap.cp.util.JacksonUtils;
+import com.totainfo.eap.cp.util.LogUtils;
 import com.totainfo.eap.cp.util.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -61,7 +62,7 @@ public class EAPReqManualLoadProgram extends EapBaseService<EAPReqLoadProgramI, 
 
         StateInfo stateInfo = stateDao.getStateInfo();
         String userId = inTrx.getUserId();
-        String lotId = inTrx.getLotId();
+        String lotId = inTrx.getLotNo();
         if(StringUtils.isEmpty(lotId)){
             outTrx.setRtnCode(LOT_ID_EMPTY);
             outTrx.setRtnMesg("批次号为空，请重新扫描!");
@@ -81,30 +82,33 @@ public class EAPReqManualLoadProgram extends EapBaseService<EAPReqLoadProgramI, 
         eapOperationInstructionI.setUserId(userId);
         eapOperationInstructionI.setIsFirst("1");
 
-        if (GenergicStatDef.StepName.NIGHT.equals(stateInfo.getStep()) && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())){
-            String returnMesg = httpHandler.postHttpForEqpt(evtNo, testerUrl, eapOperationInstructionI);
-            if (StringUtils.isEmpty(returnMesg)) {
-                StateSet("10","3",lotId);
-                outTrx.setRtnCode(KVM_TIME_OUT);
-                outTrx.setRtnMesg("EAP 下发测试程序清除， KVM 没有返回");
-                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
-                return;
-            }
-            EAPOperationInstructionO eapOperationInstructionO = JacksonUtils.string2Object(returnMesg, EAPOperationInstructionO.class);
-            if (!RETURN_CODE_OK.equals(eapOperationInstructionO.getRtnCode())) {
-                StateSet("10","3",lotId);
-                outTrx.setRtnCode(KVM_RETURN_ERROR);
-                outTrx.setRtnMesg("EAP 下发测试程序清除， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
-//                EapEndCard(evtNo);
-//                Remove(evtNo);
-                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
-                return;
-            }
-            ClientHandler.sendMessage(evtNo, false, 2, "EAP成功下发load程式指令");
+        if (Integer.parseInt(stateInfo.getStep()) == 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())){
+            extracted(evtNo, outTrx, lotId, eapOperationInstructionI);
+        }else if (Integer.parseInt(stateInfo.getStep()) >= 10 ){
+            extracted(evtNo, outTrx, lotId, eapOperationInstructionI);
         }else {
-            ClientHandler.sendMessage(evtNo, false, 1, "请Check In后,在手动load程式!");
             return;
         }
+    }
+
+    private void extracted(String evtNo, EAPReqLoadProgramO outTrx, String lotId, EAPOperationInstructionI eapOperationInstructionI) {
+        String returnMesg = httpHandler.postHttpForEqpt(evtNo, testerUrl, eapOperationInstructionI);
+        if (StringUtils.isEmpty(returnMesg)) {
+            StateSet("10","3", lotId);
+            outTrx.setRtnCode(KVM_TIME_OUT);
+            outTrx.setRtnMesg("EAP 下发测试程序清除， KVM 没有返回");
+            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+            return;
+        }
+        EAPOperationInstructionO eapOperationInstructionO = JacksonUtils.string2Object(returnMesg, EAPOperationInstructionO.class);
+        if (!RETURN_CODE_OK.equals(eapOperationInstructionO.getRtnCode())) {
+            StateSet("10","3", lotId);
+            outTrx.setRtnCode(KVM_RETURN_ERROR);
+            outTrx.setRtnMesg("EAP 下发测试程序清除， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
+//            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
+            return;
+        }
+        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-Tester]: EAP下发手动load程式指令, 程式Loading……");
     }
 
 

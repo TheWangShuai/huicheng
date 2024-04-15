@@ -83,7 +83,9 @@ public class GPIBWaferEndReportService extends EapBaseService<GPIBWaferStartRepo
                 dieInfoOAOld = dieInfoOA;
             }
         }
+        LogUtils.info("当前waferId：[" + waferId + "]对应测试完成前的DieInfo数据为：" + dieInfoOAOld.getWorkId() + dieInfoOAOld.getDieCount() +dieInfoOAOld.getDeviceName() + dieInfoOAOld.getWaferStartTime() +dieInfoOAOld.getWaferEndTime());
         dieInfoOAOld.setWaferEndTime(waferEndTime);
+        LogUtils.info("当前waferId：[" + waferId + "]对应测试完成后的DieInfo数据为：" + dieInfoOAOld.getWorkId() + dieInfoOAOld.getDieCount() +dieInfoOAOld.getDeviceName() + dieInfoOAOld.getWaferStartTime() +dieInfoOAOld.getWaferEndTime());
         lotDao.addDieCount(dieCountInfo);
         //Wafer Start时判断，上一片Wafer Die数据是否上报完成，如果没有，将上一片Wafer的Die数据上报完成
 //        if(StringUtils.isNotEmpty(pvWaferId)){
@@ -104,7 +106,7 @@ public class GPIBWaferEndReportService extends EapBaseService<GPIBWaferStartRepo
                     EmsHandler.waferInfotoEms(evtNo,lotNo,waferId, "End");
                     CleanFuncKeyO cleanFuncKeyO = KvmHandler.cleanFuncKey(evtNo, "N");
                     if ("0000000".equals(cleanFuncKeyO.getRtnCode())) {
-                        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]: EAP 下发获取程式成功！ ");
+                        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]: 获取程式成功！ ");
                     }
                 }
 
@@ -146,7 +148,7 @@ public class GPIBWaferEndReportService extends EapBaseService<GPIBWaferStartRepo
             }
 //        }
 
-        ClientHandler.sendMessage(evtNo, false, 2, "[" + waferId + "] : 测试完成 ");
+        ClientHandler.sendMessage(evtNo, false, 2, "[Prober-EAP]: WaferId：[" + waferId + "] 测试完成 ");
     }
 }
 

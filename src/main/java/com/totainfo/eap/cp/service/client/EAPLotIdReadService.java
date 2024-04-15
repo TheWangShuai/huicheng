@@ -135,7 +135,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         }
 
         //发送给前端，LOT 校验成功。
-        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]:批次号:[" + lotId + "]探针:["+ proberId +"] MES 验证成功。");
+        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]: 批次号:[" + lotId + "]探针:["+ proberId +"]MES帐料信息验证成功");
 
         EAPReqLotInfoOA eapReqLotInfoOA = eapReqLotInfoO.getLotInfo();
         lotInfo = new LotInfo();
@@ -207,7 +207,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
             outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报信息，KVM返回失败，原因:[" + kvmTimeReportO.getRtnMesg() + "]");
             return;
         }
-        ClientHandler.sendMessage(evtNo,false,2,"EAP开始进行时间校验");
+        ClientHandler.sendMessage(evtNo,false,2,"EAP开始进行时间校验, 等待验证结果");
     }
 
 

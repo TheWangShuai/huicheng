@@ -15,6 +15,6 @@ import javax.naming.ldap.PagedResultsControl;
 @Getter
 @Setter
 public class EAPReqLoadProgramI extends BaseTrxI {
-    private String lotId;
+    private String lotNo;
     private String userId;
 }
