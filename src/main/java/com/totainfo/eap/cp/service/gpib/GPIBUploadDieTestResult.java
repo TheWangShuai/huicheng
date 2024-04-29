@@ -60,7 +60,6 @@ public class GPIBUploadDieTestResult extends EapBaseService <GPIBUploadDieTestRe
         if (!RETURN_CODE_OK.equals(eapUploadDieResultO.getRtnCode())) {
             outTrx.setRtnCode(eapUploadDieResultO.getRtnCode());
             outTrx.setRtnMesg(eapUploadDieResultO.getRtnMesg());
-            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
             return;
         }
         ClientHandler.sendMessage(evtNo, false, 2, "批次:[" + lotInfo.getLotId() + "] WaferStart时间上报成功");

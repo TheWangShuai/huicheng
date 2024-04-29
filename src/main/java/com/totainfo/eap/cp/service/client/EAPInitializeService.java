@@ -30,14 +30,12 @@ public class EAPInitializeService extends EapBaseService<EAPInitializeI, EAPInit
         if(StringUtils.isEmpty(returnMesage)){
             outTrx.setRtnCode(KVM_TIME_OUT);
             outTrx.setRtnMesg("[EAP-KVM]:EAP发送指令，尚未check out，关闭实时温度上报和状态变化上报。KVM 没有回复");
-            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
             return;
         }
         EAPInitializeO eapInitializeO = JacksonUtils.string2Object(returnMesage, EAPInitializeO.class);
         if(!RETURN_CODE_OK.equals(eapInitializeO.getRtnCode())){
             outTrx.setRtnCode(KVM_RETURN_ERROR);
             outTrx.setRtnMesg("[EAP-KVM]:EAP发送指令，尚未check out，关闭实时温度上报和状态变化上报，KVM 返回失败,原因:[" + eapInitializeO.getRtnMesg() + "]");
-            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
             return;
         }
         ClientHandler.sendMessage(evtNo, false, 2, "[Client-EAP-KVM]:下发关闭实时温度采集和状态上报成功");

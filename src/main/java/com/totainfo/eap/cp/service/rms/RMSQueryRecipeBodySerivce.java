@@ -47,7 +47,6 @@ public class RMSQueryRecipeBodySerivce  extends EapBaseService<RmsQueryRecipeBod
         if(!EqptMode.Online.equals(eqptInfo.getEqptMode())){
             outTrx.setRtnCode(EQPT_MODE_DISMATCH);
             outTrx.setRtnMesg("[RMS-EAP]:设备当前是Offline 模式，请确认");
-            ClientHandler.sendMessage(evtNo,false,1,outTrx.getRtnMesg());
             return;
         }
 
@@ -62,7 +61,6 @@ public class RMSQueryRecipeBodySerivce  extends EapBaseService<RmsQueryRecipeBod
         if(StringUtils.isEmpty(recipeBody)){
             outTrx.setRtnCode(KVM_TIME_OUT);
             outTrx.setRtnMesg("[EAP-Client]:EAP 下发Recipe :["+recipeId+"]参数采集， Client 没有返回");
-            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
         outTrx.setRecipeId(recipeId);

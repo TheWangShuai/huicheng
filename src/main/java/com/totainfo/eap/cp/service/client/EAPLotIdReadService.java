@@ -33,8 +33,7 @@ import java.util.*;
 
 import static com.totainfo.eap.cp.commdef.GenergicCodeDef.*;
 import static com.totainfo.eap.cp.commdef.GenergicStatDef.Constant.*;
-import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
-import static com.totainfo.eap.cp.commdef.GenericDataDef.proberUrl;
+import static com.totainfo.eap.cp.commdef.GenericDataDef.*;
 
 /**
  * @author xiaobin.Guo
@@ -179,7 +178,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
         emsDeviceParameterReportI.setParamList(emsDeviceParameterReportIAS);
 
         EmsHandler.emsDeviceParameterReportToEms(evtNo,lotId,emsDeviceParameterReportI);
-        ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上报设备参数信息指令成功");
+        ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]: EAP给EMS上报设备参数信息指令成功");
         EmsHandler.reportRunWorkInfo(evtNo,"上报Lot信息",lotId,"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
         LogUtils.info("开始执行上报Lot数据结束方法");
         //第一步Lot信息上报结束
@@ -195,7 +194,7 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
             EmsHandler.waferInfotoEms(evtNo,lotInfo.getLotId(),lotInfo.getWaferLot(), "End");
             removeCache();
             outTrx.setRtnCode(KVM_TIME_OUT);
-            outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报指令，KVM没有回复");
+            outTrx.setRtnMesg("[EAP-KVM]:EAP给Porber下发请求时间上报指令，KVM没有回复");
             return;
         }
         KVMTimeReportO kvmTimeReportO = JacksonUtils.string2Object(returnMsg, KVMTimeReportO.class);
@@ -204,10 +203,10 @@ public class EAPLotIdReadService extends EapBaseService<EAPLotIdReadI, EAPLotIdR
             EmsHandler.waferInfotoEms(evtNo,lotInfo.getLotId(),lotInfo.getWaferLot(), "End");
             removeCache();
             outTrx.setRtnCode(kvmTimeReportO.getRtnCode());
-            outTrx.setRtnMesg("[EAP-KVM]:EAP下发请求时间上报信息，KVM返回失败，原因:[" + kvmTimeReportO.getRtnMesg() + "]");
+            outTrx.setRtnMesg("[EAP-KVM]:EAP给Porber下发请求时间上报信息，KVM返回失败，原因:[" + kvmTimeReportO.getRtnMesg() + "]");
             return;
         }
-        ClientHandler.sendMessage(evtNo,false,2,"EAP开始进行时间校验, 等待验证结果");
+        ClientHandler.sendMessage(evtNo,false,2,"EAP开始进行Prober时间校验, 等待验证结果");
     }
 
 

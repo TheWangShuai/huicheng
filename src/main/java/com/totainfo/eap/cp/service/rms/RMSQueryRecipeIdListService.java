@@ -73,7 +73,6 @@ public class RMSQueryRecipeIdListService extends EapBaseService<RmsQueryRecipeId
         if(recipeIdList ==null){
             outTrx.setRtnCode(KVM_TIME_OUT);
             outTrx.setRtnMesg("[EAP-Client]:EAP 下发RecipeList采集， Client 没有返回");
-            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
         RmsQueryRecipeIdListOA rmsQueryRecipeIdListOA;

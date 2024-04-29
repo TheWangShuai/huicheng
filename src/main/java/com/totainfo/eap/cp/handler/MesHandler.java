@@ -148,7 +148,6 @@ public class MesHandler {
 
 
     public static EAPReqCheckInO checkInReq(String evtNo, String lotNo, String userId,EAPReqCheckInI eapReqCheckInI){
-//        EAPReqCheckInI eapReqCheckInI = new EAPReqCheckInI();
         EAPReqCheckInO eapReqCheckInO = new EAPReqCheckInO();
         eapReqCheckInI.setComputerName(computerName);
         eapReqCheckInI.setEquipmentNo(GenericDataDef.equipmentNo);
@@ -156,7 +155,7 @@ public class MesHandler {
         String outTrxStr =rabbitmqHandler.sendForReply (evtNo,appName,mesQueue, mesExchange, eapReqCheckInI);
         if(!StringUtils.hasText(outTrxStr)){
             eapReqCheckInO.setRtnCode(MES_TIME_OUT);
-            eapReqCheckInO.setRtnMesg("[EAP-MES]:EAP发送Lot:["+lotNo+"] Check In，MES没有回复");
+            eapReqCheckInO.setRtnMesg("[EAP-MES]:EAP发送Lot:["+lotNo+"] Check In，MES回复超时!");
         }else{
             eapReqCheckInO = JacksonUtils.string2Object(outTrxStr, EAPReqCheckInO.class);
         }

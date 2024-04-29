@@ -6,7 +6,7 @@ package com.totainfo.eap.cp.commdef;
  */
 public class GenergicCodeDef {
 
-    public static final String MES_TIME_OUT = "9999999";
+    public static final String MES_TIME_OUT = "3333333";
     public static final String KVM_TIME_OUT = "8888888";
     public static final String KVM_RETURN_ERROR = "8888889";
     public static final String RMS_TIME_OUT = "7777777";

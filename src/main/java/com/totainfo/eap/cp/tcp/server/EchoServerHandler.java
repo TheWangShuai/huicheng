@@ -42,6 +42,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static com.totainfo.eap.cp.commdef.GenericDataDef.equipmentNo;
 import static io.netty.util.CharsetUtil.*;
@@ -250,10 +251,12 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
                 DieCountInfo dieCountInfo = lotDao.getDieCount();
                 List<DieInfoOA> dieInfoOAS = dieCountInfo.getDieInfoOAS();
                 LogUtils.info("当前制程步骤为：" + stateInfo.getStep() + ", 步骤状态为: " + stateInfo.getState());
-                LogUtils.info("当前批次实际Wafer为: [" + slotMapQueue + "], 实际测试完成的数据为: " + dieInfoOAS.toString());
+                List<String> workIds = dieInfoOAS.stream().map(DieInfoOA::getWorkId).collect(Collectors.toList());
+                LogUtils.info("当前批次实际Wafer为: [" + slotMapQueue + "], 实际测试完成的数据为: " + workIds);
                 if (stateInfo != null && Integer.parseInt(stateInfo.getStep()) > 9 && GenergicStatDef.StepStat.COMP.equals(stateInfo.getState())) {
                     if (!dieInfoOAS.isEmpty() && slotMapQueue.size() != dieInfoOAS.size()) {
                         ClientHandler.sendMessage(evtNo, false, 2, "LotEnd异常结束！" );
+                        return;
                     }
                 }else {
                     ClientHandler.sendMessage(evtNo, true, 1, "GPIB回复数据格式失败，回复的数据为：" + message);

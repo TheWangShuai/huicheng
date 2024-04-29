@@ -47,8 +47,6 @@ public class KVMAlarmReportService extends EapBaseService<KVMAlarmReportI, KVMAl
         //判断是不是制程结束的报警，如果是，发给MES Check Out
         if(!"00405".equals(alarmCode)){
             EAPEqptAlarmReportO eapEqptAlarmReportO = MesHandler.alarmReport(evtNo, alarmCode, alarmText, time,null);
-//            String s = eapEqptAlarmReportO.toString();
-            ClientHandler.sendMessage(evtNo,false,2,eapEqptAlarmReportO.getRtnMesg());
             return;
         }
         LotInfo lotInfo = lotDao.getCurLotInfo();

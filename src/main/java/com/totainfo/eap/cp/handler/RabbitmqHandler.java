@@ -74,7 +74,7 @@ public class RabbitmqHandler<I extends BaseTrxI> {
         Message rtnMessage = null;
         try {
         AsyncRabbitTemplate.RabbitMessageFuture future = asyncRabbitTemplate.sendAndReceive(exchange, queue, message);
-            rtnMessage = future.get(timeout, TimeUnit.MILLISECONDS);
+        rtnMessage = future.get(timeout, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             LogUtils.error("RabbitMQ Receive Exception", e);
         }

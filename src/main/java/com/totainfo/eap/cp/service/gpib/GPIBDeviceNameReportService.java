@@ -122,22 +122,20 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
                 //切换被动模式
                 EAPRepCurModelO eapRepCurModelO = getCurModelO();
                 ClientHandler.sendGPIBState(evtNo,eapRepCurModelO);
-//                ClientHandler.sendMessage(evtNo, false, 2, "GPIB切换从机模式成功！" );
                 return;
             }
         }
 
         // DEVICENAME校验成功
-        ClientHandler.sendMessage(evtNo, false, 2, "DeviceName校验结果: 机台采集[" + deviceName + "],MES下发:[" + recipeId + "]");
+        ClientHandler.sendMessage(evtNo, false, 2, "DeviceName校验结果: 机台采集[" + deviceName + "], MES下发:[" + recipeId + "], DeviceName验证通过");
         //切换被动模式
         EAPRepCurModelO eapRepCurModelO = getCurModelO();
         ClientHandler.sendGPIBState(evtNo,eapRepCurModelO);
-//        ClientHandler.sendMessage(evtNo, false, 2, "GPIB切换从机模式成功！" );
 
         // DEVICE参数校验
         if (rmsCheckFlag) {
             LogUtils.info("开始发给rms做校验请求");
-            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-RMS]: Device:[" + lotInfo.getDevice() + "]发送RMS请求参数校验, 等待结果");
+            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-RMS]:Device: [" + lotInfo.getDevice() + "]发送RMS请求参数校验, 等待结果");
             RmsOnlineValidationO rmsOnlineValidationO = RMSHandler.toRmsOnlineValidation(evtNo, equipmentNo, lotInfo.getLotId(), lotInfo.getDevice(),"CP");
             if (rmsOnlineValidationO == null) {
                 outTrx.setRtnCode(RMS_TIME_OUT);
@@ -147,10 +145,10 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
             if (!RMSResult.TRUE.equals(rmsOnlineValidationO.getResult())) {
                 Stateset("4", "3", lotId);
                 outTrx.setRtnCode(RMS_FAILD);
-                outTrx.setRtnMesg("[EAP-RMS]:Device:[" + lotInfo.getDevice() + "]验证失败，原因:[" + rmsOnlineValidationO.getReason() + "]");
+                outTrx.setRtnMesg("[RMS-EAP]:Device:[" + lotInfo.getDevice() + "]验证失败，原因:[" + rmsOnlineValidationO.getReason() + "]");
                 return;
             }
-            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-RMS]:Device:[" + lotInfo.getDevice() + "]已激活, 参数内容一致, RMS验证成功");
+            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-RMS]:Device: [" + lotInfo.getDevice() + "]已激活, 参数内容一致, RMS验证成功");
         }
 
         EmsHandler.reportRunWorkInfo(evtNo,"DeviceName参数校验完成",lotId,"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
@@ -205,10 +203,10 @@ public class GPIBDeviceNameReportService extends EapBaseService<GPIBDeviceNameRe
             return;
         }
         //发送给前端，LOT信息发送KVM成功
-        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:批次:[" + lotInfo.getLotId() + "]开始进行自动化作业");
+        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:批次号: [" + lotInfo.getLotId() + "]开始进行自动化作业");
         MesHandler.eqptStatReport(evtNo, EqptStat.RUN, "无", lotInfo.getUserId());
         RcmHandler.eqptInfoReport(evtNo, lotInfo.getLotId(), EqptStat.RUN, _SPACE, _SPACE,_SPACE, _SPACE);
-        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:批次:[" + lotInfo.getLotId() + "], LotSetting信息写入成功");
+        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-KVM]:批次号: [" + lotInfo.getLotId() + "]LotSetting信息写入成功");
         EmsHandler.reportRunWorkInfo(evtNo,"批次信息写入成功",lotId,"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
         //第五步下发LotSetting信息结束
         clientHandler.setFlowStep(StepName.FITTH,StepStat.COMP);

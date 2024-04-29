@@ -45,7 +45,7 @@ public class EAPReqChangeGPIBModel  extends EapBaseService<EAPChangeGPIBModelI, 
         LotInfo curLotInfo = lotDao.getCurLotInfo();
         if ("ManualStopJob".equals(actionFlg)){
             EmsHandler.waferInfotoEms(evtNo,curLotInfo.getLotId(),curLotInfo.getWaferLot(),"End");
-            ClientHandler.sendMessage(evtNo,false,2,"批次：[" + curLotInfo.getLotId() + "],用户 [" + curLotInfo.getUserId() + "]手动制程结束。" );
+            ClientHandler.sendMessage(evtNo,false,2,"批次: [" + curLotInfo.getLotId() + "], 用户[" + curLotInfo.getUserId() + "]手动制程结束" );
             removeCache();
         }
     }

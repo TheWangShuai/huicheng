@@ -83,7 +83,7 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
         dieInfoOAS.add(dieInfoOA);
         dieCountInfo.setDieInfoOAS(dieInfoOAS);
         lotDao.addDieCount(dieCountInfo);
-        ClientHandler.sendMessage(evtNo, false, 2, "[Prober-EAP]：WaferId: [" + waferId + "]测试开始 ");
+        ClientHandler.sendMessage(evtNo, false, 2, "[Prober-EAP]: WaferId:[" + waferId + "]测试开始");
 
         if (!dieCountInfo.getDieInfoOAS().isEmpty()){
             if (StringUtils.isNotEmpty(stateDao.getStateInfo().getStep()) && Integer.parseInt(stateDao.getStateInfo().getStep()) > 9 ){
@@ -91,19 +91,19 @@ public class GPIBWaferStartReportService extends EapBaseService<GPIBWaferStartRe
                 String cleanFlg = "N";
                 CleanFuncKeyO cleanFuncKeyO = KvmHandler.cleanFuncKey(evtNo, cleanFlg);
                 if ("0000000".equals(cleanFuncKeyO.getRtnCode())) {
-                    ClientHandler.sendMessage(evtNo, false, 2, "[EAP-Tester]: EAP给测试机下发清除FunctionKey成功！");
+                    ClientHandler.sendMessage(evtNo, false, 2, "[EAP-Tester]: EAP给测试机下发获取程式成功！");
                 }
             }
         }
 
-//        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]：上报 WaferId: [" + waferId + "]进行刻号比对,  等待结果");
+//        ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]: 上报 WaferId: [" + waferId + "]进行刻号比对, 等待结果");
 //        GPIBWaferStartReportO gpibWaferStartReportO = MesHandler.waferStart(evtNo, evtUsr, lotNo, waferId);
 //        if (!RETURN_CODE_OK.equals(gpibWaferStartReportO.getRtnCode())) {
 //            ClientHandler.sendMessage(evtNo, false, 1 , gpibWaferStartReportO.getRtnMesg());
 //            KvmHandler.haltStop(evtNo);
 //            return;
 //        }
-//        ClientHandler.sendMessage(evtNo, false, 2, "[MES-EAP]: WaferId: [" + waferId + "]刻号比对成功   ");
+//        ClientHandler.sendMessage(evtNo, false, 2, "[MES-EAP]: WaferId: [" + waferId + "]刻号比对成功");
         ClientHandler.sendMessage(evtNo, false, 2, "[EAP-EMS]: 批次号:[" + lotNo + "], 上报EMS批次信息");
         EMSWaferReportO emsWaferReportO = EmsHandler.waferInfotoEms(evtNo,lotNo, waferId, "Start");
         if (!RETURN_CODE_OK.equals(emsWaferReportO.getRtnCode())){

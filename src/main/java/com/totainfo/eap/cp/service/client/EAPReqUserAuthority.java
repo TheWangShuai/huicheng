@@ -26,7 +26,6 @@ public class EAPReqUserAuthority extends EapBaseService<EAPReqUserAuthorityI, EA
         if (!GenergicStatDef.Constant.RETURN_CODE_OK.equals(eapReqUserAuthorityO.getRtnCode())) {
             outTrx.setRtnCode(eapReqUserAuthorityO.getRtnCode());
             outTrx.setRtnMesg(eapReqUserAuthorityO.getRtnMesg());
-            ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
             return;
         }
         ClientHandler.sendMessage(evtNo,false,2,"该人员手动输入权限校验通过，请输入相关信息");

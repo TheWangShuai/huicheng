@@ -148,7 +148,7 @@ public class GPIBWaferEndReportService extends EapBaseService<GPIBWaferStartRepo
             }
 //        }
 
-        ClientHandler.sendMessage(evtNo, false, 2, "[Prober-EAP]: WaferId：[" + waferId + "] 测试完成 ");
+        ClientHandler.sendMessage(evtNo, false, 2, "[Prober-EAP]: WaferId:[" + waferId + "]测试完成");
     }
 }
 

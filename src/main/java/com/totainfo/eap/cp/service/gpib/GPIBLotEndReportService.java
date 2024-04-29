@@ -91,7 +91,7 @@ public class GPIBLotEndReportService extends EapBaseService<GPIBLotEndReportI, G
         emsLotInfoReportI.setProcessState("4");
         emsLotInfoReportI.setOperator(lotInfo.getUserId());
         emsLotInfoReportI.setTemperature(lotInfo.getTemperature());
-        ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]:EAP给EMS上传结束生产相关信息指令成功");
+        ClientHandler.sendMessage(evtNo,false,2,"[EAP-EMS]: EAP给EMS上传结束生产相关信息指令成功");
         EmsHandler.emsLotInfoReporToEms(evtNo,emsLotInfoReportI);
 
 

@@ -75,10 +75,9 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
                 outTrx.setRtnCode(LOT_INFO_NOT_EXIST);
                 outTrx.setRtnMesg("[EAP-Client]:没有找需要制程的批次信息，请确认");
                 EapEndCard(evtNo);
-                ClientHandler.sendMessage(evtNo, true, 1, outTrx.getRtnMesg());
                 return;
             }
-            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]:批次号:["+ lotInfo.getLotId()+ "]正在Check In, 等待MES返回结果");
+            ClientHandler.sendMessage(evtNo, false, 2, "[EAP-MES]: 批次号:["+ lotInfo.getLotId()+ "]正在Check In, 等待MES返回结果");
             String lotId = lotInfo.getLotId();
             EAPReqCheckInI eapReqCheckInI = new EAPReqCheckInI();
             eapReqCheckInI.setTrxId("checkIn");
@@ -97,7 +96,7 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
                 outTrx.setRtnMesg(eapReqCheckInO.getRtnMesg());
                 return;
             }
-            ClientHandler.sendMessage(evtNo, false, 2, "[MES-EAP]: 批次号:[" + lotInfo.getLotId() + "] Check In 成功");
+            ClientHandler.sendMessage(evtNo, false, 2, "[MES-EAP]: 批次号: [" + lotInfo.getLotId() + "] Check In 成功");
             EmsHandler.reportRunWorkInfo(evtNo,"CheckIn成功",lotId,"","OK","Success", Thread.currentThread().getStackTrace()[1].getMethodName());
             //第九步开始CheckIn结束
             clientHandler.setFlowStep(GenergicStatDef.StepName.NIGHT, GenergicStatDef.StepStat.COMP);
@@ -116,7 +115,6 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
                 Stateset("10","3",lotId);
                 outTrx.setRtnCode(KVM_TIME_OUT);
                 outTrx.setRtnMesg("EAP 下发测试程序清除， KVM 没有返回");
-                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                 return;
             }
             EAPOperationInstructionO eapOperationInstructionO = JacksonUtils.string2Object(returnMesg, EAPOperationInstructionO.class);
@@ -124,7 +122,6 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
                 Stateset("10","3",lotId);
                 outTrx.setRtnCode(KVM_RETURN_ERROR);
                 outTrx.setRtnMesg("EAP 下发测试程序清除， KVM 返回错误:[" + eapOperationInstructionO.getRtnMesg() + "]");
-//                ClientHandler.sendMessage(evtNo, false, 2, outTrx.getRtnMesg());
                 return;
             }
             ClientHandler.sendMessage(evtNo, false, 2, "[EAP-Tester]: EAP下发load程式指令, 程式Loading……");
@@ -139,14 +136,12 @@ public class EAPEqpControlService extends EapBaseService<EAPEqpControlI, EAPEqpC
             if (StringUtils.isEmpty(returnMsg)) {
                 outTrx.setRtnCode(KVM_TIME_OUT);
                 outTrx.setRtnMesg("[EAP-KVM]:EAP 发送设备启停指令，KVM 没有回复");
-                ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
                 return;
             }
             EAPControlCommandO eapControlCommandO = JacksonUtils.string2Object(returnMsg, EAPControlCommandO.class);
             if (!RETURN_CODE_OK.equals(eapControlCommandO.getRtnCode())) {
                 outTrx.setRtnCode(eapControlCommandO.getRtnCode());
                 outTrx.setRtnMesg("[EAP-KVM]:EAP 发送设备启停指令，KVM 返回失败，原因:[" + eapControlCommandO.getRtnMesg() + "]");
-                ClientHandler.sendMessage(evtNo, false, 1, outTrx.getRtnMesg());
                 return;
             }
 

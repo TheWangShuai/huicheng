@@ -62,9 +62,8 @@ public class GPIBLotStartReportService extends EapBaseService<GPIBLotStartReport
         if(!RETURN_CODE_OK.equals(gpibLotStartReportO.getRtnCode())){
             outTrx.setRtnCode(gpibLotStartReportO.getRtnCode());
             outTrx.setRtnMesg(gpibLotStartReportO.getRtnMesg());
-            ClientHandler.sendMessage(evtNo,false,2,outTrx.getRtnMesg());
             return;
         }
-        ClientHandler.sendMessage(evtNo,false,2,"[Prober-EAP]：批次:[" + lotInfo.getLotId() +"] ： 制程开始");
+        ClientHandler.sendMessage(evtNo,false,2,"[Prober-EAP]:批次:[" + lotInfo.getLotId() +"]制程开始");
     }
 }
